@@ -17,7 +17,7 @@ class AsyncGZIPInput(stream: AsyncInput, bufferSize: Int = 512, closeStream: Boo
         usesDefaultInflater = true
     }
 
-    override suspend fun read(dest: ByteBuffer): Int {
+    override suspend fun read(dest: ByteBuffer): DataTransferSize {
         readHeader(stream)
         return super.read(dest)
     }

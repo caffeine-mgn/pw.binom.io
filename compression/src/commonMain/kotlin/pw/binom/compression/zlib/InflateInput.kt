@@ -1,19 +1,20 @@
 package pw.binom.compression.zlib
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.empty
 
 open class InflateInput(
-    val stream: Input,
-    bufferSize: Int = 512,
-    wrap: Boolean = false,
-    val closeStream: Boolean = false
+  val stream: Input,
+  bufferSize: Int = 512,
+  wrap: Boolean = false,
+  val closeStream: Boolean = false,
 ) : Input {
-    private val buf2 = ByteBuffer(bufferSize).empty()
-    private val inflater = Inflater(wrap)
-    protected var usesDefaultInflater = true
-    private var first = true
+  private val buf2 = ByteBuffer(bufferSize).empty()
+  private val inflater = Inflater(wrap)
+  protected var usesDefaultInflater = true
+  private var first = true
 
 //    override fun skip(length: Long): Long {
 //        var l = length
@@ -24,29 +25,29 @@ open class InflateInput(
 //        return length
 //    }
 
-    override fun read(dest: ByteBuffer): Int {
-        val l = dest.remaining
-        while (true) {
-            full2()
-            if (buf2.remaining == 0 || dest.remaining == 0) {
-                break
-            }
-            val r = inflater.inflate(buf2, dest)
-            if (r == 0) {
-                break
-            }
-        }
-        return l - dest.remaining
+  override fun read(dest: ByteBuffer): DataTransferSize {
+    val l = dest.remaining
+    while (true) {
+      full2()
+      if (buf2.remaining == 0 || dest.remaining == 0) {
+        break
+      }
+      val r = inflater.inflate(buf2, dest)
+      if (r == 0) {
+        break
+      }
     }
+    return DataTransferSize.ofSize(l - dest.remaining)
+  }
 
-    protected fun full2() {
-        if (buf2.remaining > 0) {
-            return
-        }
-        buf2.clear()
-        stream.read(buf2)
-        buf2.flip()
+  protected fun full2() {
+    if (buf2.remaining > 0) {
+      return
     }
+    buf2.clear()
+    stream.read(buf2)
+    buf2.flip()
+  }
 
 //    protected fun full() {
 //        if (!first && cursor.availIn > 0)
@@ -71,18 +72,18 @@ open class InflateInput(
 //        return length - cursor.outputLength
 //    }
 
-    override fun close() {
-        if (usesDefaultInflater) {
-            try {
-                inflater.end()
-            } catch (e: Throwable) {
-                // Do nothing
-            }
-        }
-        inflater.closeAnyway()
-        buf2.close()
-        if (closeStream) {
-            stream.close()
-        }
+  override fun close() {
+    if (usesDefaultInflater) {
+      try {
+        inflater.end()
+      } catch (e: Throwable) {
+        // Do nothing
+      }
     }
+    inflater.closeAnyway()
+    buf2.close()
+    if (closeStream) {
+      stream.close()
+    }
+  }
 }

@@ -1,6 +1,7 @@
 package pw.binom.process
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.Output
 import java.nio.channels.Channels
@@ -13,7 +14,7 @@ class JvmProcess(val process: java.lang.Process, val processStarter: JvmProcessS
 
     private val channel = Channels.newChannel(process.outputStream)
 
-    override fun write(data: ByteBuffer): Int = channel.write(data.native)
+    override fun write(data: ByteBuffer) = DataTransferSize.ofSize(channel.write(data.native))
 
     override fun flush() {
       // Do nothing
@@ -57,11 +58,11 @@ class JvmProcess(val process: java.lang.Process, val processStarter: JvmProcessS
 private class ProcessInputStream(val process: java.lang.Process, val stream: java.io.InputStream) : Input {
   private val channel = Channels.newChannel(stream)
 
-  override fun read(dest: ByteBuffer): Int {
+  override fun read(dest: ByteBuffer): DataTransferSize {
     while (stream.available() == 0 && process.isAlive) {
       Thread.sleep(10)
     }
-    return channel.read(dest.native)
+    return DataTransferSize.ofSize(channel.read(dest.native))
   }
 
   override fun close() {

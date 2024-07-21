@@ -13,8 +13,8 @@ actual object Console {
             // Do nothing
         }
 
-        override fun write(data: ByteBuffer): Int =
-            vv.write(data.native)
+        override fun write(data: ByteBuffer): DataTransferSize =
+          DataTransferSize.ofSize(vv.write(data.native))
 
         override fun flush() {
             // Do nothing
@@ -35,8 +35,8 @@ actual object Console {
 //            return length
 //        }
 
-        override fun read(dest: ByteBuffer): Int =
-            cc.read(dest.native)
+        override fun read(dest: ByteBuffer) =
+          DataTransferSize.ofSize(cc.read(dest.native))
 
 //        override fun read(data: ByteDataBuffer, offset: Int, length: Int) =
 //                data.update(offset, length) {

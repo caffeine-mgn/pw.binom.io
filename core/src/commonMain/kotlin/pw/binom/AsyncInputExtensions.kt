@@ -8,7 +8,7 @@ fun Input.asyncInput(callClose: Boolean = true) = object : AsyncInput {
   override val available: Int
     get() = -1
 
-  override suspend fun read(dest: ByteBuffer): Int =
+  override suspend fun read(dest: ByteBuffer) =
     this@asyncInput.read(dest)
 
   override suspend fun asyncClose() {
@@ -41,7 +41,7 @@ fun Input.asyncInput(callClose: Boolean = true) = object : AsyncInput {
 suspend fun AsyncInput.readUtf8Char(pool: ByteBufferProvider): Char? {
   pool.using { buffer ->
     buffer.reset(0, 1)
-    return if (read(buffer) == 0) {
+    return if (read(buffer).isNotAvailable) {
       null
     } else {
       val firstByte = buffer[0]
@@ -176,10 +176,10 @@ suspend fun AsyncInput.copyTo(dest: AsyncOutput, buffer: ByteBuffer): Long {
   while (true) {
     buffer.clear()
     val length = read(buffer)
-    if (length == 0) {
+    if (length.isNotAvailable) {
       break
     }
-    totalLength += length.toLong()
+    totalLength += length.length.toLong()
     buffer.flip()
     dest.writeFully(buffer)
   }
@@ -195,10 +195,10 @@ suspend fun AsyncInput.copyTo(dest: Output, buffer: ByteBuffer): Long {
   while (true) {
     buffer.clear()
     val length = read(buffer)
-    if (length == 0) {
+    if (length.isNotAvailable) {
       break
     }
-    totalLength += length.toLong()
+    totalLength += length.length.toLong()
     buffer.flip()
     dest.write(buffer)
   }
@@ -279,11 +279,11 @@ suspend fun AsyncInput.readByteArray(dest: ByteArray, buffer: ByteBuffer) {
   while (cursor < dest.size) {
     buffer.reset(0, minOf(dest.size - cursor, buffer.capacity))
     val len = read(buffer)
-    if (len == 0) {
+    if (len.isNotAvailable) {
       throw EOFException("Read $cursor/${dest.size}, can't read ${dest.size - cursor}")
     }
     buffer.flip()
     val cp = buffer.readInto(dest = dest, offset = cursor)
-    cursor += len
+    cursor += len.length
   }
 }

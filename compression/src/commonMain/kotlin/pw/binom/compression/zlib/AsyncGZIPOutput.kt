@@ -3,10 +3,7 @@ package pw.binom.compression.zlib
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.crc.CRC32
-import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.holdState
-import pw.binom.io.use
+import pw.binom.io.*
 
 open class AsyncGZIPOutput protected constructor(
   stream: AsyncOutput,
@@ -63,7 +60,7 @@ open class AsyncGZIPOutput protected constructor(
     usesDefaultDeflater = false
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     writeHeader()
     data.holdState {
       crcCalc.update(buffer = data)

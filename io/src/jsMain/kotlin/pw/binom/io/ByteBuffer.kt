@@ -257,7 +257,7 @@ actual open class ByteBuffer(val native: NativeMem) : Channel, Buffer, ByteBuffe
     return this
   }
 
-  override fun write(data: ByteBuffer): Int = data.readInto(this)
+  override fun write(data: ByteBuffer) = DataTransferSize.ofSize(data.readInto(this))
 
   actual fun getByte(): Byte {
     ensureOpen()
@@ -403,7 +403,7 @@ actual open class ByteBuffer(val native: NativeMem) : Channel, Buffer, ByteBuffe
     return l
   }
 
-  override fun read(dest: ByteBuffer): Int = readInto(dest)
+  override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
 
   fun write(data: Int8Array): Int {
     ensureOpen()

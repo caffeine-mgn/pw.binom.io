@@ -79,7 +79,7 @@ class AsyncBufferedAsciiInputReader private constructor(
     try {
       buffer.compact()
       val len = stream.read(buffer)
-      if (len < 0) {
+      if (len.isNotAvailable) {
         eof = true
       }
       buffer.flip()
@@ -89,7 +89,7 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
   }
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     ensureOpen()
     full()
     return buffer.read(dest)
@@ -114,14 +114,14 @@ class AsyncBufferedAsciiInputReader private constructor(
     return buffer.getByte().toInt().toChar()
   }
 
-  override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
+  override suspend fun read(dest: CharArray, offset: Int, length: Int): DataTransferSize {
     ensureOpen()
     full()
     val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
     for (i in offset until offset + len) {
       dest[i] = buffer.getByte().toInt().toChar()
     }
-    return len
+    return DataTransferSize.ofSize(len)
   }
 
   override suspend fun readByte(): Byte {

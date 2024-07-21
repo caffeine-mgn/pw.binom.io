@@ -6,7 +6,7 @@ interface Reader : Closeable {
      */
     fun read(): Char?
 
-    fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): Int {
+    fun read(data: CharArray, offset: Int = 0, length: Int = data.size - offset): DataTransferSize {
         if (offset + length > data.size) {
             throw IndexOutOfBoundsException()
         }
@@ -16,10 +16,10 @@ interface Reader : Closeable {
                 val c = read() ?: break
                 data[offset + i++] = c
             } catch (e: EOFException) {
-                return i
+                return DataTransferSize.ofSize(i)
             }
         }
-        return i
+        return DataTransferSize.ofSize(i)
     }
 
     fun readln(): String? {
@@ -49,7 +49,7 @@ fun Reader.asAsync() = object : AsyncReader {
     override suspend fun readChar(): Char? =
         this@asAsync.read()
 
-    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int =
+    override suspend fun read(dest: CharArray, offset: Int, length: Int) =
         this@asAsync.read(dest, offset, length)
 
     override suspend fun asyncClose() {

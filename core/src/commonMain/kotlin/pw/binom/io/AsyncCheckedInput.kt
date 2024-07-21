@@ -15,10 +15,10 @@ class AsyncCheckedInput(val stream: AsyncInput, val cksum: MessageDigest) : Asyn
 //        return len
 //    }
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     val pos = dest.position
     val ll = stream.read(dest)
-    if (ll != -1) {
+    if (ll.isAvailable) {
       dest.flip()
       cksum.update(dest)
     }

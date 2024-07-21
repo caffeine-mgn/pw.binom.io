@@ -10,6 +10,7 @@ import pw.binom.executeAndResumeWithException
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
+import pw.binom.io.DataTransferSize
 import pw.binom.io.socket.ListenFlags
 import pw.binom.io.socket.SelectorKey
 import pw.binom.io.socket.TcpClientSocket
@@ -29,7 +30,7 @@ class TcpConnection(
   override fun toString(): String = "TcpConnection(description: $description, channel: $channel, key: $currentKey)"
 
   private class IOState {
-    var continuation: CancellableContinuation<Int>? = null
+    var continuation: CancellableContinuation<DataTransferSize>? = null
     var data: ByteBuffer? = null
     var full = false
 
@@ -39,7 +40,7 @@ class TcpConnection(
     }
 
     fun set(
-      continuation: CancellableContinuation<Int>,
+      continuation: CancellableContinuation<DataTransferSize>,
       data: ByteBuffer,
     ) {
       this.continuation = continuation
@@ -77,8 +78,8 @@ class TcpConnection(
       return
     }
     if (sendData.continuation != null) {
-      val result = runCatching { channel.send(sendData.data!!) }
-      if (result.isSuccess && result.getOrNull()!! < 0) {
+      val result = runCatching { DataTransferSize.ofSize(channel.send(sendData.data!!)) }
+      if (result.isSuccess && result.getOrNull()!!.isNotAvailable) {
         sendData.continuation?.cancel(SocketClosedException())
         sendData.reset()
         return
@@ -135,7 +136,7 @@ class TcpConnection(
       if (data.remaining == 0) {
         readData.reset()
         readLock.unlock()
-        continuation.resume(value = readed, onCancellation = null)
+        continuation.resume(value = DataTransferSize.ofSize(readed), onCancellation = null)
       } else {
         currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
       }
@@ -143,7 +144,7 @@ class TcpConnection(
       logger.info(line = __LINE__) { "readyForRead:: data was read success. $readed bytes" }
       readData.reset()
       readLock.unlock()
-      continuation.resume(value = readed, onCancellation = null)
+      continuation.resume(value = DataTransferSize.ofSize(readed), onCancellation = null)
     }
   }
 
@@ -247,10 +248,10 @@ class TcpConnection(
     close()
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     val oldRemaining = data.remaining
     if (oldRemaining == 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     if (sendData.continuation != null) {
       error("Connection already has write operation")
@@ -261,14 +262,14 @@ class TcpConnection(
 //        check(!currentKey.isClosed) { "Key already closed. channel: $channel" }
     val wrote = channel.send(data)
     if (wrote > 0) {
-      return wrote
+      return DataTransferSize.ofSize(wrote)
     }
     if (wrote == -1) {
       close()
       throw SocketClosedException()
     }
     sendData.data = data
-    return suspendCancellableCoroutine<Int> {
+    return suspendCancellableCoroutine<DataTransferSize> {
       sendData.continuation = it
       this.currentKey.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
       this.currentKey.selector.wakeup()
@@ -307,7 +308,7 @@ class TcpConnection(
     }
     readData.full = true
     val readed =
-      suspendCancellableCoroutine<Int> { continuation ->
+      suspendCancellableCoroutine<DataTransferSize> { continuation ->
         continuation.invokeOnCancellation {
 //          currentKey.removeListen(KeyListenFlags.READ)
           readData.reset()
@@ -320,19 +321,19 @@ class TcpConnection(
         currentKey.addListen(ListenFlags.READ + ListenFlags.ERROR + ListenFlags.ONCE)
         currentKey.selector.wakeup()
       }
-    if (readed == 0) {
+    if (readed.isNotAvailable) {
       channel.closeAnyway()
       throw SocketClosedException()
     }
-    return readed
+    return readed.length
   }
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     if (dest.remaining == 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     if (currentKey.isClosed) {
-      return -1
+      return DataTransferSize.CLOSED
 //      throw SocketClosedException()
     }
     if (readData.continuation != null) {
@@ -348,11 +349,11 @@ class TcpConnection(
         throw e
       }
     if (read > 0) {
-      return read
+      return DataTransferSize.ofSize(read)
     }
     if (read == -1) {
       channel.close()
-      return -1
+      return DataTransferSize.CLOSED
 //      throw SocketClosedException()
     }
     readData.full = false

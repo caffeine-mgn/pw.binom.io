@@ -27,7 +27,7 @@ class BufferedAsciiInputReader(
         }
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
         checkAvailable()
         return buffer.read(dest)
     }
@@ -45,13 +45,13 @@ class BufferedAsciiInputReader(
         return buffer.getByte().toInt().toChar()
     }
 
-    override fun read(data: CharArray, offset: Int, length: Int): Int {
+    override fun read(data: CharArray, offset: Int, length: Int): DataTransferSize {
         checkAvailable()
         val len = minOf(minOf(data.size - offset, length), buffer.remaining)
         for (i in offset until offset + len) {
             data[i] = buffer.getByte().toInt().toChar()
         }
-        return len
+        return DataTransferSize.ofSize(len)
     }
 
     fun readUntil(char: Char): String? {

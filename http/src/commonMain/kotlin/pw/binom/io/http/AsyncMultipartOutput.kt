@@ -2,6 +2,7 @@ package pw.binom.io.http
 
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.bufferedAsciiWriter
 import kotlin.random.Random
 
@@ -95,7 +96,7 @@ class AsyncMultipartOutput(
         }
     }
 
-    override suspend fun write(data: ByteBuffer): Int {
+    override suspend fun write(data: ByteBuffer): DataTransferSize {
         writer.flush()
         if (first) {
             throw IllegalStateException("No defined part")

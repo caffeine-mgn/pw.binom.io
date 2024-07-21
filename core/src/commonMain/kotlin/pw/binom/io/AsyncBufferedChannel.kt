@@ -15,7 +15,7 @@ class AsyncBufferedChannel(
         channel.asyncClose()
     }
 
-    override suspend fun write(data: ByteBuffer): Int =
+    override suspend fun write(data: ByteBuffer) =
         outputBuf.write(data)
 
     override suspend fun flush() {
@@ -25,6 +25,6 @@ class AsyncBufferedChannel(
     override val available: Int
         get() = inputBuf.available
 
-    override suspend fun read(dest: ByteBuffer): Int =
+    override suspend fun read(dest: ByteBuffer) =
         inputBuf.read(dest)
 }

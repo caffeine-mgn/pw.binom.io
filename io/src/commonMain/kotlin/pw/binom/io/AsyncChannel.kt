@@ -25,10 +25,10 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
         override val available: Int
           get() = input.available
 
-        override suspend fun read(dest: ByteBuffer): Int =
+        override suspend fun read(dest: ByteBuffer) =
           input.read(dest)
 
-        override suspend fun write(data: ByteBuffer): Int =
+        override suspend fun write(data: ByteBuffer) =
           output.write(data)
 
         override fun toString(): String = "AsyncChannel($input, $output)"
@@ -47,10 +47,10 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
       override val available: Int
         get() = input.available
 
-      override suspend fun read(dest: ByteBuffer): Int =
+      override suspend fun read(dest: ByteBuffer) =
         input.read(dest)
 
-      override suspend fun write(data: ByteBuffer): Int =
+      override suspend fun write(data: ByteBuffer) =
         output.write(data)
 
       override fun toString(): String = "AsyncChannel($input, $output)"
@@ -68,10 +68,10 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
       override val available: Int
         get() = channel.available
 
-      override suspend fun read(dest: ByteBuffer): Int =
+      override suspend fun read(dest: ByteBuffer) =
         channel.read(dest)
 
-      override suspend fun write(data: ByteBuffer): Int =
+      override suspend fun write(data: ByteBuffer) =
         channel.write(data)
 
       override fun toString(): String = "AsyncChannel($channel)"

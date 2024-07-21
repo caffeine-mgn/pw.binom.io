@@ -15,17 +15,17 @@ class StringReader(data: String) : Reader {
         return data[cursor++]
     }
 
-    override fun read(data: CharArray, offset: Int, length: Int): Int {
+    override fun read(data: CharArray, offset: Int, length: Int): DataTransferSize {
         if (offset + length > data.size) {
             throw IndexOutOfBoundsException()
         }
         val len = minOf(this.data.size - cursor, length)
         if (len == 0) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         this.data.copyInto(data, offset, cursor, cursor + len)
         cursor += len
-        return len
+        return DataTransferSize.ofSize(len)
     }
 
     override fun close() {

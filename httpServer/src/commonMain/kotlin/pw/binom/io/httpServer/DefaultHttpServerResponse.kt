@@ -24,7 +24,7 @@ class DefaultHttpServerResponse(val exchange: HttpServerExchange) : HttpServerRe
     return object : HttpAsyncOutput {
       override suspend fun getInput(): HttpInput? = null
 
-      override suspend fun write(data: ByteBuffer): Int = out.write(data)
+      override suspend fun write(data: ByteBuffer) = out.write(data)
 
       override suspend fun asyncClose() {
         out.asyncClose()

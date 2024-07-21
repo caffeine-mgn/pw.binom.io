@@ -2,10 +2,7 @@ package pw.binom.io.http
 
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.StreamClosedException
-import pw.binom.io.UTF8
+import pw.binom.io.*
 
 /**
  * Implements Async Http Chunked Transport Output
@@ -29,7 +26,7 @@ open class AsyncChunkedOutput(
 
   private val tmp = ByteBuffer(50)
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     ensureOpen()
     val len = data.remaining
     while (true) {
@@ -42,7 +39,7 @@ open class AsyncChunkedOutput(
       }
       buffer.write(data)
     }
-    return len
+    return DataTransferSize.ofSize(len)
   }
 
   private suspend fun sendBuffer() {

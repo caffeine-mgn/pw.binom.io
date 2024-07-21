@@ -4,6 +4,7 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncInput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
+import pw.binom.io.DataTransferSize
 
 open class AsyncContentLengthInput(
   val stream: AsyncInput,
@@ -23,13 +24,13 @@ open class AsyncContentLengthInput(
   private var readed = 0uL
   private var closed = AtomicBoolean(false)
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     ensureOpen()
     if (dest.remaining == 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     if (eof) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     val read = if ((contentLength - readed < dest.remaining.toULong())) {
       val oldLimit = dest.limit
@@ -41,7 +42,9 @@ open class AsyncContentLengthInput(
     } else {
       stream.read(dest)
     }
-    readed += read.toULong()
+    if (read.isAvailable) {
+      readed += read.length.toULong()
+    }
     return read
   }
 

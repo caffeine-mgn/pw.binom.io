@@ -257,9 +257,9 @@ open class AsyncMultipartInput(
     }
   }
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     if (isBlockEof) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     return super.read(dest)
   }

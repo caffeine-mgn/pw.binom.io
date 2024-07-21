@@ -12,7 +12,7 @@ class ReaderUTF82(val stream: Input) : Reader {
     override fun read(): Char? =
         try {
             data.reset(0, 1)
-            if (stream.read(data) > 0) {
+            if (stream.read(data).isAvailable) {
                 val firstByte = data[0]
                 val size = UTF8.getUtf8CharSize(firstByte) - 1
                 if (size > 0) {

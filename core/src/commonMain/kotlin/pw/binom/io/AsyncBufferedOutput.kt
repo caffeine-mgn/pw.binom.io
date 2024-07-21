@@ -52,7 +52,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     return l
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     var l = 0
     while (data.remaining > 0) {
@@ -60,10 +60,12 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
         flush()
       }
       val wrote = buffer.write(data)
-      internalWroteBytes += wrote
-      l += wrote
+      if (wrote.isAvailable) {
+        internalWroteBytes += wrote.length
+        l += wrote.length
+      }
     }
-    return l
+    return DataTransferSize.ofSize(l)
   }
 
   suspend fun writeByte(value: Byte) {

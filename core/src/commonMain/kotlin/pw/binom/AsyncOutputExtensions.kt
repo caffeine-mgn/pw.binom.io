@@ -6,7 +6,7 @@ import pw.binom.uuid.UUID
 
 fun Output.asyncOutput(callClose: Boolean = true) = object : AsyncOutput {
 
-  override suspend fun write(data: ByteBuffer): Int =
+  override suspend fun write(data: ByteBuffer) =
     this@asyncOutput.write(data)
 
   override suspend fun flush() {

@@ -9,7 +9,7 @@ internal class WebSocketOutput(
   val masked: Boolean,
   override val stream: AsyncOutput,
   bufferSize: Int,
-  val connection:WebSocketConnectionImpl,
+  val connection: WebSocketConnectionImpl,
 ) : AbstractAsyncBufferedOutput() {
 
   override val buffer: ByteBuffer = ByteBuffer(bufferSize).empty()
@@ -35,9 +35,9 @@ internal class WebSocketOutput(
     flush(eof = false)
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     if (closing.getValue()) {
-      return -1
+      return DataTransferSize.CLOSED
     }
     return super.write(data)
   }

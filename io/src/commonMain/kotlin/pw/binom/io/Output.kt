@@ -1,12 +1,12 @@
 package pw.binom.io
 
 interface Output : Closeable {
-    fun write(data: ByteBuffer): Int
+    fun write(data: ByteBuffer): DataTransferSize
     fun flush()
     fun writeFully(data: ByteBuffer) {
         while (data.remaining > 0) {
             val wrote = write(data)
-            if (wrote <= 0) {
+            if (wrote.isNotAvailable) {
                 throw IOException("Can't write data")
             }
         }
@@ -14,10 +14,10 @@ interface Output : Closeable {
 }
 
 object NullOutput : Output {
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
         val remaining = data.remaining
         data.empty()
-        return remaining
+        return DataTransferSize.ofSize(remaining)
     }
 
     override fun close() {

@@ -6,7 +6,7 @@ interface AsyncReader : AsyncCloseable {
    */
   suspend fun readChar(): Char?
 
-  suspend fun read(dest: CharArray, offset: Int = 0, length: Int = dest.size - offset): Int
+  suspend fun read(dest: CharArray, offset: Int = 0, length: Int = dest.size - offset): DataTransferSize
   suspend fun readln(): String? {
     val sb = StringBuilder()
     try {
@@ -44,7 +44,7 @@ interface AsyncReader : AsyncCloseable {
 }
 
 abstract class AbstractAsyncReader : AsyncReader {
-  override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
+  override suspend fun read(dest: CharArray, offset: Int, length: Int): DataTransferSize {
     if (offset + length > dest.size) {
       throw IndexOutOfBoundsException()
     }
@@ -53,9 +53,9 @@ abstract class AbstractAsyncReader : AsyncReader {
       try {
         dest[offset + i++] = readChar() ?: break
       } catch (e: EOFException) {
-        return i
+        return DataTransferSize.ofSize(i)
       }
     }
-    return i
+    return DataTransferSize.ofSize(i)
   }
 }

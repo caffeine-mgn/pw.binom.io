@@ -83,7 +83,7 @@ open class AsyncBufferedInputReader protected constructor(
             buffer.clear()
         }
         val r = input.read(buffer)
-        if (r == 0) {
+        if (r.isNotAvailable) {
             eof = true
         }
         buffer.flip()
@@ -104,9 +104,9 @@ open class AsyncBufferedInputReader protected constructor(
         }
     }
 
-    override suspend fun read(dest: CharArray, offset: Int, length: Int): Int {
+    override suspend fun read(dest: CharArray, offset: Int, length: Int): DataTransferSize {
         if (length == 0) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         var counter = 0
         while (counter < length) {
@@ -121,7 +121,7 @@ open class AsyncBufferedInputReader protected constructor(
                 break
             }
         }
-        return counter
+        return DataTransferSize.ofSize(counter)
     }
 
     suspend fun readUntil(func: (Char, Int) -> Boolean): String? {

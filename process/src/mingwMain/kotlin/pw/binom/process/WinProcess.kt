@@ -6,44 +6,10 @@ import platform.posix.memset
 import platform.windows.*
 
 @OptIn(ExperimentalForeignApi::class)
-private inline fun CreateProcess(
-  lpApplicationName: LPCWSTR?,
-  lpCommandLine: LPWSTR?,
-  lpProcessAttributes: LPSECURITY_ATTRIBUTES?,
-  lpThreadAttributes: LPSECURITY_ATTRIBUTES?,
-  bInheritHandles: WINBOOL,
-  dwCreationFlags: DWORD,
-  lpEnvironment: LPVOID?,
-  lpCurrentDirectory: LPCWSTR?,
-  lpStartupInfo: LPSTARTUPINFOW?,
-  lpProcessInformation: LPPROCESS_INFORMATION?,
-) = CreateProcess!!(
-  lpApplicationName,
-  lpCommandLine,
-  lpProcessAttributes,
-  lpThreadAttributes,
-  bInheritHandles,
-  dwCreationFlags,
-  lpEnvironment,
-  lpCurrentDirectory,
-  lpStartupInfo,
-  lpProcessInformation,
-)
-
-@OptIn(ExperimentalForeignApi::class)
-inline fun <R> processHandler(pid: Long, func: (HANDLE?) -> R): R {
-  val handler = OpenProcess((PROCESS_QUERY_INFORMATION or PROCESS_VM_READ).convert(), FALSE, pid.convert()) ?: TODO()
-  try {
-    return func(handler)
-  } finally {
-    CloseHandle(handler)
-  }
-}
-
-@OptIn(ExperimentalForeignApi::class)
 class WinProcess(val processStarter: MingwProcessStarter) : Process {
 
   override var pid: Long = 0
+    private set
 
   override val stdout
     get() = processStarter.io.stdout
@@ -53,6 +19,41 @@ class WinProcess(val processStarter: MingwProcessStarter) : Process {
     get() = processStarter.io.stdin
   private lateinit var processHandle: HANDLE
 
+//  @OptIn(ExperimentalForeignApi::class)
+//  inline fun <R> processHandler(pid: Long, func: (HANDLE?) -> R): R {
+//    val handler = OpenProcess((PROCESS_QUERY_INFORMATION or PROCESS_VM_READ).convert(), FALSE, pid.convert()) ?: TODO()
+//    try {
+//      return func(handler)
+//    } finally {
+//      CloseHandle(handler)
+//    }
+//  }
+
+  @OptIn(ExperimentalForeignApi::class)
+  private inline fun CreateProcess(
+    lpApplicationName: LPCWSTR?,
+    lpCommandLine: LPWSTR?,
+    lpProcessAttributes: LPSECURITY_ATTRIBUTES?,
+    lpThreadAttributes: LPSECURITY_ATTRIBUTES?,
+    bInheritHandles: WINBOOL,
+    dwCreationFlags: DWORD,
+    lpEnvironment: LPVOID?,
+    lpCurrentDirectory: LPCWSTR?,
+    lpStartupInfo: LPSTARTUPINFOW?,
+    lpProcessInformation: LPPROCESS_INFORMATION?,
+  ) = CreateProcess!!(
+    lpApplicationName,
+    lpCommandLine,
+    lpProcessAttributes,
+    lpThreadAttributes,
+    bInheritHandles,
+    dwCreationFlags,
+    lpEnvironment,
+    lpCurrentDirectory,
+    lpStartupInfo,
+    lpProcessInformation,
+  )
+
   init {
     memScoped {
       val piProcInfo = alloc<PROCESS_INFORMATION>()
@@ -60,9 +61,9 @@ class WinProcess(val processStarter: MingwProcessStarter) : Process {
 
       val vv = alloc<STARTUPINFO>()
       vv.cb = sizeOf<STARTUPINFO>().convert()
-      vv.hStdError = processStarter.io.stderr.handler
-      vv.hStdOutput = processStarter.io.stdout.handler
-      vv.hStdInput = processStarter.io.stdin.handler
+      vv.hStdError = processStarter.io.stderr.writeFd
+      vv.hStdOutput = processStarter.io.stdout.writeFd
+      vv.hStdInput = processStarter.io.stdin.readFd
 
       vv.dwFlags = STARTF_USESTDHANDLES.convert()
       val envList = processStarter.env.map { "${it.key}=${it.value}" }
@@ -98,8 +99,8 @@ class WinProcess(val processStarter: MingwProcessStarter) : Process {
 
       pid = piProcInfo.dwProcessId.toLong()
       processHandle = piProcInfo.hProcess!!
-      stdout.processHandle = processHandle
-      stderr.processHandle = processHandle
+//      stdout.processHandle = processHandle
+//      stderr.processHandle = processHandle
       CloseHandle(piProcInfo.hThread)
     }
   }

@@ -2,6 +2,7 @@ package pw.binom.base64
 
 import pw.binom.io.ByteBuffer
 import pw.binom.io.ClosedException
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Output
 
 internal fun byteToBase64(value: Byte): Char =
@@ -39,13 +40,13 @@ class Base64EncodeOutput(private val appendable: Appendable, private val padding
     }
   }
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     val length = data.remaining
     (data.position until data.limit).forEach {
       write(data[it])
     }
-    return length
+    return DataTransferSize.ofSize(length)
   }
 
   override fun flush() {

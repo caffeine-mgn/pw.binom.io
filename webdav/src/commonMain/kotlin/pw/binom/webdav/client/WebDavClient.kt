@@ -174,7 +174,7 @@ open class WebDavClient constructor(val client: HttpClient, val url: URL) :
       WebAuthAccess.getCurrentUser()?.apply(r)
       val upload = r.writeBinary()
       return object : AsyncOutput {
-        override suspend fun write(data: ByteBuffer): Int = upload.write(data)
+        override suspend fun write(data: ByteBuffer) = upload.write(data)
 
         override suspend fun flush() {
           upload.flush()

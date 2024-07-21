@@ -4,6 +4,7 @@ import pw.binom.dns.protocol.ResourcePackage
 import pw.binom.io.AsyncInput
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.readShort
 import pw.binom.writeShort
 
@@ -127,7 +128,7 @@ data class DnsRecord(
         }
     }
 
-    suspend fun write(output: AsyncOutput, buffer: ByteBuffer): Int {
+    suspend fun write(output: AsyncOutput, buffer: ByteBuffer): DataTransferSize {
         buffer.clear()
         buffer.writeShort(0)
         write(buffer)

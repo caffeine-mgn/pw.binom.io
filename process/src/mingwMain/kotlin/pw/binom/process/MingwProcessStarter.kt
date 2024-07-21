@@ -3,6 +3,8 @@ package pw.binom.process
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Input
 import pw.binom.io.Output
+import pw.binom.io.pipe.PipeInput
+import pw.binom.io.pipe.PipeOutput
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 

@@ -1,0 +1,7 @@
+
+---
+#include <unistd.h>
+
+int internal_pipe2(int pipefd[2], int flags){
+    return pipe2(pipefd, flags);
+}

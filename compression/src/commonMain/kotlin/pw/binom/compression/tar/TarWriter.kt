@@ -14,10 +14,10 @@ fun ByteBuffer.writeZero() {
   while (s > 0) {
     ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
     val b = write(ZERO_BYTE)
-    if (b == 0) {
+    if (b.isNotAvailable) {
       throw RuntimeException("No space for write zero")
     }
-    s -= b
+    s -= b.length
   }
 }
 
@@ -38,7 +38,9 @@ private fun Output.writeZero(size: Int) {
   while (s > 0) {
     ZERO_BYTE.reset(0, minOf(ZERO_BYTE.capacity, s))
     val b = write(ZERO_BYTE)
-    s -= b
+    if (b.isAvailable) {
+      s -= b.length
+    }
   }
 }
 
@@ -140,11 +142,11 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
     override val dateSize: Long
       get() = size
 
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
       require(wrote + data.remaining <= size) { "Real data size should be equals defined size before" }
       val l = stream.write(data)
-      if (l > 0) {
-        wrote += l
+      if (l.isAvailable) {
+        wrote += l.length
       }
       return l
     }
@@ -165,7 +167,7 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
   ) : AbstractOutput(closeListener = closeListener, block = block, stream = stream) {
     private val data = ByteArrayOutput()
 
-    override fun write(data: ByteBuffer): Int = this.data.write(data)
+    override fun write(data: ByteBuffer) = this.data.write(data)
 
     override fun flush() {
       data.flush()

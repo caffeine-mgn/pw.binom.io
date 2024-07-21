@@ -63,15 +63,18 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     busy {
       ensureOpen()
       var r = 0
       while (data.remaining > 0) {
         checkFlush()
-        r += buffer.write(data)
+        val l = buffer.write(data)
+        if (l.isAvailable) {
+          r += l.length
+        }
       }
-      return r
+      return DataTransferSize.ofSize(r)
     }
   }
 

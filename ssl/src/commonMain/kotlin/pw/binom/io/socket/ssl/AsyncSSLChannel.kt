@@ -1,10 +1,7 @@
 package pw.binom.io.socket.ssl
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.AsyncChannel
-import pw.binom.io.ByteBuffer
-import pw.binom.io.ClosedException
-import pw.binom.io.empty
+import pw.binom.io.*
 import pw.binom.pool.ObjectPool
 
 fun SSLSession.asyncChannel(
@@ -139,10 +136,10 @@ class AsyncSSLChannel private constructor(
         }
     }
 
-    override suspend fun write(data: ByteBuffer): Int {
+    override suspend fun write(data: ByteBuffer): DataTransferSize {
         checkClosed()
         if (eof) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         var len = data.remaining
         val length = data.remaining
@@ -170,7 +167,7 @@ class AsyncSSLChannel private constructor(
                 else -> TODO("Unknown state ${s.state}")
             }
         }
-        return length - len
+        return DataTransferSize.ofSize(length - len)
     }
 
     override suspend fun flush() {
@@ -180,10 +177,10 @@ class AsyncSSLChannel private constructor(
     override val available: Int
         get() = -1
 
-    override suspend fun read(dest: ByteBuffer): Int {
+    override suspend fun read(dest: ByteBuffer): DataTransferSize {
         checkClosed()
         if (eof) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         val id = callId++
         sendAll()
@@ -215,6 +212,6 @@ class AsyncSSLChannel private constructor(
                 else -> TODO("Unknown state ${s.state}")
             }
         }
-        return readed
+        return DataTransferSize.ofSize(readed)
     }
 }

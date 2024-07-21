@@ -73,7 +73,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 //        }
 //    }
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     ensureOpen()
     if (data === this) {
       throw IllegalArgumentException()
@@ -84,7 +84,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
         self.native.put(src.native)
       }
     }
-    return l
+    return DataTransferSize.ofSize(l)
   }
 
   override fun flush() {
@@ -195,7 +195,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return len
   }
 
-  override fun read(dest: ByteBuffer): Int = readInto(dest)
+  override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
 
   actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
     if (closed) {

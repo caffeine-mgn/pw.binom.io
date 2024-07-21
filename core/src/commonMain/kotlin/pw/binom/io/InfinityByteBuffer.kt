@@ -91,10 +91,10 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
         }
     }
 
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
         checkClosed()
         if (data.remaining == 0) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         val len = data.remaining
         while (true) {
@@ -104,25 +104,25 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
                 break
             }
         }
-        return len
+        return DataTransferSize.ofSize(len)
     }
 
     override fun flush() {
         checkClosed()
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
         checkClosed()
         if (dest.remaining == 0) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         var read = 0
         while (dest.remaining > 0) {
-            val p = getReadyForRead() ?: return read
+            val p = getReadyForRead() ?: return DataTransferSize.ofSize(read)
             val r = p.read(dest)
             read += r
         }
-        return read
+        return DataTransferSize.ofSize(read)
     }
 
     override fun close() {

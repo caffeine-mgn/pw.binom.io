@@ -27,20 +27,20 @@ internal class WebSocketInputImpl(
         else -> -1
       }
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     return readInternal(dest)
   }
 
-  private suspend fun readInternal(dest: ByteBuffer): Int {
+  private suspend fun readInternal(dest: ByteBuffer): DataTransferSize {
     if (dest.remaining <= 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     var wasRead = 0
     while (true) {
       if (inputReady == 0L) {
         if (lastFrame) {
-          return 0
+          return DataTransferSize.EMPTY
         }
         WebSocketHeader.read(input, header)
         if (header.opcode != Opcode.CONTINUATION) {
@@ -55,17 +55,16 @@ internal class WebSocketInputImpl(
       dest.limit = dest.position + minOf(inputReady, dest.remaining.toLong()).toInt()
 
       val n = input.read(dest)
-      if (n <= 0) {
-        return wasRead
+      if (n.isNotAvailable) {
+        return DataTransferSize.ofSize(wasRead)
       }
-
-      wasRead += n
-      inputReady -= n
+      wasRead += n.length
+      inputReady -= n.length
 
       if (maskFlag) {
         dest.reset(
           position = startPosition,
-          length = n,
+          length = n.length,
         )
         cursor = WebSocketInput.encode(
           cursor = cursor,
@@ -75,7 +74,7 @@ internal class WebSocketInputImpl(
       }
 
       dest.limit = startLimit
-      dest.position = startPosition + n
+      dest.position = startPosition + n.length
       return n
     }
 
@@ -130,7 +129,7 @@ internal class WebSocketInputImpl(
         ByteBuffer(1024).use { buffer ->
           while (true) {
             buffer.clear()
-            if (readInternal(buffer) <= 0) {
+            if (readInternal(buffer).isNotAvailable) {
               break
             }
           }

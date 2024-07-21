@@ -1,10 +1,7 @@
 package pw.binom.io.http
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.AsyncInput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.ClosedException
-import pw.binom.io.IOException
+import pw.binom.io.*
 
 internal const val CR = 0x0D.toByte()
 internal const val LF = 0x0A.toByte()
@@ -82,17 +79,17 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     }
   }
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     ensureOpen()
     while (true) {
       if (eof) {
-        return 0
+        return DataTransferSize.EMPTY
       }
       // check chunk not exist
       if (chunkedSize == 0uL) {
         readChunkSize()
         if (eof) {
-          return 0
+          return DataTransferSize.EMPTY
         }
       }
 
@@ -109,7 +106,9 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
       dest.limit = dest.position + r.toInt()
       val b = stream.read(dest)
 //            dest.limit = oldLimit
-      readed += b.toULong()
+      if (b.isAvailable) {
+        readed += b.length.toULong()
+      }
 //      if (chunkedSize!! - readed == 0uL) {
 //        chunkedSize = null
 //      }

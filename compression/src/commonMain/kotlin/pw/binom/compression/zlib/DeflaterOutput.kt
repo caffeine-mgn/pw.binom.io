@@ -1,6 +1,7 @@
 package pw.binom.compression.zlib
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Output
 import pw.binom.io.StreamClosedException
 
@@ -39,7 +40,7 @@ open class DeflaterOutput(
 //        return write(sync) == 1
 //    }
 
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
         checkClosed()
         val vv = data.remaining
         while (data.remaining > 0) {
@@ -48,7 +49,7 @@ open class DeflaterOutput(
             buffer.flip()
             stream.write(buffer)
         }
-        return vv
+        return DataTransferSize.ofSize(vv)
     }
 
     override fun flush() {

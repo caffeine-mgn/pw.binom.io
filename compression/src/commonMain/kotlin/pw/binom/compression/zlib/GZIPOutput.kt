@@ -1,10 +1,7 @@
 package pw.binom.compression.zlib
 
 import pw.binom.crc.CRC32
-import pw.binom.io.ByteBuffer
-import pw.binom.io.Output
-import pw.binom.io.holdState
-import pw.binom.io.use
+import pw.binom.io.*
 
 class GZIPOutput(
   stream: Output,
@@ -29,7 +26,7 @@ class GZIPOutput(
     usesDefaultDeflater = false
   }
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     writeHeader()
     data.holdState {
       crcCalc.update(buffer = data)

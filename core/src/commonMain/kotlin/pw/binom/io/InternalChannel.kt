@@ -1,24 +1,26 @@
 package pw.binom.io
 
 class InternalChannel(val readBuffer: ByteBuffer, val writeBuffer: ByteBuffer) : Channel {
-    override fun read(dest: ByteBuffer): Int {
-        val p = readBuffer.position
-        readBuffer.flip()
-        val r = readBuffer.read(dest)
-        readBuffer.compact()
-        readBuffer.position = p - r
-        return r
+  override fun read(dest: ByteBuffer): DataTransferSize {
+    val p = readBuffer.position
+    readBuffer.flip()
+    val r = readBuffer.read(dest)
+    readBuffer.compact()
+    if (r.isAvailable) {
+      readBuffer.position = p - r.length
     }
+    return r
+  }
 
-    override fun close() {
-        TODO("Not yet implemented")
-    }
+  override fun close() {
+    TODO("Not yet implemented")
+  }
 
-    override fun write(data: ByteBuffer): Int {
-        return writeBuffer.write(data)
-    }
+  override fun write(data: ByteBuffer) =
+    writeBuffer.write(data)
 
-    override fun flush() {
-        TODO("Not yet implemented")
-    }
+
+  override fun flush() {
+    TODO("Not yet implemented")
+  }
 }

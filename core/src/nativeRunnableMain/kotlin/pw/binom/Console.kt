@@ -17,13 +17,13 @@ actual object Console {
     override fun close() {
     }
 
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
       if (data.capacity == 0) {
-        return 0
+        return DataTransferSize.EMPTY
       }
       return data.refTo(data.position) { data2 ->
-        write(fd, data2, data.remaining.convert()).convert()
-      } ?: 0
+        DataTransferSize.ofSize(write(fd, data2, data.remaining.convert()).convert())
+      } ?: DataTransferSize.EMPTY
     }
 
     override fun flush() {
@@ -35,13 +35,13 @@ actual object Console {
 
   actual val inChannel: Input =
     object : Input {
-      override fun read(dest: ByteBuffer): Int {
+      override fun read(dest: ByteBuffer): DataTransferSize {
         if (dest.capacity == 0) {
-          return 0
+          return DataTransferSize.EMPTY
         }
         return dest.refTo(dest.position) { dest2 ->
           write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
-        } ?: 0
+        } ?: DataTransferSize.EMPTY
       }
 
       override fun close() {

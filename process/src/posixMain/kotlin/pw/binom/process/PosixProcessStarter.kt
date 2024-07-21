@@ -1,11 +1,17 @@
 package pw.binom.process
 
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.concurrency.ReentrantLock
+import pw.binom.concurrency.synchronize
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Input
+import pw.binom.io.pipe.PipeInput
+import pw.binom.io.pipe.PipeOutput
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalNativeApi::class)
-class LinuxProcessStarter(
+class PosixProcessStarter(
   val exe: String,
   val args: List<String>,
   val workDir: String?,
@@ -17,25 +23,40 @@ class LinuxProcessStarter(
     val stderr = PipeInput()
   }
 
-  private val io = IO()
+  internal val io = IO()
   override val stdin
     get() = io.stdin
-  override val stdout
-    get() = io.stdout
+  override val stdout = object : Input {
+    override fun read(dest: ByteBuffer) =
+      lock.synchronize {
+        if (!processStarted.getValue()) {
+          con.await()
+        }
+        io.stdout.read(dest)
+      }
+
+    override fun close() {
+      // do nothing
+    }
+
+  }
   override val stderr
     get() = io.stderr
 
-  @OptIn(ExperimentalStdlibApi::class)
+  internal val lock = ReentrantLock()
+  internal val con = lock.newCondition()
+
   private val cleaner = createCleaner(io) {
-    it.stdout.free()
-    it.stderr.free()
-    it.stdin.free()
+    it.stdout.close()
+    it.stderr.close()
+    it.stdin.close()
   }
 
   private var processStarted = AtomicBoolean(false)
 
   override fun start(): Process {
     check(processStarted.compareAndSet(false, true)) { "Process already started!" }
-    return LinuxProcess(this)
+    val r = PosixProcess(this)
+    return r
   }
 }

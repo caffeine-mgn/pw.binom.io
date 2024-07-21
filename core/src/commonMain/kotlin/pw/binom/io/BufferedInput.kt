@@ -8,7 +8,7 @@ class BufferedInput(val stream: Input, bufferSize: Int = DEFAULT_BUFFER_SIZE) : 
     val available
         get() = if (buffer.remaining == 0) -1 else buffer.remaining
 
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
         if (buffer.remaining == 0) {
             buffer.clear()
             stream.read(buffer)

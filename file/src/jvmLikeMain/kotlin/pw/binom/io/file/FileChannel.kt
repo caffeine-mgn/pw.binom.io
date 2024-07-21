@@ -2,6 +2,7 @@ package pw.binom.io.file
 
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
+import pw.binom.io.DataTransferSize
 import pw.binom.io.StreamClosedException
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
@@ -48,10 +49,10 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
         return l
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
         checkClosed()
         return native.read(dest.native).let {
-            if (it == -1) 0 else it
+            if (it == -1) DataTransferSize.EMPTY else DataTransferSize.ofSize(it)
         }
     }
 
@@ -67,9 +68,9 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
         native.close()
     }
 
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
         checkClosed()
-        return native.write(data.native)
+        return DataTransferSize.ofSize(native.write(data.native))
     }
 
 //    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {

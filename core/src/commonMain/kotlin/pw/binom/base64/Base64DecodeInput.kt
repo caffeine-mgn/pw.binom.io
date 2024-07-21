@@ -1,6 +1,7 @@
 package pw.binom.base64
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.Reader
 import kotlin.experimental.or
@@ -15,7 +16,7 @@ class Base64DecodeInput(val reader: Reader) : Input {
 
     private fun getChar(): Char? {
         if (cursor >= len) {
-            len = reader.read(buffer)
+            len = reader.read(buffer).length
             if (len == 0)
                 return null
             cursor = 0
@@ -23,7 +24,7 @@ class Base64DecodeInput(val reader: Reader) : Input {
         return buffer[cursor++]
     }
 
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
         val length = dest.remaining
 
         while (dest.remaining > 0) {
@@ -58,7 +59,7 @@ class Base64DecodeInput(val reader: Reader) : Input {
             if (counter == 4)
                 counter = 0
         }
-        return length - dest.remaining
+        return DataTransferSize.ofSize(length - dest.remaining)
     }
 
     override fun close() {

@@ -5,14 +5,17 @@ import platform.posix.sleep
 import platform.windows.*
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class)
 actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
 
-  internal var writeFd = fd.first
-  internal var readFd = fd.second
+  var writeFd = fd.first
+    private set
+  var readFd = fd.second
+    private set
 
   val available: Int
     get() {
@@ -51,14 +54,14 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
     }
   }
 
-  override fun read(dest: ByteBuffer): Int {
+  override fun read(dest: ByteBuffer): DataTransferSize {
     if (!dest.isReferenceAccessAvailable()) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     while (true) {
       sleep(1.convert())
       if (available == 0) {
-        return 0
+        return DataTransferSize.EMPTY
       }
 
       if (available > 0) {
@@ -83,7 +86,7 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
       }
       val read = dwWritten.value.toInt()
       dest.position += read
-      return read
+      return DataTransferSize.ofSize(read)
     }
   }
 

@@ -1,6 +1,7 @@
 package pw.binom.process
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.Output
 import java.io.File
@@ -17,7 +18,7 @@ class JvmProcessStarter(
   private val con = lock.newCondition()
   private var process: JvmProcess? = null
   override val stdin: Output = object : Output {
-    override fun write(data: ByteBuffer): Int {
+    override fun write(data: ByteBuffer): DataTransferSize {
       lock.withLock {
         if (process == null) {
           con.await()
@@ -36,7 +37,7 @@ class JvmProcessStarter(
     }
   }
   override val stdout: Input = object : Input {
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
       lock.withLock {
         if (process == null) {
           con.await()
@@ -51,7 +52,7 @@ class JvmProcessStarter(
     }
   }
   override val stderr: Input = object : Input {
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
       lock.withLock {
         if (process == null) {
           con.await()

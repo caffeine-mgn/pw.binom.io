@@ -35,7 +35,7 @@ class GZIPInput(
 //        return super.read(data, offset, length)
 //    }
 
-    override fun read(dest: ByteBuffer): Int {
+    override fun read(dest: ByteBuffer): DataTransferSize {
         readHeader(stream)
         return super.read(dest)
     }
@@ -100,11 +100,11 @@ class GZIPInput(
         var n = n
         while (n > 0) {
             tmpbuf.reset(0, if (n < tmpbuf.capacity) n else tmpbuf.capacity)
-            val len: Int = stream.read(tmpbuf)
-            if (len == -1) {
+            val len = stream.read(tmpbuf)
+            if (len.isNotAvailable) {
                 throw EOFException()
             }
-            n -= len
+            n -= len.length
         }
     }
 

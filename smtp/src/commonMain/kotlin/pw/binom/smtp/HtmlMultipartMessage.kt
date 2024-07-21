@@ -77,7 +77,7 @@ class HtmlMultipartMessage internal constructor(val output: AsyncOutput) : Messa
 }
 
 class FlashOnCloseAsyncOutput(val output: AsyncOutput) : AsyncOutput {
-  override suspend fun write(data: ByteBuffer): Int = output.write(data)
+  override suspend fun write(data: ByteBuffer) = output.write(data)
 
   override suspend fun asyncClose() {
     output.flush()

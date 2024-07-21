@@ -8,9 +8,9 @@ class CheckedInput(val stream: Input, val cksum: MessageDigest) : Input {
     stream.close()
   }
 
-  override fun read(dest: ByteBuffer): Int {
+  override fun read(dest: ByteBuffer): DataTransferSize {
     val ll = stream.read(dest)
-    if (ll != -1) {
+    if (ll.isAvailable) {
       dest.flip()
       cksum.update(dest)
     }

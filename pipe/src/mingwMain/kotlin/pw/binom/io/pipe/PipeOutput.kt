@@ -3,13 +3,16 @@ package pw.binom.io.pipe
 import kotlinx.cinterop.*
 import platform.windows.*
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.Output
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class)
 actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output {
-  internal var writeFd = fd.first
-  internal var readFd = fd.second
+  var writeFd = fd.first
+    private set
+  var readFd = fd.second
+    private set
 
   init {
     if (SetHandleInformation(writeFd, HANDLE_FLAG_INHERIT.convert(), 0.convert()) <= 0) {
@@ -21,9 +24,9 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
 
   actual constructor(input: PipeInput) : this(input.writeFd to input.readFd)
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     if (!data.isReferenceAccessAvailable()) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     memScoped {
       val dwWritten = alloc<UIntVar>()
@@ -42,7 +45,7 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
       }
       val wrote = dwWritten.value.toInt()
       data.position += wrote
-      return wrote
+      return DataTransferSize.ofSize(wrote)
     }
   }
 

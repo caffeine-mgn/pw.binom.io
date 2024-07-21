@@ -9,7 +9,7 @@ interface AsyncInput : AsyncCloseable {
       override val available: Int
         get() = 0
 
-      override suspend fun read(dest: ByteBuffer): Int = 0
+      override suspend fun read(dest: ByteBuffer) = DataTransferSize.EMPTY
 
       override suspend fun asyncClose() {
         // Do nothing
@@ -34,7 +34,7 @@ interface AsyncInput : AsyncCloseable {
   suspend fun skipAll(buffer: ByteBuffer) {
     while (true) {
       buffer.clear()
-      if (read(buffer) == 0) {
+      if (read(buffer).isNotAvailable) {
         break
       }
     }
@@ -59,12 +59,12 @@ interface AsyncInput : AsyncCloseable {
     }
   }
 
-  suspend fun read(dest: ByteBuffer): Int
+  suspend fun read(dest: ByteBuffer): DataTransferSize
   suspend fun readFully(dest: ByteBuffer): Int {
     val length = dest.remaining
     while (dest.remaining > 0) {
       val read = read(dest)
-      if (read == 0 && dest.remaining > 0) {
+      if (read.isNotAvailable && dest.remaining > 0) {
         throw EOFException("Full message $length bytes, can't read ${dest.remaining} bytes")
       }
     }

@@ -336,8 +336,10 @@ internal object InternalProtocolUtils {
       buf.limit = minOf(cap, size - cur)
       val l = input.read(buf)
       buf.flip()
-      repeat(l) {
-        out[cur++] = buf.getByte()
+      if (l.isAvailable) {
+        repeat(l.length) {
+          out[cur++] = buf.getByte()
+        }
       }
     }
     return out

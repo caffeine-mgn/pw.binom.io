@@ -24,7 +24,7 @@ class ComposeReader : Reader {
         }
     }
 
-    override fun read(data: CharArray, offset: Int, length: Int): Int {
+    override fun read(data: CharArray, offset: Int, length: Int): DataTransferSize {
         var off = offset
         var len = length
 
@@ -33,20 +33,22 @@ class ComposeReader : Reader {
                 if (current.isEmpty) {
                     readers.popFirst(current)
                     if (current.isEmpty) {
-                        return off - offset
+                        return DataTransferSize.ofSize(off - offset)
                     }
                 }
                 val l = current.value.read(data, off, len)
-                len -= l
-                off += l
-                if (l == 0) {
+              if (l.isAvailable) {
+                len -= l.length
+                off += l.length
+              }
+                if (l.isNotAvailable) {
                     current.clear()
                 } else {
                     break
                 }
             }
         }
-        return off - offset
+        return DataTransferSize.ofSize(off - offset)
     }
 
     fun addFirst(reader: Reader): ComposeReader {

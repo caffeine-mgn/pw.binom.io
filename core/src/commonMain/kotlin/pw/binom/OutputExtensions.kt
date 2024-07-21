@@ -49,10 +49,10 @@ fun <T : Output> T.writeBytes(buffer: ByteBuffer, value: ByteArray): T {
     )
     buffer.flip()
     val wrote = write(buffer)
-    if (wrote <= 0) {
+    if (wrote.isNotAvailable) {
       throw RuntimeException("Can't write bytes")
     }
-    l -= wrote
+    l -= wrote.length
   }
   return this
 }

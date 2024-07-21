@@ -4,6 +4,7 @@ import pw.binom.crypto.MD5MessageDigest
 import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.holdState
 import pw.binom.s3.dto.Part
 import pw.binom.s3.v4.toHex
@@ -29,16 +30,16 @@ class ObjectAsyncOutput(
     private val buffer = ByteBuffer(bufferSize)
     private var uploadId: String? = null
     private val parts = ArrayList<Part>()
-    override suspend fun write(data: ByteBuffer): Int {
+    override suspend fun write(data: ByteBuffer): DataTransferSize {
         if (data.remaining == 0) {
-            return 0
+            return DataTransferSize.EMPTY
         }
         if (buffer.remaining <= 0) {
             throw IllegalStateException("No free buffer size")
         }
         val wrote = buffer.write(data)
-        if (wrote > 0) {
-            contentSize += wrote
+        if (wrote.isAvailable) {
+            contentSize += wrote.length
         }
         if (buffer.remaining == 0) {
             makePart()

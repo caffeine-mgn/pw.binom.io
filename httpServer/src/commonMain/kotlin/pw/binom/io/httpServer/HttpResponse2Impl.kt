@@ -236,7 +236,7 @@ internal class HttpResponseOutput(
     val channel: ServerAsyncAsciiChannel,
     val keepAlive: Boolean,
 ) : AsyncOutput {
-    override suspend fun write(data: ByteBuffer): Int =
+    override suspend fun write(data: ByteBuffer) =
         channel.writer.write(data)
 
     override suspend fun asyncClose() {
@@ -260,7 +260,7 @@ internal class HttpResponseOutput2(
     val keepAlive: Boolean,
     val returnToIdle: IdlePool?,
 ) : AsyncOutput {
-    override suspend fun write(data: ByteBuffer): Int =
+    override suspend fun write(data: ByteBuffer) =
         channel.writer.write(data)
 
     override suspend fun asyncClose() {

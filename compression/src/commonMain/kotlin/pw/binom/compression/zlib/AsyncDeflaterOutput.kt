@@ -73,7 +73,7 @@ open class AsyncDeflaterOutput protected constructor(
         }
     }
 
-    override suspend fun write(data: ByteBuffer): Int {
+    override suspend fun write(data: ByteBuffer): DataTransferSize {
         checkBusy()
         try {
             busy = true
@@ -91,7 +91,7 @@ open class AsyncDeflaterOutput protected constructor(
                     break
                 }
             }
-            return vv
+            return DataTransferSize.ofSize(vv)
         } finally {
             busy = false
         }

@@ -5,7 +5,7 @@ fun Channel.asAsyncChannel() = object : AsyncChannel {
         this@asAsyncChannel.close()
     }
 
-    override suspend fun write(data: ByteBuffer): Int =
+    override suspend fun write(data: ByteBuffer) =
         this@asAsyncChannel.write(data)
 
     override suspend fun flush() {
@@ -15,6 +15,6 @@ fun Channel.asAsyncChannel() = object : AsyncChannel {
     override val available: Int
         get() = -1
 
-    override suspend fun read(dest: ByteBuffer): Int =
+    override suspend fun read(dest: ByteBuffer) =
         this@asAsyncChannel.read(dest)
 }

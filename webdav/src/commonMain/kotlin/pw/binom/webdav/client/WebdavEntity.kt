@@ -43,7 +43,7 @@ class WebdavEntity(
       override val available: Int
         get() = body.available
 
-      override suspend fun read(dest: ByteBuffer): Int = body.read(dest)
+      override suspend fun read(dest: ByteBuffer) = body.read(dest)
 
       override suspend fun asyncClose() {
         resp.asyncClose()
@@ -171,7 +171,7 @@ class WebdavEntity(
     user?.apply(r)
     val upload = r.writeBinary()
     return object : AsyncOutput {
-      override suspend fun write(data: ByteBuffer): Int = upload.write(data)
+      override suspend fun write(data: ByteBuffer) = upload.write(data)
 
       override suspend fun flush() {
         upload.flush()

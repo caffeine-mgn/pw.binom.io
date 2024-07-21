@@ -6,7 +6,7 @@ import pw.binom.uuid.UUID
 
 fun Input.readUtf8Char(buffer: ByteBuffer): Char? {
     buffer.reset(0, 1)
-    return if (read(buffer) == 0) {
+    return if (read(buffer).isNotAvailable) {
         null
     } else {
         val firstByte = buffer[0]
@@ -68,13 +68,13 @@ fun Input.copyTo(output: Output, buffer: ByteBuffer): Long {
     while (true) {
         buffer.clear()
         val length = read(buffer)
-        if (length == 0) {
+        if (length.isNotAvailable) {
             break
         }
-        totalLength += length.toLong()
+        totalLength += length.length.toLong()
         buffer.flip()
         val ret = output.write(buffer)
-        if (ret <= 0) {
+        if (ret.isNotAvailable) {
             throw IOException("Can't write data to output")
         }
     }
@@ -105,14 +105,14 @@ suspend fun Input.copyTo(output: AsyncOutput, buffer: ByteBuffer): Long {
     while (true) {
         buffer.clear()
         val length = read(buffer)
-        if (length == 0) {
+        if (length.isNotAvailable) {
             break
         }
-        totalLength += length.toLong()
+        totalLength += length.length.toLong()
         buffer.flip()
         while (buffer.remaining > 0) {
             val wrote = output.write(buffer)
-            if (wrote <= 0) {
+            if (wrote.isNotAvailable) {
                 throw IOException("Can't copy data into output")
             }
         }

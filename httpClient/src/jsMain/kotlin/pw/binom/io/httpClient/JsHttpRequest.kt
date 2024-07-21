@@ -1,9 +1,6 @@
 package pw.binom.io.httpClient
 
-import pw.binom.io.AsyncAppendable
-import pw.binom.io.AsyncOutput
-import pw.binom.io.AsyncWriter
-import pw.binom.io.ByteBuffer
+import pw.binom.io.*
 import pw.binom.io.http.Encoding
 import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.MutableHeaders
@@ -70,9 +67,9 @@ class JsHttpRequest(val client: JsBaseHttpClient, override val method: String, o
         return req().flush()
       }
 
-      override suspend fun write(data: ByteBuffer): Int {
+      override suspend fun write(data: ByteBuffer): DataTransferSize {
         val len = output().write(data)
-        if (len > 0) {
+        if (len.isAvailable) {
           hasBodyExist = true
         }
         return len

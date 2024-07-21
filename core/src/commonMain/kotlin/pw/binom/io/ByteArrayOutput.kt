@@ -96,10 +96,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     while (true) {
       alloc(blockSize)
       val wasRead = input.read(this.data)
-      if (wasRead <= 0) {
+      if (wasRead.isNotAvailable) {
         break
       }
-      _wrote += wasRead
+      _wrote += wasRead.length
     }
   }
 
@@ -117,15 +117,14 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
       val p = data.position
       val wasRead = input.read(this.data)
       data.limit = data.capacity
-      if (wasRead > 0) {
-        w += wasRead
-      }
-      if (wasRead <= 0) {
+      if (wasRead.isAvailable) {
+        w += wasRead.length
+      } else {
         break
       }
-      data.position = p + wasRead
+      data.position = p + wasRead.length
 
-      _wrote += wasRead
+      _wrote += wasRead.length
     }
   }
 
@@ -149,11 +148,13 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
   }
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     ensureUnlocked()
     alloc(data.remaining)
     val l = this.data.write(data)
-    _wrote += l
+    if (l.isAvailable) {
+      _wrote += l.length
+    }
     return l
   }
 

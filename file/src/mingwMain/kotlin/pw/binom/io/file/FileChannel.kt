@@ -5,10 +5,7 @@ import kotlinx.cinterop.convert
 import platform.posix.*
 import platform.windows.GetLastError
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.ByteBuffer
-import pw.binom.io.Channel
-import pw.binom.io.ClosedException
-import pw.binom.io.IOException
+import pw.binom.io.*
 
 @OptIn(ExperimentalForeignApi::class)
 actual class FileChannel actual constructor(
@@ -60,16 +57,16 @@ actual class FileChannel actual constructor(
     return (endOfFile - position).toLong()
   }
 
-  override fun read(dest: ByteBuffer): Int {
+  override fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     if (feof(handler) != 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     val l = dest.refTo(dest.position) { destPtr ->
       fread(destPtr, 1.convert(), dest.remaining.convert(), handler).convert<Int>()
     } ?: 0
     dest.position += l
-    return l
+    return DataTransferSize.ofSize(l)
   }
 
   private val closed = AtomicBoolean(false)
@@ -88,10 +85,10 @@ actual class FileChannel actual constructor(
     }
   }
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     if (feof(handler) != 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     val wroted = data.ref(0) { dataPtr, remaining ->
       fwrite(dataPtr, 1.convert(), remaining.convert(), handler).convert()
@@ -99,7 +96,7 @@ actual class FileChannel actual constructor(
     if (wroted > 0) {
       data.position += wroted
     }
-    return wroted
+    return DataTransferSize.ofSize(wroted)
   }
 
   override fun flush() {

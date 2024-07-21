@@ -10,10 +10,10 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
      * Special AsyncOutput for drop all output passed to [write]
      */
     private object NullAsyncOutput : AsyncOutput {
-      override suspend fun write(data: ByteBuffer): Int {
+      override suspend fun write(data: ByteBuffer): DataTransferSize {
         val remaining = data.remaining
         data.empty()
-        return remaining
+        return DataTransferSize.ofSize(remaining)
       }
 
       override suspend fun asyncClose() {
@@ -29,16 +29,16 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
   }
 
   //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
-  suspend fun write(data: ByteBuffer): Int
+  suspend fun write(data: ByteBuffer): DataTransferSize
 
   suspend fun writeFully(data: ByteBuffer): Int {
     var writeSize = 0
     while (data.remaining > 0) {
       val wrote = write(data)
-      if (wrote <= 0) {
+      if (wrote.isNotAvailable) {
         throw IOException("Can't write data")
       }
-      writeSize += wrote
+      writeSize += wrote.length
     }
     return writeSize
   }
@@ -49,9 +49,11 @@ fun AsyncOutput.withCounter() = AsyncOutputWithWriteCounter(this)
 class AsyncOutputWithWriteCounter(val stream: AsyncOutput) : AsyncOutput {
   var writedBytes = 0L
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     val r = stream.write(data)
-    writedBytes += r
+    if (r.isAvailable) {
+      writedBytes += r.length
+    }
     return r
   }
 
@@ -109,14 +111,17 @@ class AsyncOutputAsciStringAppender : AsyncOutput {
     sb.ensureCapacity(minimumCapacity)
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     val len = data.remaining
+    if (len == 0) {
+      return DataTransferSize.EMPTY
+    }
     sb.ensureCapacity(sb.length + len)
     data.forEach { byte ->
       sb.append(byte.toInt().toChar())
     }
     data.position = data.limit
-    return len
+    return DataTransferSize.ofSize(len)
   }
 
   override suspend fun asyncClose() {

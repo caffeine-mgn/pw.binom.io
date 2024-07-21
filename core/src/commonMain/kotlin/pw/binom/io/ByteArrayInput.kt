@@ -6,11 +6,11 @@ class ByteArrayInput(val data: ByteArray) : Input {
   private var closed = false
   private var cursor = 0
 
-  override fun read(dest: ByteBuffer): Int {
+  override fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     val max = minOf(data.size - cursor, dest.remaining)
     if (max == 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     dest.write(
       data = data,
@@ -18,7 +18,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
       length = max,
     )
     cursor += max
-    return max
+    return DataTransferSize.ofSize(max)
   }
 
   private fun checkClosed() {

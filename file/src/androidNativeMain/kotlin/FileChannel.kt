@@ -9,6 +9,7 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import pw.binom.io.ClosedException
+import pw.binom.io.DataTransferSize
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 actual class FileChannel actual constructor(file: File, mode: AccessMode) :
@@ -61,20 +62,24 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
   }
 
   @OptIn(UnsafeNumber::class)
-  override fun read(dest: ByteBuffer): Int {
+  override fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     if (dest.remaining <= 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
     if (feof(handler) != 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
 
     val r = dest.ref(0) { destPtr, destRemaining ->
       fread(destPtr, 1.convert(), destRemaining.convert(), handler).convert<Int>()
     }
-    dest.position += r
-    return r
+    when {
+      r == 0 || r < 0 -> TODO()
+      else -> dest.position += r
+    }
+
+    return DataTransferSize.ofSize(r)
   }
 
 //    override fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {
@@ -98,17 +103,17 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
     fclose(handler)
   }
 
-  override fun write(data: ByteBuffer): Int {
+  override fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     if (feof(handler) != 0) {
-      return 0
+      return DataTransferSize.EMPTY
     }
 
     val r = data.ref(0) { dataPtr, dataRemaining ->
       fwrite(dataPtr, 1.convert(), dataRemaining.convert(), handler).convert<Int>()
     }
     data.position += r
-    return r
+    return DataTransferSize.EMPTY
   }
 
 //    override fun write(data: ByteDataBuffer, offset: Int, length: Int): Int {
