@@ -18,20 +18,6 @@ class ReadProcessOutputTest {
             it.readText()
           }
           println(text)
-//          starter.stdout.let {
-//            val now = TimeSource.Monotonic.markNow()
-//            while (now.elapsedNow() < 3.seconds) {
-//              buffer.clear()
-//              val r = it.read(buffer)
-//              if (r.isNotAvailable) {
-//                break
-//              }
-//              buffer.flip()
-//              buffer.forEach {
-//                print(it.toInt().toChar())
-//              }
-//            }
-//          }
         }
       } catch (e: Throwable) {
         e.printStackTrace()

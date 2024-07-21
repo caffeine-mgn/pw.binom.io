@@ -28,12 +28,7 @@ class PosixProcessStarter(
     get() = io.stdin
   override val stdout = object : Input {
     override fun read(dest: ByteBuffer) =
-      lock.synchronize {
-        if (!processStarted.getValue()) {
-          con.await()
-        }
         io.stdout.read(dest)
-      }
 
     override fun close() {
       // do nothing
@@ -42,9 +37,6 @@ class PosixProcessStarter(
   }
   override val stderr
     get() = io.stderr
-
-  internal val lock = ReentrantLock()
-  internal val con = lock.newCondition()
 
   private val cleaner = createCleaner(io) {
     it.stdout.close()

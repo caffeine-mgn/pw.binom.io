@@ -87,9 +87,6 @@ class PosixProcess internal constructor(private val posixProcessStarter: PosixPr
         close(posixProcessStarter.io.stdout.writeFd)
         close(posixProcessStarter.io.stderr.writeFd)
         close(posixProcessStarter.io.stdin.readFd)
-        posixProcessStarter.lock.synchronize {
-          posixProcessStarter.con.signalAll()
-        }
       }
     }
   }
