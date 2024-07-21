@@ -30,10 +30,32 @@ class JsHttpRequestBody internal constructor(
 
   private var bytes: ByteArrayOutput? = null
   private var text: StringAsyncWriter? = null
+  private var any: dynamic = null
+
+  suspend fun send(obj: Any): JsHttpResponse {
+    writeObject(obj)
+    return flush()
+  }
+
+  override suspend fun send(text: String): JsHttpResponse {
+    return super.send(text) as JsHttpResponse
+  }
+
+  override suspend fun send(data: ByteBuffer): JsHttpResponse {
+    return super.send(data) as JsHttpResponse
+  }
+
+  fun writeObject(obj: dynamic) {
+    check(text == null) { "Request already started" }
+    check(bytes == null) { "Request already started" }
+    check(any == null) { "Request already started" }
+    any = obj
+  }
 
   override suspend fun startWriteBinary(): AsyncOutput {
     check(text == null) { "Request already started" }
     check(bytes == null) { "Request already started" }
+    check(any == null) { "Request already started" }
     var bytes = bytes
     bytes = ByteArrayOutput()
     this.bytes = bytes
@@ -43,15 +65,16 @@ class JsHttpRequestBody internal constructor(
   override suspend fun startWriteText(): AsyncWriter {
     check(text == null) { "Request already started" }
     check(bytes == null) { "Request already started" }
+    check(any == null) { "Request already started" }
     val text = StringAsyncWriter()
     this.text = text
     return text
   }
 
-  private var resp: HttpResponse? = null
+  private var resp: JsHttpResponse? = null
   private val flashWaters = arrayOf<Continuation<HttpResponse>>()
 
-  override suspend fun flush(): HttpResponse {
+  override suspend fun flush(): JsHttpResponse {
     val rr = resp
     if (rr != null) {
       return rr
@@ -92,11 +115,13 @@ class JsHttpRequestBody internal constructor(
       }
       val text = text
       val bytes = bytes
+      val any = any
       xhr.open(method, url.toString())
       headers.forEachHeader { key, value ->
         xhr.setRequestHeader(key, value)
       }
       when {
+        any != null -> xhr.send(any)
         text != null -> xhr.send(text.toString())
         bytes != null -> bytes.locked {
           xhr.send(it.native.toInt8Array(startIndex = 0, endIndex = bytes.size))
