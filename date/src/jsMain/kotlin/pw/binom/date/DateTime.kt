@@ -1,5 +1,6 @@
 package pw.binom.date
 
+import kotlin.js.Date
 import kotlin.time.Duration
 
 actual value class DateTime(val milliseconds: Long) {
@@ -43,4 +44,26 @@ actual value class DateTime(val milliseconds: Long) {
     )
 
   override fun toString(): String = dateTimeToString(this)
+
+  /**
+   * Convert Binom date to JS date
+   */
+  val js
+    get() = Date(milliseconds)
 }
+
+/**
+ *  Convert JS date to Binom date
+ */
+val Date.binom
+  get() = DateTime(getTime().toLong())
+//  get() = DateTime.internalOf(
+//    year = getUTCFullYear(),
+//    month = getUTCMonth(),
+//    dayOfMonth = getUTCDate(),
+//    hours = getUTCHours(),
+//    minutes = getUTCMinutes(),
+//    seconds = getUTCSeconds(),
+//    millis = getUTCMilliseconds(),
+//    timeZoneOffset = 0,
+//  )
