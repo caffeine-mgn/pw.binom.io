@@ -1,7 +1,10 @@
 package pw.binom.io.httpServer
 
+import com.jakewharton.cite.__FILE__
+import com.jakewharton.cite.__LINE__
 import kotlinx.coroutines.*
 import pw.binom.ByteBufferPool
+import pw.binom.InternalLog
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.collections.defaultMutableSet
 import pw.binom.collections.removeAtUsingReplace
@@ -42,6 +45,7 @@ class HttpServer2(
   val keepAlive: Boolean = true,
   val compressing: Boolean = true,
 ) : AsyncCloseable {
+  private val logger = InternalLog.file(__FILE__)
   private val closed = AtomicBoolean(false)
   private val listeners = defaultMutableSet<Job>()
   private val timeoutWaiters = ArrayList<TimeoutRecord>()
@@ -98,6 +102,7 @@ class HttpServer2(
     val headers = HashHeaders2()
     withTimeout(readTimeout) {
       val line = stream.reader.readln() ?: throw EOFException()
+      logger.info(line = __LINE__) { "Header line was read. Line: \"$line\", stream.reader: ${stream.reader::class.qualifiedName}" }
       HttpServerUtils.parseHttpRequest(line) { method, path ->
         reqMethod = method
         reqPath = path

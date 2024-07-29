@@ -329,7 +329,7 @@ class TcpConnection(
   }
 
   override suspend fun read(dest: ByteBuffer): DataTransferSize {
-    if (dest.remaining == 0) {
+    if (!dest.hasRemaining) {
       return DataTransferSize.EMPTY
     }
     if (currentKey.isClosed) {

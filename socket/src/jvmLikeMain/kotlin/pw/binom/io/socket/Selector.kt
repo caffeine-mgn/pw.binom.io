@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import com.jakewharton.cite.__FILE__
 import com.jakewharton.cite.__LINE__
 import pw.binom.InternalLog
 import pw.binom.io.Closeable
@@ -10,7 +11,7 @@ import kotlin.concurrent.withLock
 import kotlin.time.Duration
 import java.nio.channels.Selector as JvmSelector
 
-private val SELECTOR_LOGGER = InternalLog.file("Selector")
+private val SELECTOR_LOGGER = InternalLog.file(__FILE__)
 
 actual class Selector : Closeable {
   private val native = JvmSelector.open()
@@ -157,7 +158,7 @@ actual class Selector : Closeable {
   }
 
   actual fun wakeup() {
-    SELECTOR_LOGGER.info(line = __LINE__) { "wakeup\n${Throwable().stackTraceToString()}" }
+    SELECTOR_LOGGER.info(line = __LINE__) { "wakeup" }
     native.wakeup()
   }
 

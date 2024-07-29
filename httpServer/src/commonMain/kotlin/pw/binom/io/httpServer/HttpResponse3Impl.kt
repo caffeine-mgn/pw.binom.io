@@ -97,7 +97,7 @@ internal class HttpResponse3Impl(
             resultOutput = HttpServerUtils.wrapStream(
                 encoding = it,
                 stream = resultOutput,
-                closeStream = true,
+                closeStream = false,
                 compressBufferPool = compressBufferPool,
                 compressLevel = 6,
             )
@@ -109,7 +109,7 @@ internal class HttpResponse3Impl(
             resultOutput = HttpServerUtils.wrapStream(
                 encoding = it,
                 stream = resultOutput,
-                closeStream = true,
+                closeStream = false,
                 compressBufferPool = compressBufferPool,
                 compressLevel = 6,
             )

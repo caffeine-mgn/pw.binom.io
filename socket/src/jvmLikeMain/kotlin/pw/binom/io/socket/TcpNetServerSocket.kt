@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+import com.jakewharton.cite.__FILE__
 import com.jakewharton.cite.__LINE__
 import pw.binom.InternalLog
 import java.nio.channels.AlreadyBoundException
@@ -8,7 +9,7 @@ import java.nio.channels.spi.AbstractSelectableChannel
 
 actual class TcpNetServerSocket (override val native: ServerSocketChannel): TcpServerSocket, NetSocket {
   actual constructor():this(ServerSocketChannel.open())
-  private val logger = InternalLog.file("ServerSocket_$id")
+  private val logger = InternalLog.file(__FILE__)
   actual fun accept(address: MutableInetAddress?): TcpClientNetSocket? {
     logger.info(line = __LINE__) { "Accepting..." }
     val client = native.accept()

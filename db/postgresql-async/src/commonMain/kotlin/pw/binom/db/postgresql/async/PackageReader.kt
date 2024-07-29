@@ -88,9 +88,9 @@ class PackageReader(
 
   suspend fun readCString(): String {
     if (bodyReading) {
-      limitInput.readUntil(byte = 0.toByte(), exclude = true, dest = stringBufferAsync)
+      limitInput.readUntil(condition = { it == 0.toByte() }, exclude = true, dest = stringBufferAsync)
     } else {
-      rawInput.readUntil(byte = 0.toByte(), exclude = true, dest = stringBufferAsync)
+      rawInput.readUntil(condition = { it == 0.toByte() }, exclude = true, dest = stringBufferAsync)
     }
 //        while (true) {
 //            val byte = readByte()
@@ -124,13 +124,22 @@ class PackageReader(
 private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncInput {
   var limit = 0
 
-  suspend fun readUntil(byte: Byte, exclude: Boolean, dest: AsyncOutput): Int {
-    val r = input.readUntil(
-      byte = byte,
+  suspend fun readUntil(byte: Byte, exclude: Boolean, dest: AsyncOutput) =
+    readUntil(
+      condition = { it == byte },
       exclude = exclude,
       dest = dest
     )
-    limit -= r
+
+  suspend fun readUntil(condition: (Byte) -> Boolean, exclude: Boolean, dest: AsyncOutput): DataTransferSize {
+    val r = input.readUntil(
+      condition = condition,
+      exclude = exclude,
+      dest = dest
+    )
+    if (r.isAvailable) {
+      limit -= r.length
+    }
     return r
   }
 

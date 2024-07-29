@@ -5,11 +5,12 @@ import pw.binom.asyncInput
 import pw.binom.asyncOutput
 import pw.binom.copyTo
 import pw.binom.io.*
-import pw.binom.readUtf8Char
+import pw.binom.readByte
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class AsyncChunkedInputTest {
 
@@ -48,31 +49,28 @@ class AsyncChunkedInputTest {
     appendChunk(ByteArray(0))
   }
 
+  private suspend fun AsyncInput.readChar() = ByteBuffer(1).use { buffer ->
+    readByte(buffer)
+  }.toInt().toChar()
+
   @Test
   fun shortDataTest() = runTest {
-    val output = ByteArrayOutput()
-    output.appendChunk("Wiki")
-    output.appendChunk("pedia")
-    output.finishChunk()
-    val input = AsyncChunkedInput(ByteArrayInput(output.toByteArray()).asyncInput())
-    val buf = ByteBuffer(50)
-    val tmpBuffer = ByteBuffer(6)
-    assertEquals(4, input.read(buf))
-    buf.flip()
-    assertEquals('W', buf.readUtf8Char(tmpBuffer))
-    assertEquals('i', buf.readUtf8Char(tmpBuffer))
-    assertEquals('k', buf.readUtf8Char(tmpBuffer))
-    assertEquals('i', buf.readUtf8Char(tmpBuffer))
-    buf.clear()
-    assertEquals(5, input.read(buf))
-    buf.flip()
-    assertEquals('p', buf.readUtf8Char(tmpBuffer))
-    assertEquals('e', buf.readUtf8Char(tmpBuffer))
-    assertEquals('d', buf.readUtf8Char(tmpBuffer))
-    assertEquals('i', buf.readUtf8Char(tmpBuffer))
-    assertEquals('a', buf.readUtf8Char(tmpBuffer))
-    buf.clear()
-    assertEquals(0, input.read(buf))
+    val output = ByteBuffer(TestData.wikipediaChunkedData.size)
+    TestData.wikipediaChunkedData.forEach {
+      output.put(it.code.toByte())
+    }
+    output.clear()
+    val input = AsyncChunkedInput(output.asAsyncChannel())
+
+    TestData.wikipediaData.forEach {
+      assertEquals(it, input.readChar())
+    }
+
+    ByteBuffer(1).use {
+      assertEquals(DataTransferSize.CLOSED, input.read(it))
+    }
+
+    assertFalse(output.hasRemaining)
   }
 
   @Test

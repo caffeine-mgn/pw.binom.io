@@ -23,7 +23,7 @@ import kotlin.time.measureTime
 class TestAsyncBaseHttpClient {
   @Test
   fun timeoutTest2() =
-    runTest(dispatchTimeoutMs = 10_000) {
+    runTest {
       Dispatchers.Network.bindTcp(InetSocketAddress.resolve(host = "127.0.0.1", port = 0))
         .use { server ->
           val serverPort = server.port

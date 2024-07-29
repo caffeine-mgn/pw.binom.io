@@ -1,12 +1,15 @@
 package pw.binom.io.socket
 
+import com.jakewharton.cite.__FILE__
 import com.jakewharton.cite.__LINE__
+import com.jakewharton.cite.__TYPE__
 import pw.binom.InternalLog
 import pw.binom.io.Closeable
 import java.nio.channels.SelectionKey
+import kotlin.math.absoluteValue
 
 actual class SelectorKey(val native: SelectionKey, actual val selector: Selector) : Closeable {
-  private val logger = InternalLog.file("SelectorKey_${System.identityHashCode(native.selector())}")
+  private val logger = InternalLog.file(__FILE__)
 
   override fun close() {
     logger.info(line = __LINE__) { "Closing" }
@@ -66,7 +69,7 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     return try {
       native.interestOps(r and native.channel().validOps())
       logger.info(line = __LINE__) {
-        "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}: ${Throwable().stackTraceToString()}"
+        "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}"
       }
       true
     } catch (e: java.nio.channels.CancelledKeyException) {

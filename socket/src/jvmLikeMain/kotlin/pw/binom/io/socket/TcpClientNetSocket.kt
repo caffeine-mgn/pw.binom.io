@@ -1,6 +1,8 @@
 package pw.binom.io.socket
 
+import com.jakewharton.cite.__FILE__
 import com.jakewharton.cite.__LINE__
+import com.jakewharton.cite.__TYPE__
 import pw.binom.InternalLog
 import pw.binom.io.ByteBuffer
 import java.io.IOException
@@ -8,11 +10,12 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.nio.channels.AlreadyConnectedException
 import java.nio.channels.SocketChannel
+import kotlin.math.absoluteValue
 
 actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpClientSocket, NetSocket {
   actual constructor() : this(SocketChannel.open())
 
-  private val logger = InternalLog.file("ClientSocket_$id")
+  private val logger = InternalLog.file(__FILE__)
   actual fun connect(address: InetSocketAddress): ConnectStatus {
     return try {
       logger.info(line = __LINE__) { "Start connecting to $address" }
@@ -69,7 +72,7 @@ actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpCl
       native.configureBlocking(value)
     }
   override val id: String
-    get() = System.identityHashCode(native).toString()
+    get() = System.identityHashCode(native).absoluteValue.toString()
   override val tcpNoDelay: Boolean
     get() =
       try {

@@ -1,7 +1,6 @@
 package pw.binom.io.httpServer
 
 import pw.binom.io.ByteBuffer
-import pw.binom.io.forEachIndexed
 
 fun Byte.toChar2() = when (this) {
     '\r'.code.toByte() -> "\\r"

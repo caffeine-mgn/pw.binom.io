@@ -1,8 +1,11 @@
 package pw.binom.io.http
 
-import kotlinx.coroutines.runBlocking
-import pw.binom.*
+import kotlinx.coroutines.test.runTest
+import pw.binom.ByteBufferPool
+import pw.binom.asyncInput
+import pw.binom.asyncOutput
 import pw.binom.io.*
+import pw.binom.toByteBufferUTF8
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.test.Test
@@ -33,52 +36,50 @@ class AsyncMultipartInputTest {
   }
 
   @Test
-  fun asyncMultipartInputTest() {
+  fun asyncMultipartInputTest() = runTest {
     val stream = ByteArrayOutput()
     val mulipart = AsyncMultipartOutput(stream.asyncOutput(), closeParent = false)
     var exception: Throwable? = null
     val userName = Random.nextUuid().toString()
     val userPassword = Random.nextUuid().toString()
     val bufferPool = ByteBufferPool(100)
-    runBlocking {
-      try {
-        // -------build test data-------//
-        mulipart.formData("userName")
-        mulipart.utf8Appendable().append(userName)
-        mulipart.formData("userPassword")
-        mulipart.utf8Appendable().append(userPassword)
-        mulipart.formData("emptyData")
-        mulipart.asyncClose()
-        stream.trimToSize()
-        stream.data.clear()
-        val testData = stream.data.clone()
-        stream.close()
+    try {
+      // -------build test data-------//
+      mulipart.formData("userName")
+      mulipart.utf8Appendable().append(userName)
+      mulipart.formData("userPassword")
+      mulipart.utf8Appendable().append(userPassword)
+      mulipart.formData("emptyData")
+      mulipart.asyncClose()
+      stream.trimToSize()
+      stream.data.clear()
+      val testData = stream.data.clone()
+      stream.close()
 
-        // -------test-------//
-        val t = ByteBuffer(100)
-        val input = AsyncMultipartInput(
-          separator = mulipart.boundary,
-          stream = testData.asyncInput(),
-          bufferPool = bufferPool,
-        )
+      // -------test-------//
+      val t = ByteBuffer(100)
+      val input = AsyncMultipartInput(
+        separator = mulipart.boundary,
+        stream = testData.asyncInput(),
+        bufferPool = bufferPool,
+      )
 
-        t.clear()
-        assertEquals(0, input.read(t))
-        assertTrue(input.next())
-        assertEquals("userName", input.formName)
-        assertEquals(userName, input.utf8Reader().readText())
+      t.clear()
+      assertEquals(DataTransferSize.EMPTY, input.read(t))
+      assertTrue(input.next())
+      assertEquals("userName", input.formName)
+      assertEquals(userName, input.utf8Reader().readText())
 
-        assertTrue(input.next())
-        assertEquals("userPassword", input.formName)
-        assertEquals(userPassword, input.utf8Reader().readText())
-        assertTrue(input.next())
-        assertEquals("emptyData", input.formName)
-        t.clear()
-        assertEquals(0, input.read(t))
-        assertFalse(input.next())
-      } catch (e: Throwable) {
-        exception = e
-      }
+      assertTrue(input.next())
+      assertEquals("userPassword", input.formName)
+      assertEquals(userPassword, input.utf8Reader().readText())
+      assertTrue(input.next())
+      assertEquals("emptyData", input.formName)
+      t.clear()
+      assertEquals(DataTransferSize.EMPTY, input.read(t))
+      assertFalse(input.next())
+    } catch (e: Throwable) {
+      exception = e
     }
 
     if (exception != null) {

@@ -57,6 +57,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     val chunkedSize = stream.readLineCRLF()
     if (chunkedSize.isEmpty()) {
       eof = true
+      asyncClose()
       return
     }
     this.chunkedSize = chunkedSize.toULongOrNull(16) ?: throw IOException("Invalid Chunk Size: \"$chunkedSize\"")
@@ -65,6 +66,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     if (this.chunkedSize == 0uL) {
       readCRLF()
       eof = true
+      asyncClose()
       return
     }
   }
@@ -83,13 +85,13 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     ensureOpen()
     while (true) {
       if (eof) {
-        return DataTransferSize.EMPTY
+        return DataTransferSize.CLOSED
       }
       // check chunk not exist
       if (chunkedSize == 0uL) {
         readChunkSize()
         if (eof) {
-          return DataTransferSize.EMPTY
+          return DataTransferSize.CLOSED
         }
       }
 

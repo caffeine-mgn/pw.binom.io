@@ -104,7 +104,7 @@ class HttpServerExchangeImpl(
       output = HttpServerUtils.wrapStream(
         encoding = it,
         stream = output,
-        closeStream = true,
+        closeStream = false,
         compressBufferPool = compressByteBufferPool,
         compressLevel = compressLevel,
       )
@@ -116,7 +116,7 @@ class HttpServerExchangeImpl(
       output = HttpServerUtils.wrapStream(
         encoding = it,
         stream = output,
-        closeStream = true,
+        closeStream = false,
         compressBufferPool = compressByteBufferPool,
         compressLevel = compressLevel,
       )

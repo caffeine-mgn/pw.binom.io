@@ -1,7 +1,10 @@
 package pw.binom.io
 
+import com.jakewharton.cite.__FILE__
+import com.jakewharton.cite.__LINE__
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.InternalLog
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.fromBytes
 
@@ -10,6 +13,8 @@ class AsyncBufferedAsciiInputReader private constructor(
   val closeParent: Boolean = true,
 ) : AsyncReader, BufferedAsyncInput {
   private var buffer: ByteBuffer = ByteBuffer(0)
+
+  private val logger = InternalLog.file(__FILE__)
 
   constructor(
     stream: AsyncInput,
@@ -78,12 +83,18 @@ class AsyncBufferedAsciiInputReader private constructor(
 //            println("AsyncBufferedAsciiInputReader::full #1. position: ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")
     try {
       buffer.compact()
+
+      logger.info(line = __LINE__) { "Reading from stream ${buffer.remaining} bytes... Stream: $stream" }
       val len = stream.read(buffer)
       if (len.isNotAvailable) {
+        logger.info(line = __LINE__) { "Got from stream $len. mark stream as EOF. Stream: $stream" }
         eof = true
+      } else {
+        logger.info(line = __LINE__) { "Was read from stream $len bytes. Stream: $stream" }
       }
       buffer.flip()
     } catch (e: Throwable) {
+      logger.info(line = __LINE__) { "Can't read ${buffer.remaining} bytes from stream. Stream: $stream, e: $e" }
       buffer.empty()
       throw e
     }
@@ -101,7 +112,10 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
     buffer.close()
     if (closeParent) {
+      logger.info(line = __LINE__) { "Closing stream. Eof: $eof, Stream: $stream" }
       stream.asyncClose()
+    } else {
+      logger.info(line = __LINE__) { "Closing without close parent stream. Eof: $eof, Stream: $stream" }
     }
   }
 
@@ -183,12 +197,23 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
   }
 
-  suspend fun readUntil(byte: Byte, exclude: Boolean, dest: AsyncOutput): Int {
+  suspend fun readUntil(stopByte: Byte, exclude: Boolean, dest: AsyncOutput) =
+    readUntil(
+      condition = { it == stopByte },
+      exclude = exclude,
+      dest = dest
+    )
+
+  suspend fun readUntil(condition: (Byte) -> Boolean, exclude: Boolean, dest: AsyncOutput): DataTransferSize {
     ensureOpen()
     var readSize = 0
     while (!eof) {
       full(1)
-      val index = buffer.indexOfFirst { it == byte }
+//      if (eof && !buffer.hasRemaining) {
+//        return DataTransferSize.EMPTY
+//      }
+      val index = buffer.indexOfFirst(condition)
+      logger.info(line = __LINE__) { "readUntil index=$index buffer.remaining=${buffer.remaining}" }
       if (index == -1) {
         readSize += dest.writeFully(buffer)
       } else {
@@ -203,7 +228,8 @@ class AsyncBufferedAsciiInputReader private constructor(
         break
       }
     }
-    return readSize
+    logger.info(line = __LINE__) { "readed = $readSize" }
+    return DataTransferSize.ofSize(readSize)
   }
 
   //    suspend fun readUntil(char: Char): String? {
@@ -241,38 +267,23 @@ class AsyncBufferedAsciiInputReader private constructor(
 //            throw e
 //        }
 //    }
-  suspend fun readUntil(char: Char): String {
-    ensureOpen()
-    val vv = AsyncOutputAsciStringAppender()
-    readUntil(char.code.toByte(), true, vv)
-    return vv.toString().trimEnd()
+  suspend fun readUntil(char: Char): String? = readUntil {
+    it == char
+  }
 
-    /*
-    val out = StringBuilder()
-    var exist = false
-    val charValue = char.code.toByte()
-    LOOP@ while (true) {
-        full()
-        if (buffer.remaining <= 0) {
-            break
-        }
-        val byte = buffer.getByte()
-        if (charValue == byte) {
-            exist = true
-            break@LOOP
-        }
-        out.append(byte.toInt().toChar())
-        exist = true
+  suspend fun readUntil(condition: (Char) -> Boolean): String? {
+    ensureOpen()
+    val outputString = AsyncOutputAsciStringAppender()
+    val r = readUntil(condition = { condition(it.toInt().toChar()) }, exclude = true, dest = outputString)
+    if (r.isNotAvailable) {
+      return null
     }
-    if (!exist) {
-        return null
-    }
-    return out.toString()
-    */
+
+    return outputString.toString().trimEnd()
   }
 
   override suspend fun readln(): String? {
-    val result = readUntil(10.toChar()).removeSuffix("\r")
+    val result = readUntil { it == 10.toChar() }?.removeSuffix("\r")
     return result
   }
 }
