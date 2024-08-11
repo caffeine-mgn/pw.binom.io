@@ -15,7 +15,7 @@ interface Input : Closeable {
       return 0
     }
     val length = dest.remaining
-    while (dest.remaining > 0 && dest.remaining > 0) {
+    while (dest.hasRemaining) {
       if (read(dest).isNotAvailable) {
         throw EOFException()
       }

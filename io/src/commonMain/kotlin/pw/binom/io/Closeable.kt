@@ -110,17 +110,25 @@ private inline fun appendException(root: Throwable?, e: Throwable): Throwable =
   (root ?: RuntimeException("Can't close all closable elements")).apply { addSuppressed(e) }
 
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
-  val result = try {
-    func(this)
-  } catch (funcException: Throwable) {
+  var exception: Throwable? = null
+  try {
+    return func(this)
+  } catch (e: Throwable) {
+    exception = e
+    throw e
+  } finally {
+    this.closeFinally(exception)
+  }
+}
+
+@PublishedApi
+internal fun Closeable?.closeFinally(cause: Throwable?): Unit = when {
+  this == null -> {}
+  cause == null -> close()
+  else ->
     try {
       close()
     } catch (closeException: Throwable) {
-      closeException.addSuppressed(funcException)
-      throw closeException
+      cause.addSuppressed(closeException)
     }
-    throw funcException
-  }
-  close()
-  return result
 }
