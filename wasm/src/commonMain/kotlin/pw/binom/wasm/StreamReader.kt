@@ -12,24 +12,20 @@ import kotlin.contracts.contract
 
 class StreamReader(
   private val input: Input,
-  limit: Int = Int.MAX_VALUE,
+  limit: UInt = UInt.MAX_VALUE,
 ) : Input {
   var globalCursor: Int = 0
     private set
   var cursor = 0
     private set
 
-  init {
-    require(limit > 0) { "limit should be equals or greater than 0" }
-  }
-
   private val buffer = ByteBuffer(8)
   private var remaining = limit
 
   fun readByteArray(size: Int) = readByteArray(size, buffer)
 
-  fun withLimit(limit: Int): StreamReader {
-    require(remaining == Int.MAX_VALUE || limit <= remaining)
+  fun withLimit(limit: UInt): StreamReader {
+    require(remaining == UInt.MAX_VALUE || limit <= remaining)
     val reader = StreamReader(input = this, limit = limit)
     reader.globalCursor = globalCursor
     return reader
@@ -40,7 +36,7 @@ class StreamReader(
   }
 
   override fun read(dest: ByteBuffer): DataTransferSize {
-    if (remaining == Int.MAX_VALUE) {
+    if (remaining == UInt.MAX_VALUE) {
       val l = input.read(dest)
       if (l.isAvailable) {
         cursor += l.length
@@ -48,11 +44,15 @@ class StreamReader(
       }
       return l
     } else {
-      val lim = minOf(dest.remaining, remaining)
+      val lim = minOf(dest.remaining, remaining.toInt())
       dest.limit = dest.position + lim
       val l = input.read(dest)
       if (l.isAvailable) {
-        remaining -= l.length
+        remaining = if (l.length.toUInt() > remaining) {
+          0u
+        } else {
+          remaining - l.length.toUInt()
+        }
         cursor += l.length
         globalCursor += l.length
       }
@@ -181,7 +181,7 @@ class StreamReader(
   fun readUByte() = readByte().toUByte()
 
   fun skipOther() {
-    if (remaining == Int.MAX_VALUE || remaining == 0) {
+    if (remaining == UInt.MAX_VALUE || remaining == 0u) {
       return
     }
     println("-------skiping $remaining bytes-------")
@@ -194,7 +194,7 @@ class StreamReader(
   }
 
   override fun close() {
-    if (remaining != Int.MAX_VALUE && remaining > 0) {
+    if (remaining != UInt.MAX_VALUE && remaining > 0u) {
       throw IllegalStateException("Not all data was read. remaining=$remaining")
     }
     buffer.close()

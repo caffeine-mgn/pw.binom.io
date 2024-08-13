@@ -38,7 +38,7 @@ object WasmReader {
 //          }
         val sectionLen = input.v32u()
 
-        input.withLimit(sectionLen.toInt()).use { sectionInput ->
+        input.withLimit(sectionLen).use { sectionInput ->
           when (section) {
             Sections.CUSTOM_SECTION -> {
               CustomSectionReader.read(input = sectionInput, visitor = visitor.customSection())

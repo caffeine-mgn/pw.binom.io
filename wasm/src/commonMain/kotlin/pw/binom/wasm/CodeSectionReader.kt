@@ -17,7 +17,7 @@ object CodeSectionReader {
       visitor.end()
       return
     }
-    input.withLimit(sizeInBytes.toInt()).use { sectionInput ->
+    input.withLimit(sizeInBytes).use { sectionInput ->
       sectionInput.readVec {
         val size = sectionInput.v32u()
         val type = sectionInput.readValueType()
