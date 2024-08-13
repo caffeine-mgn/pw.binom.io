@@ -18,7 +18,7 @@ class ReadFromFileTest {
     File(path)
       .openRead()
       .use { buf ->
-        WasmReader.read(InputReader(buf), MyWasmVisitor())
+        WasmReader.read(StreamReader(buf), MyWasmVisitor())
       }
   }
 }
@@ -54,7 +54,7 @@ class MyFunctionSectionVisitor : FunctionSectionVisitor {
   override fun start() {
   }
 
-  override fun value(int: Int) {
+  override fun value(int: UInt) {
     println("function($int)")
   }
 
@@ -95,22 +95,29 @@ class MyImportSectionVisitor : ImportSectionVisitor {
   override fun end() {
   }
 
-  override fun function(module: String, field: String, index: Int) {
+  override fun function(module: String, field: String, index: UInt) {
     println("Import $module->$field function: #$index")
   }
 
-  override fun memory(module: String, field: String, initial: Int, maximum: Int?) {
-    println("Import $module->$field memory with range $initial->${maximum ?: "unlimited"}")
+  override fun memory(module: String, field: String, initial: UInt, maximum: UInt) {
+    println("Import $module->$field memory with range $initial->$maximum")
   }
 
-  override fun table(module: String, field: String, type: ValueType.Ref, min: Int, max: Int?) {
-    println("Import $module->$field table $type with range $min->${max ?: "unlimited"}")
+  override fun memory(module: String, field: String, initial: UInt) {
+    println("Import $module->$field memory with range $initial->unlimited")
+  }
+
+  override fun table(module: String, field: String, type: ValueType.Ref, min: UInt, max: UInt) {
+    println("Import $module->$field table $type with range $min->$max")
+  }
+  override fun table(module: String, field: String, type: ValueType.Ref, min: UInt) {
+    println("Import $module->$field table $type with range $min->unlimited")
   }
 }
 
 class MyCodeSectionVisitor(val count:Int) : CodeSectionVisitor {
   private var c = 0
-  override fun start(size: Int) {
+  override fun start(size: UInt) {
     c++
     println("---------------Start CODE (size=$size) $c/$count---------------")
   }

@@ -4,7 +4,10 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
 import pw.binom.pool.ObjectPool
 
-class PooledByteBuffer(val pool: ObjectPool<PooledByteBuffer>, size: Int) : ByteBuffer(size) {
+class PooledByteBuffer(
+  val pool: ObjectPool<PooledByteBuffer>,
+  size: Int,
+) : ByteBuffer(size) {
     val inPool = AtomicBoolean(true)
     val owner = AtomicReference<Any?>(null)
     private val deallocation = AtomicBoolean(false)

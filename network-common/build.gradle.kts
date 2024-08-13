@@ -7,7 +7,7 @@ plugins {
 //  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
 //    id("com.android.library")
 //  }
-  id("com.jakewharton.cite")
+//  id("com.jakewharton.cite")
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {

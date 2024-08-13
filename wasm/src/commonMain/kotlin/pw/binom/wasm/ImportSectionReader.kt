@@ -3,35 +3,53 @@ package pw.binom.wasm
 internal object ImportSectionReader {
 
   private fun readTable(
-    input: InputReader,
+    input: StreamReader,
     module: String,
     field: String,
     visitor: ImportSectionVisitor,
   ) {
     val refType = input.readRefType()
-    val limitExist = input.readVarUInt1()
-    val min = input.readVarUInt32AsInt()
-    val max = if (limitExist) {
-      input.readVarUInt32AsInt()
+    val limitExist = input.v1u()
+    val min = input.v32u()
+    if (limitExist) {
+      visitor.table(
+        module = module,
+        field = field,
+        min = min,
+        max = input.v32u(),
+        type = refType,
+      )
     } else {
-      null
+      visitor.table(
+        module = module,
+        field = field,
+        min = min,
+        type = refType,
+      )
     }
-    visitor.table(module = module, field = field, min = min, max = max, type = refType)
+
   }
 
-  private fun readMemory(module: String, field: String, input: InputReader, visitor: ImportSectionVisitor) {
-    val maximumExist = input.readVarUInt1()
-    val initial = input.readVarUInt32AsInt()
-    val maximum = if (maximumExist) input.readVarUInt32AsInt() else null
-    visitor.memory(
-      module = module,
-      field = field,
-      initial = initial,
-      maximum = maximum,
-    )
+  private fun readMemory(module: String, field: String, input: StreamReader, visitor: ImportSectionVisitor) {
+    val maximumExist = input.v1u()
+    val initial = input.v32u()
+    if (maximumExist) {
+      visitor.memory(
+        module = module,
+        field = field,
+        initial = initial,
+        maximum = input.v32u(),
+      )
+    } else {
+      visitor.memory(
+        module = module,
+        field = field,
+        initial = initial,
+      )
+    }
   }
 
-  fun readImportSection(input: InputReader, visitor: ImportSectionVisitor) {
+  fun readImportSection(input: StreamReader, visitor: ImportSectionVisitor) {
     visitor.start()
     val module = input.readString()
     val field = input.readString()
@@ -40,7 +58,7 @@ internal object ImportSectionReader {
       0.toByte() -> visitor.function(
         module = module,
         field = field,
-        index = input.readVarUInt32AsInt()
+        index = input.v32u()
       )
 
       1.toByte() -> readTable(

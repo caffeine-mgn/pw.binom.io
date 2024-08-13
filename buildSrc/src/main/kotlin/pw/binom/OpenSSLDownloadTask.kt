@@ -17,11 +17,11 @@ abstract class OpenSSLDownloadTask : DefaultTask() {
   @get:Input
   abstract val url: Property<String>
 
-  private val lastUrl = project.buildDir.resolve("openssl/openssl.date")
+  private val lastUrl = project.layout.buildDirectory.file("openssl/openssl.date").get().asFile
 
   init {
     url.set("https://github.com/openssl/openssl/archive/refs/tags/openssl-3.1.1.zip")
-    output.set(project.buildDir.resolve("openssl/openssl.zip"))
+    output.set(project.layout.buildDirectory.file("openssl/openssl.zip"))
     val lastUrl = lastUrl.takeIf { it.isFile }?.readText()
     if (lastUrl != url.get()) {
       this.lastUrl.parentFile?.mkdirs()

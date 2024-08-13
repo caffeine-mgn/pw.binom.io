@@ -1,7 +1,7 @@
 package pw.binom.wasm
 
 interface CodeSectionVisitor {
-  fun start(size:Int)
+  fun start(size:UInt)
   fun end()
   fun indexArgument(opcode:UByte,index: Int)
   fun memOpAlignOffsetArg(opcode: UByte, readVarUInt32AsInt: Int, readVarUInt32: Long)

@@ -89,7 +89,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     val configName =
       when (target.get()) {
         KonanTarget.MINGW_X64 -> "mingw64"
-        KonanTarget.MINGW_X86 -> "mingw"
+//        KonanTarget.MINGW_X86 -> "mingw"
         KonanTarget.ANDROID_ARM32 -> "linux-armv4"
         KonanTarget.ANDROID_ARM64,
         KonanTarget.ANDROID_X86,

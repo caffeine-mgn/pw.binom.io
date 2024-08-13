@@ -4,7 +4,7 @@ import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
-  id("com.jakewharton.cite")
+//  id("com.jakewharton.cite")
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {

@@ -125,8 +125,8 @@ fun KotlinMultiplatformExtension.baseStaticLibConfig() {
       when (it.konanTarget) {
 //                KonanTarget.MACOS_ARM64,
 //                KonanTarget.MACOS_ARM64 -> it.binaries.framework()
-        KonanTarget.WASM32 -> { /*Do nothing*/
-        }
+//        KonanTarget.WASM32 -> { /*Do nothing*/
+//        }
 
         else -> it.binaries.staticLib()
       }

@@ -17,7 +17,7 @@ object TypeSectionReader {
   private const val kWasmSubtypeFinalCode: UByte = 0x4fu
   private const val kWasmRecursiveTypeGroupCode: UByte = 0x4eu
 
-  private fun consume_sig(input: InputReader, visitor: TypeSectionVisitor) {
+  private fun consume_sig(input: StreamReader, visitor: TypeSectionVisitor) {
     input.readVec {
       // args
       input.readValueType()
@@ -28,7 +28,7 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_mutability(input: InputReader): Boolean {
+  private fun consume_mutability(input: StreamReader): Boolean {
     val f = input.readUByte()
     return when (f) {
       0u.toUByte() -> false
@@ -38,7 +38,7 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_struct(input: InputReader, visitor: TypeSectionVisitor) {
+  private fun consume_struct(input: StreamReader, visitor: TypeSectionVisitor) {
     input.readVec {
       val storageType = input.readStorageType()
       println("storageType=$storageType")
@@ -47,12 +47,12 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_array(input: InputReader, visitor: TypeSectionVisitor) {
+  private fun consume_array(input: StreamReader, visitor: TypeSectionVisitor) {
     input.readStorageType()
     val mutable = consume_mutability(input)
   }
 
-  private fun consume_base_type_definition(kind: UByte?, input: InputReader, visitor: TypeSectionVisitor) {
+  private fun consume_base_type_definition(kind: UByte?, input: StreamReader, visitor: TypeSectionVisitor) {
     var kind = kind?:input.readUByte()
     val is_final = true
     var shared = false
@@ -79,15 +79,15 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_subtype_definition(kind: UByte?, input: InputReader, visitor: TypeSectionVisitor) {
+  private fun consume_subtype_definition(kind: UByte?, input: StreamReader, visitor: TypeSectionVisitor) {
     val kind = kind?:input.readUByte()
     if (kind == kWasmSubtypeCode || kind == kWasmSubtypeFinalCode) {
       val is_final = kind == kWasmSubtypeFinalCode
       // is_wasm_gc = true
-      val supertype_count = input.readVarUInt32AsInt()
-      var supertype = Int.MAX_VALUE
-      if (supertype_count == 1) {
-        supertype = input.readVarUInt32AsInt()
+      val supertype_count = input.v32u()
+      var supertype = UInt.MAX_VALUE
+      if (supertype_count == 1u) {
+        supertype = input.v32u()
         println("supertype=$supertype")
       } else {
         println("supertype not defined, supertype_count: $supertype_count")
@@ -99,7 +99,7 @@ object TypeSectionReader {
     }
   }
 
-  private fun DecodeTypeSection(input: InputReader, visitor: TypeSectionVisitor) {
+  private fun DecodeTypeSection(input: StreamReader, visitor: TypeSectionVisitor) {
     val groupKind = input.readUByte()
     println("DecodeTypeSection kind=0x${groupKind.toString(16)} cursor0x${input.globalCursor.toString(16)}")
     if (groupKind == kWasmRecursiveTypeGroupCode) {
@@ -112,7 +112,7 @@ object TypeSectionReader {
     }
   }
 
-  fun read(input: InputReader, visitor: TypeSectionVisitor) {
+  fun read(input: StreamReader, visitor: TypeSectionVisitor) {
     DecodeTypeSection(input=input,visitor=visitor)
 //    check(byte == kWasmFunctionTypeCode) {
 //      "Invalid marker 0x${byte.toString(16)}, position=0x${

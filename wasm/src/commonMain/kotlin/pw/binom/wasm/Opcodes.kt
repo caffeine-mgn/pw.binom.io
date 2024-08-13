@@ -32,11 +32,11 @@ object Opcodes {
   const val SELECT: UByte = 0x1bu // select
   const val SELECT_WITH_TYPE: UByte = 0x1cu // select with type
 
-  const val GET_LOCAL: UByte = 0x20u // get_local
-  const val SET_LOCAL: UByte = 0x21u // set_local
-  const val TEE_LOCAL: UByte = 0x22u // tee_local
-  const val GET_GLOBAL: UByte = 0x23u // get_global
-  const val SET_GLOBAL: UByte = 0x24u // set_global
+  const val GET_LOCAL: UByte = 0x20u // local.get
+  const val SET_LOCAL: UByte = 0x21u // local.set
+  const val TEE_LOCAL: UByte = 0x22u // local.tee
+  const val GET_GLOBAL: UByte = 0x23u // global.get
+  const val SET_GLOBAL: UByte = 0x24u // global.set
 
   const val I32_LOAD: UByte = 0x28u // i32.load
   const val I64_LOAD: UByte = 0x29u // i64.load
@@ -151,8 +151,8 @@ object Opcodes {
   const val F32_SUB: UByte = 0x93u // f32.sub
   const val F32_MUL: UByte = 0x94u // f32.mul
   const val F32_DIV: UByte = 0x95u // f32.div
-  const val F32_MIN: UByte = 0x96u//opMapEntry("f32.min", 0x96, NumOp::NoArg, Instr.F32Min, Instr.F32Min::class)
-  const val F32_MAX: UByte = 0x97u//opMapEntry("f32.max", 0x97, NumOp::NoArg, Instr.F32Max, Instr.F32Max::class)
+  const val F32_MIN: UByte = 0x96u // f32.min
+  const val F32_MAX: UByte = 0x97u // f32.max
   const val F32_COPYSIGN: UByte = 0x98u // f32.copysign
   const val F64_ABS: UByte = 0x99u // f64.abs
   const val F64_NEG: UByte = 0x9au // f64.neg

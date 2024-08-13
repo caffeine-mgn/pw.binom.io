@@ -1,9 +1,9 @@
 package pw.binom.wasm
 
 object FunctionSectionReader {
-  fun read(input: InputReader, visitor: FunctionSectionVisitor) {
+  fun read(input: StreamReader, visitor: FunctionSectionVisitor) {
     visitor.start()
-    val index = input.readVarUInt32AsInt()
+    val index = input.v32u()
     visitor.value(index)
     visitor.end()
   }

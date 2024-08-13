@@ -1,10 +1,10 @@
 package pw.binom.wasm
 
 object TagSectionReader {
-  fun read(input: InputReader) {
+  fun read(input: StreamReader) {
     input.readVec {
       check(input.readUByte() == 0u.toUByte())
-      input.readVarUInt32L()
+      input.v32u()
     }
   }
 }

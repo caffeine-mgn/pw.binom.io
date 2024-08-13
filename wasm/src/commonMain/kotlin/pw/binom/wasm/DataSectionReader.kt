@@ -5,21 +5,21 @@ object DataSectionReader {
   private const val TYPE1: UByte = 1u
   private const val TYPE2: UByte = 2u
 
-  fun read(input: InputReader) {
+  fun read(input: StreamReader) {
     input.readVec {
       when (val type = input.readUByte()) {
         TYPE0 -> {
-          CodeSectionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
-          input.skip(input.readVarUInt32L().toInt()) // data
+          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
+          input.skip(input.v32u().toInt()) // data
         }
 
         TYPE1 -> {
-          input.skip(input.readVarUInt32L().toInt()) // data
+          input.skip(input.v32u().toInt()) // data
         }
         TYPE2 -> {
-          input.readVarUInt32L()
-          CodeSectionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
-          input.skip(input.readVarUInt32L().toInt()) // data
+          input.v32u()
+          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
+          input.skip(input.v32u().toInt()) // data
         }
         else -> TODO("Unknown type: $type")
       }

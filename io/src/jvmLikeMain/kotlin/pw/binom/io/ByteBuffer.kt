@@ -36,12 +36,12 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   actual open val isClosed: Boolean
     get() = closed
 
-  override fun flip() {
+  actual override fun flip() {
     ensureOpen()
     native.flip()
   }
 
-  override val remaining: Int
+  actual override val remaining: Int
     get() {
       return native.remaining()
     }
@@ -73,7 +73,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
 //        }
 //    }
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     ensureOpen()
     if (data === this) {
       throw IllegalArgumentException()
@@ -87,11 +87,11 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return DataTransferSize.ofSize(l)
   }
 
-  override fun flush() {
+  actual override fun flush() {
     ensureOpen()
   }
 
-  override fun close() {
+  actual override fun close() {
     if (closed) {
       return
     }
@@ -101,14 +101,14 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     native = JByteBuffer.allocate(0)
   }
 
-  override var position: Int
+  actual override var position: Int
     get() {
       return native.position()
     }
     set(value) {
       native.position(value)
     }
-  override var limit: Int
+  actual override var limit: Int
     get() {
       return native.limit()
     }
@@ -116,11 +116,11 @@ actual open class ByteBuffer(var native: JByteBuffer) :
       native.limit(value)
     }
 
-  override val capacity: Int
+  actual override val capacity: Int
     get() {
       return native.capacity()
     }
-  override val hasRemaining: Boolean
+  actual override val hasRemaining: Boolean
     get() = native.hasRemaining()
 
   init {
@@ -195,7 +195,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return len
   }
 
-  override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
+  actual override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
 
   actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
     if (closed) {
@@ -233,12 +233,12 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return true
   }
 
-  override fun clear() {
+  actual override fun clear() {
     ensureOpen()
     native.clear()
   }
 
-  override val elementSizeInBytes: Int
+  actual override val elementSizeInBytes: Int
     get() = 1
 
   actual fun realloc(newSize: Int): ByteBuffer {
@@ -295,7 +295,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return l
   }
 
-  override fun compact() {
+  actual override fun compact() {
     ensureOpen()
     if (position == 0) {
       native.clear()
@@ -338,9 +338,9 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     native.limit(newLimit)
   }
 
-  override fun get(): ByteBuffer = this
+  actual override fun get(): ByteBuffer = this
 
-  override fun reestablish(buffer: ByteBuffer) {
+  actual override fun reestablish(buffer: ByteBuffer) {
     require(buffer === this) { "Buffer should equals this buffer" }
     check(!closed) { "Buffer closed" }
   }

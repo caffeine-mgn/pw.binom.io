@@ -3,7 +3,7 @@ import kotlinx.benchmark.gradle.KotlinJvmBenchmarkTarget
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
-  id("org.jetbrains.kotlin.plugin.allopen") version "1.9.21"
+  id("org.jetbrains.kotlin.plugin.allopen") version "1.9.24"
   id("org.jetbrains.kotlinx.benchmark") version "0.4.10"
 }
 apply<pw.binom.KotlinConfigPlugin>()

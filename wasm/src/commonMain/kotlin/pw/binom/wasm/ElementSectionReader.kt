@@ -9,14 +9,14 @@ object ElementSectionReader {
   private const val TYPE5: UByte = 5u
   private const val TYPE6: UByte = 6u
   private const val TYPE7: UByte = 7u
-  fun read(input: InputReader) {
+  fun read(input: StreamReader) {
     input.readVec {
       println("SECTION!!!")
       when (val type = input.readUByte()) {
         TYPE0 -> {
-          CodeSectionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
+          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
           input.readVec {
-            input.readVarUInt32L()
+            input.v32u()
           }
         }
         else-> TODO("Unknown type: $type")

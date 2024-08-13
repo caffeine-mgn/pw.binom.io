@@ -31,21 +31,7 @@ sealed interface StorageType {
   }
 }
 
-const val TYPE_NUM_I32: UByte = 0x7Fu
-const val TYPE_NUM_I64: UByte = 0x7Eu
-const val TYPE_NUM_F32: UByte = 0x7Du
-const val TYPE_NUM_F64: UByte = 0x7Cu
-const val TYPE_PAK_I8: UByte = 0x78u
-const val TYPE_PAK_I16: UByte = 0x77u
-const val TYPE_PAK_F16: UByte = 0x76u
-const val TYPE_VEC_V128: UByte = 0x7Bu
-const val TYPE_REF_FUNC_REF: UByte = 0x70u
-const val TYPE_REF_EXTERN_REF: UByte = 0x6Fu
-const val TYPE_REF_NULL: UByte = 0x63u
-const val TYPE_REF: UByte = 0x64u
-const val kStructRefCode: UByte = 0x6bu
-const val kNoneCode: UByte = 0x71u
-const val kAnyRefCode: UByte = 0x6eu
+
 
 /**
  * reftype
@@ -53,55 +39,55 @@ const val kAnyRefCode: UByte = 0x6eu
  * https://www.w3.org/TR/wasm-core-2/#binary-reftype
  * https://webassembly.github.io/gc/core/binary/types.html#reference-types
  */
-fun InputReader.readRefType() =
+fun StreamReader.readRefType() =
   when (val value = readByte().toUByte()) {
-    TYPE_REF_FUNC_REF -> ValueType.Ref.FUNC_REF
-    TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
-    kStructRefCode -> ValueType.Ref.STRUCT
-    kNoneCode -> ValueType.Ref.NONE
+    Types.TYPE_REF_FUNC_REF -> ValueType.Ref.FUNC_REF
+    Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
+    Types.TYPE_REF_HEAP_STRUCT -> ValueType.Ref.STRUCT
+    Types.TYPE_REF_HEAP_NONE -> ValueType.Ref.NONE
     else -> TODO("Unknown type 0x${value.toString(16)}")
   }
 
 /**
  * https://www.w3.org/TR/wasm-core-2/#binary-resulttype
  */
-inline fun InputReader.readResultType(func: (ValueType) -> Unit) {
+inline fun StreamReader.readResultType(func: (ValueType) -> Unit) {
   readVec {
     func(readValueType())
   }
 }
 
-fun InputReader.readStorageType() =
+fun StreamReader.readStorageType() =
   when (val value = readByte().toUByte()) {
-    TYPE_NUM_I32 -> ValueType.Num.I32
-    TYPE_NUM_I64 -> ValueType.Num.I64
-    TYPE_NUM_F32 -> ValueType.Num.F32
-    TYPE_NUM_F64 -> ValueType.Num.F64
-    TYPE_VEC_V128 -> ValueType.Vector.V128
-    TYPE_REF_FUNC_REF -> ValueType.Ref.FUNC_REF
-    TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
-    TYPE_REF_NULL -> {
+    Types.TYPE_NUM_I32 -> ValueType.Num.I32
+    Types.TYPE_NUM_I64 -> ValueType.Num.I64
+    Types.TYPE_NUM_F32 -> ValueType.Num.F32
+    Types.TYPE_NUM_F64 -> ValueType.Num.F64
+    Types.TYPE_VEC_V128 -> ValueType.Vector.V128
+    Types.TYPE_REF_FUNC_REF -> ValueType.Ref.FUNC_REF
+    Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
+    Types.TYPE_REF_NULL -> {
       readHeapType()
       ValueType.Ref.NULL
     }
 
-    TYPE_REF -> {
+    Types.TYPE_REF -> {
       readHeapType()
       ValueType.Ref.VALUE
     }
 
-    TYPE_PAK_I8 -> StorageType.Packed.I8
-    TYPE_PAK_I16 -> StorageType.Packed.I16
-    TYPE_PAK_F16 -> StorageType.Packed.F16
-    kStructRefCode -> ValueType.Ref.STRUCT
+    Types.TYPE_PAK_I8 -> StorageType.Packed.I8
+    Types.TYPE_PAK_I16 -> StorageType.Packed.I16
+    Types.TYPE_PAK_F16 -> StorageType.Packed.F16
+    Types.TYPE_REF_HEAP_STRUCT -> ValueType.Ref.STRUCT
     else -> TODO("Unknown type 0x${value.toString(16)}")
   }
 
 /**
  * https://webassembly.github.io/gc/core/binary/types.html#binary-heaptype
  */
-fun InputReader.readHeapType() {
-  readSignedLeb128()
+fun StreamReader.readHeapType() {
+  v32s()
 //  readLebSigned()
 }
 
@@ -110,23 +96,23 @@ fun InputReader.readHeapType() {
  *
  * https://www.w3.org/TR/wasm-core-2/#binary-valtype
  */
-fun InputReader.readValueType(byte: UByte = readUByte()) =
+fun StreamReader.readValueType(byte: UByte = readUByte()) =
   when (val value = byte) {
-    TYPE_NUM_I32 -> ValueType.Num.I32
-    TYPE_NUM_I64 -> ValueType.Num.I64
-    TYPE_NUM_F32 -> ValueType.Num.F32
-    TYPE_NUM_F64 -> ValueType.Num.F64
-    TYPE_VEC_V128 -> ValueType.Vector.V128
-    TYPE_REF_FUNC_REF -> ValueType.Ref.FUNC_REF
-    TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
-    TYPE_REF_NULL -> {
+    Types.TYPE_NUM_I32 -> ValueType.Num.I32
+    Types.TYPE_NUM_I64 -> ValueType.Num.I64
+    Types.TYPE_NUM_F32 -> ValueType.Num.F32
+    Types.TYPE_NUM_F64 -> ValueType.Num.F64
+    Types.TYPE_VEC_V128 -> ValueType.Vector.V128
+    Types.TYPE_REF_FUNC_REF -> ValueType.Ref.FUNC_REF
+    Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
+    Types.TYPE_REF_NULL -> {
       readHeapType()
       ValueType.Ref.NULL
     }
 
-    kNoneCode -> ValueType.Ref.NONE
-    kAnyRefCode -> ValueType.Ref.ANY
-    TYPE_REF -> {
+    Types.TYPE_REF_HEAP_NONE -> ValueType.Ref.NONE
+    Types.TYPE_REF_ANY -> ValueType.Ref.ANY
+    Types.TYPE_REF -> {
       readHeapType()
       ValueType.Ref.VALUE
     }
@@ -136,16 +122,15 @@ fun InputReader.readValueType(byte: UByte = readUByte()) =
 
 fun isValueType(byte:UByte)=
   when (byte) {
-    TYPE_NUM_I32,
-    TYPE_NUM_I64,
-    TYPE_NUM_F32,
-    TYPE_NUM_F64,
-    TYPE_VEC_V128,
-    TYPE_REF_FUNC_REF,
-    TYPE_REF_EXTERN_REF,
-    TYPE_REF_NULL,
-
-    kNoneCode,
-    kAnyRefCode -> true
+    Types.TYPE_NUM_I32,
+    Types.TYPE_NUM_I64,
+    Types.TYPE_NUM_F32,
+    Types.TYPE_NUM_F64,
+    Types.TYPE_VEC_V128,
+    Types.TYPE_REF_FUNC_REF,
+    Types.TYPE_REF_EXTERN_REF,
+    Types.TYPE_REF_NULL,
+    Types.TYPE_REF_HEAP_NONE,
+    Types.TYPE_REF_ANY -> true
     else -> false
   }

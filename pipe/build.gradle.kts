@@ -6,7 +6,7 @@ import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
-  id("com.jakewharton.cite")
+//  id("com.jakewharton.cite")
 //  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
 //    id("com.android.library")
 //  }

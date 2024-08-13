@@ -1,0 +1,474 @@
+package pw.binom.wasm
+
+import pw.binom.io.EOFException
+
+object ExpressionReader {
+  private class Context {
+    var depth = 1
+  }
+
+  fun readExpressions(input: StreamReader, visitor: ExpressionsVisitor) {
+    val context = Context()
+    var lastOpcode = Opcodes.END
+    while (true) {
+      if (context.depth == 0 && lastOpcode == Opcodes.END) {
+        break
+      }
+      val opcode = try {
+        input.readUByte()
+      } catch (e: EOFException) {
+        break
+      }
+      lastOpcode = opcode
+      when (opcode) {
+        Opcodes.GC_PREFIX -> gc(visitor = ExpressionsVisitor.STUB, input = input)
+        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = ExpressionsVisitor.STUB)
+        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = ExpressionsVisitor.STUB)
+        else -> default(input = input, visitor = ExpressionsVisitor.STUB, opcode = opcode, context = context)
+      }
+    }
+//    input.skipOther()
+    visitor.end()
+    check(context.depth == 0)
+  }
+
+  private fun smid(input: StreamReader, visitor: ExpressionsVisitor) {
+    val opcode = input.readUByte()
+    when (opcode) {
+      else -> TODO("Unknown SMID code: 0x${opcode.toString(16)}")
+    }
+  }
+
+  private fun default(opcode: UByte, context: Context, input: StreamReader, visitor: ExpressionsVisitor) {
+    println("OPCODE      (0x${opcode.toString(16).padStart(2, '0')}) ${Codes.codes[opcode]}")
+    when (opcode) {
+      Opcodes.GET_LOCAL,
+      Opcodes.SET_LOCAL,
+      Opcodes.TEE_LOCAL,
+        -> {
+        LocalId(input.v32u())
+//        LocalId(input.readVarUInt32AsInt().toUInt())
+      }
+
+      Opcodes.GET_GLOBAL,
+      Opcodes.SET_GLOBAL,
+        -> {
+        GlobalId(input.v32u())
+//        visitor.indexArgument(opcode, input.readVarUInt32AsInt())
+      }
+
+      Opcodes.SELECT -> {
+        // TODO
+      }
+
+      Opcodes.LOOP,
+      Opcodes.BLOCK,
+      Opcodes.TRY,
+      Opcodes.IF,
+        -> {
+        context.depth++
+        input.readBlockType()
+        // TODO
+      }
+
+      Opcodes.END -> {
+        visitor.end()
+        context.depth--
+//        visitor.controlFlow(opcode)
+      }
+
+      Opcodes.BR,
+      Opcodes.BR_IF,
+      Opcodes.BR_ON_NULL,
+      Opcodes.BR_ON_NON_NULL,
+        -> visitor.br(
+        opcode = opcode,
+        label = LabelId(input.v32u()),
+      )
+
+      Opcodes.BR_TABLE -> {
+        // targets
+        input.readVec {
+          LabelId(input.v32u())
+        }
+
+        // default target
+        LabelId(input.v32u())
+      }
+
+      Opcodes.UNREACHABLE,
+      Opcodes.NOP,
+      Opcodes.ELSE,
+      Opcodes.RETURN,
+        -> {
+//        visitor.controlFlow(opcode)
+      }
+
+      Opcodes.DROP -> {
+        // TODO
+      }
+
+      Opcodes.I32_LOAD,
+      Opcodes.I64_LOAD,
+      Opcodes.F32_LOAD,
+      Opcodes.F64_LOAD,
+      Opcodes.I32_LOAD8_S,
+      Opcodes.I32_LOAD8_U,
+      Opcodes.I32_LOAD16_S,
+      Opcodes.I32_LOAD16_U,
+      Opcodes.I64_LOAD8_S,
+      Opcodes.I64_LOAD8_U,
+      Opcodes.I64_LOAD16_S,
+      Opcodes.I64_LOAD16_U,
+      Opcodes.I64_LOAD32_S,
+      Opcodes.I64_LOAD32_U,
+      Opcodes.I32_STORE,
+      Opcodes.I64_STORE,
+      Opcodes.F32_STORE,
+      Opcodes.F64_STORE,
+      Opcodes.I32_STORE8,
+      Opcodes.I32_STORE16,
+      Opcodes.I64_STORE8,
+      Opcodes.I64_STORE16,
+      Opcodes.I64_STORE32,
+        -> {
+        val align = input.v32u()
+        val offset = input.v32u()
+        visitor.memory(
+          opcode = opcode,
+          align = align,
+          offset = offset,
+        )
+      }
+
+      Opcodes.I32_CLZ,
+      Opcodes.I32_CTZ,
+      Opcodes.I32_POPCNT,
+      Opcodes.I32_ADD,
+      Opcodes.I32_SUB,
+      Opcodes.I32_MUL,
+      Opcodes.I32_DIV_S,
+      Opcodes.I32_DIV_U,
+      Opcodes.I32_REM_S,
+      Opcodes.I32_REM_U,
+      Opcodes.I32_AND,
+      Opcodes.I32_OR,
+      Opcodes.I32_XOR,
+      Opcodes.I32_SHL,
+      Opcodes.I32_SHR_S,
+      Opcodes.I32_SHR_U,
+      Opcodes.I32_ROTL,
+      Opcodes.I32_ROTR,
+      Opcodes.I64_CLZ,
+      Opcodes.I64_CTZ,
+      Opcodes.I64_POPCNT,
+      Opcodes.I64_ADD,
+      Opcodes.I64_SUB,
+      Opcodes.I64_MUL,
+      Opcodes.I64_DIV_S,
+      Opcodes.I64_DIV_U,
+      Opcodes.I64_REM_S,
+      Opcodes.I64_REM_U,
+      Opcodes.I64_AND,
+      Opcodes.I64_OR,
+      Opcodes.I64_XOR,
+      Opcodes.I64_SHL,
+      Opcodes.I64_SHR_S,
+      Opcodes.I64_SHR_U,
+      Opcodes.I64_ROTL,
+      Opcodes.I64_ROTR,
+      Opcodes.F32_ABS,
+      Opcodes.F32_NEG,
+      Opcodes.F32_CEIL,
+      Opcodes.F32_FLOOR,
+      Opcodes.F32_TRUNC,
+      Opcodes.F32_NEAREST,
+      Opcodes.F32_SQRT,
+      Opcodes.F32_ADD,
+      Opcodes.F32_SUB,
+      Opcodes.F32_MUL,
+      Opcodes.F32_DIV,
+      Opcodes.F32_MIN,
+      Opcodes.F32_MAX,
+      Opcodes.F32_COPYSIGN,
+      Opcodes.F64_ABS,
+      Opcodes.F64_NEG,
+      Opcodes.F64_CEIL,
+      Opcodes.F64_FLOOR,
+      Opcodes.F64_TRUNC,
+      Opcodes.F64_NEAREST,
+      Opcodes.F64_SQRT,
+      Opcodes.F64_ADD,
+      Opcodes.F64_SUB,
+      Opcodes.F64_MUL,
+      Opcodes.F64_DIV,
+      Opcodes.F64_MIN,
+      Opcodes.F64_MAX,
+      Opcodes.F64_COPYSIGN,
+        -> visitor.numeric(opcode)
+
+      Opcodes.F32_CONST -> visitor.const(Float.fromBits(input.readInt32()))
+      Opcodes.I64_CONST -> visitor.const(input.v64s())
+      Opcodes.F64_CONST -> visitor.const(Double.fromBits(input.readInt64()))
+      Opcodes.I32_CONST -> visitor.const(input.v32s())
+
+      Opcodes.I32_EQZ,
+      Opcodes.I32_EQ,
+      Opcodes.I32_NE,
+      Opcodes.I32_LT_S,
+      Opcodes.I32_LT_U,
+      Opcodes.I32_GT_S,
+      Opcodes.I32_GT_U,
+      Opcodes.I32_LE_S,
+      Opcodes.I32_LE_U,
+      Opcodes.I32_GE_S,
+      Opcodes.I32_GE_U,
+      Opcodes.I64_EQZ,
+      Opcodes.I64_EQ,
+      Opcodes.I64_NE,
+      Opcodes.I64_LT_S,
+      Opcodes.I64_LT_U,
+      Opcodes.I64_GT_S,
+      Opcodes.I64_GT_U,
+      Opcodes.I64_LE_S,
+      Opcodes.I64_LE_U,
+      Opcodes.I64_GE_S,
+      Opcodes.I64_GE_U,
+      Opcodes.F32_EQ,
+      Opcodes.F32_NE,
+      Opcodes.F32_LT,
+      Opcodes.F32_GT,
+      Opcodes.F32_LE,
+      Opcodes.F32_GE,
+      Opcodes.F64_EQ,
+      Opcodes.F64_NE,
+      Opcodes.F64_LT,
+      Opcodes.F64_GT,
+      Opcodes.F64_LE,
+      Opcodes.F64_GE,
+        -> visitor.compare(opcode)
+
+      Opcodes.I32_WRAP_I64,
+      Opcodes.I32_TRUNC_S_F32,
+      Opcodes.I32_TRUNC_U_F32,
+      Opcodes.I32_TRUNC_S_F64,
+      Opcodes.I32_TRUNC_U_F64,
+      Opcodes.I64_EXTEND_S_I32,
+      Opcodes.I64_EXTEND_U_I32,
+      Opcodes.I64_TRUNC_S_F32,
+      Opcodes.I64_TRUNC_U_F32,
+      Opcodes.I64_TRUNC_S_F64,
+      Opcodes.I64_TRUNC_U_F64,
+      Opcodes.F32_CONVERT_S_I32,
+      Opcodes.F32_CONVERT_U_I32,
+      Opcodes.F32_CONVERT_S_I64,
+      Opcodes.F32_CONVERT_U_I64,
+      Opcodes.F32_DEMOTE_F64,
+      Opcodes.F64_CONVERT_S_I32,
+      Opcodes.F64_CONVERT_U_I32,
+      Opcodes.F64_CONVERT_S_I64,
+      Opcodes.F64_CONVERT_U_I64,
+      Opcodes.F64_PROMOTE_F32,
+        -> visitor.convert(opcode)
+
+      Opcodes.REF_EQ -> {
+
+      }
+
+      Opcodes.REF_FUNC -> {
+        FunctionId(input.v32u())
+        // TODO
+      }
+
+      Opcodes.REF_IS_NULL -> {
+        // TODO
+      }
+
+      Opcodes.REF_AS_NON_NULL -> {
+        // TODO
+      }
+
+      Opcodes.REF_NULL -> {
+        input.readHeapType()
+        // TODO
+      }
+
+      Opcodes.CALL_INDIRECT -> {
+        TypeId(input.v32u())
+        TableId(input.v32u())
+        // TODO
+      }
+
+      Opcodes.CALL -> visitor.call(
+        opcode = opcode,
+        function = FunctionId(input.v32u()),
+      )
+
+      Opcodes.CALL_REF -> {
+        TypeId(input.v32u())
+      }
+
+      Opcodes.MEMORY_SIZE -> {
+        input.v32u()
+      }
+
+      Opcodes.MEMORY_GROW -> {
+        input.v32u()
+      }
+
+      Opcodes.THROW -> {
+        TagId(input.v32u())
+        // TODO
+      }
+
+      Opcodes.THROW_REF -> {
+        // TODO
+      }
+
+      Opcodes.RETHROW -> {
+        input.v32s()
+      }
+
+      Opcodes.CATCH -> {
+        input.v32u()
+//        input.readLebUnsigned()
+      }
+
+      Opcodes.CATCH_ALL -> {
+      }
+
+      Opcodes.SELECT_WITH_TYPE -> {
+        val typeCount = input.v32s()
+        check(typeCount == 1)
+        input.readValueType()
+      }
+
+      Opcodes.I32_REINTERPRET_F32,
+      Opcodes.I64_REINTERPRET_F64,
+      Opcodes.F32_REINTERPRET_I32,
+      Opcodes.F64_REINTERPRET_I64,
+        -> {
+
+      }
+
+      else -> TODO("Unknown opcode: 0x${opcode.toString(16)}")
+    }
+
+  }
+
+  private fun numeric(input: StreamReader, visitor: ExpressionsVisitor) {
+    val opcode = input.readUByte()
+    val opcodeStr = "0x" +
+      Opcodes.NUMERIC_PREFIX.toString(16).padStart(2, '0') +
+      opcode.toString(16).padStart(2, '0')
+    println("OPCODE NUMERIC 0xFC $opcode ($opcodeStr) ${Codes.numericCodes[opcode]}")
+    when (opcode) {
+      Opcodes.NUMERIC_I32S_CONVERT_SAT_F32,
+      Opcodes.NUMERIC_I32U_CONVERT_SAT_F32,
+      Opcodes.NUMERIC_I32S_CONVERT_SAT_F64,
+      Opcodes.NUMERIC_I32U_CONVERT_SAT_F64,
+      Opcodes.NUMERIC_I64S_CONVERT_SAT_F32,
+      Opcodes.NUMERIC_I64U_CONVERT_SAT_F32,
+      Opcodes.NUMERIC_I64S_CONVERT_SAT_F64,
+      Opcodes.NUMERIC_I64U_CONVERT_SAT_F64,
+        -> {
+      }
+
+      else -> TODO("Unknown MISC code: 0x${opcode.toString(16)}")
+    }
+  }
+
+  private fun gc(input: StreamReader, visitor: ExpressionsVisitor) {
+    val opcode = input.readUByte()
+    println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
+    when (opcode) {
+      Opcodes.GC_STRUCT_NEW -> {
+        // ref.null type_id
+        TypeId(input.v32u())
+      }
+
+      Opcodes.GC_STRUCT_SET,
+      Opcodes.GC_STRUCT_GET,
+      Opcodes.GC_STRUCT_GET_S,
+      Opcodes.GC_STRUCT_GET_U,
+        -> visitor.struct(
+        opcode = opcode,
+        type = TypeId(input.v32u()),
+        field = FieldId(input.v32u())
+      )
+
+      Opcodes.GC_REF_CAST_NULL -> {
+        // ref.cast heapType
+        input.readHeapType() // heapType
+      }
+
+      Opcodes.GC_REF_TEST -> {
+        input.readHeapType()
+      }
+
+      Opcodes.GC_REF_TEST_NULL -> {
+        input.readHeapType()
+      }
+
+      Opcodes.GC_REF_CAST -> {
+        input.readHeapType()
+      }
+
+      Opcodes.GC_ARRAY_NEW_DEFAULT -> {
+        TypeId(input.v32u())
+      }
+
+      Opcodes.GC_ARRAY_GET,
+      Opcodes.GC_ARRAY_SET,
+      Opcodes.GC_ARRAY_GET_S,
+      Opcodes.GC_ARRAY_GET_U,
+        -> {
+        TypeId(input.v32u())
+      }
+
+      Opcodes.GC_ARRAY_LEN -> {
+
+      }
+
+      Opcodes.GC_ARRAY_FILL -> {
+        TypeId(input.v32u())
+      }
+
+      Opcodes.GC_ARRAY_COPY -> {
+        TypeId(input.v32u()) // typeid
+        TypeId(input.v32u()) // typeid
+      }
+
+      Opcodes.GC_ARRAY_NEW_DATA -> {
+        TypeId(input.v32u()) // typeid
+        DataId(input.v32u()) // dataid
+      }
+
+      Opcodes.GC_ARRAY_NEW_FIXED -> {
+        input.v32u() // typeid
+        input.v32u()
+      }
+
+      Opcodes.GC_BR_ON_CAST_FAIL -> {
+        input.readUByte() // flags
+        input.v32u() // branch
+        input.readHeapType() // source_imm
+        input.readHeapType() // target_imm
+      }
+
+      Opcodes.GC_EXTERN_CONVERT_ANY -> {
+
+      }
+
+      Opcodes.GC_ANY_CONVERT_EXTERN -> {
+
+      }
+
+      else -> TODO(
+        "Unknown GC code: 0x${Opcodes.GC_PREFIX.toString(16).padStart(2, '0')}${
+          opcode.toString(16).padStart(2, '0')
+        }"
+      )
+    }
+  }
+}

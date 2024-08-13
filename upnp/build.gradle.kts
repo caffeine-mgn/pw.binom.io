@@ -4,7 +4,7 @@ plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
   id("com.bmuschko.docker-remote-api")
-  id("com.jakewharton.cite")
+//  id("com.jakewharton.cite")
 }
 
 apply<pw.binom.KotlinConfigPlugin>()

@@ -9,7 +9,7 @@ import pw.binom.io.use
  */
 object WasmReader {
 
-  fun read(input: InputReader, visitor: WasmVisitor) {
+  fun read(input: StreamReader, visitor: WasmVisitor) {
     ByteBuffer(8).use { buf ->
       visitor.start()
 //      val ver = input.readByteArray(4)
@@ -36,9 +36,9 @@ object WasmReader {
 //          require(sectionId > maxSectionId) { "Section ID $sectionId came after $maxSectionId" }.also {
 //            maxSectionId = sectionId
 //          }
-        val sectionLen = input.readVarUInt32AsInt()
+        val sectionLen = input.v32u()
 
-        input.withLimit(sectionLen).use { sectionInput ->
+        input.withLimit(sectionLen.toInt()).use { sectionInput ->
           when (section) {
             Sections.CUSTOM_SECTION -> {
               CustomSectionReader.read(input = sectionInput, visitor = visitor.customSection())
@@ -77,7 +77,7 @@ object WasmReader {
             }
 
             Sections.START_SECTION -> {
-              sectionInput.readVarUInt32()
+              sectionInput.v32u()
             }
 
             Sections.ELEMENT_SECTION -> ElementSectionReader.read(input = sectionInput)

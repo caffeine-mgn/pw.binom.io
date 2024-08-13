@@ -24,7 +24,17 @@ expect open class ByteBuffer :
   constructor(array: ByteArray)
 
   open val isClosed: Boolean
+  override var position: Int
+  override var limit: Int
+  override val capacity: Int
+  override val hasRemaining: Boolean
+  override val elementSizeInBytes: Int
 
+  override fun get(): ByteBuffer
+  override fun reestablish(buffer: ByteBuffer)
+  override fun compact()
+  override fun clear()
+  override fun read(dest: ByteBuffer) : DataTransferSize
   fun realloc(newSize: Int): ByteBuffer
   fun skip(length: Long): Long
   fun skip(length: Int): Int
@@ -33,7 +43,7 @@ expect open class ByteBuffer :
   operator fun get(index: Int): Byte
   fun readInto(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
   fun readInto(dest: ByteBuffer): Int
-
+  override fun write(data: ByteBuffer): DataTransferSize
   /**
    * Returns last byte. Work as [getByte] but don't move position when he reads
    */
@@ -55,7 +65,9 @@ expect open class ByteBuffer :
   fun replaceEach(func: (Int, Byte) -> Byte)
 
   operator fun set(index: Int, value: Byte)
-
+  override fun flip()
+  override fun flush()
+  override fun close()
   /**
    * push all available data (between [position] and [limit]) from this bytebuffer to bytearray.
    * Don't change [position] and [limit] of current buffer. Thread unsafe.
@@ -66,6 +78,7 @@ expect open class ByteBuffer :
   fun free()
   protected open fun preClose()
   internal open fun ensureOpen()
+  override val remaining: Int
 }
 
 internal fun calcLength(self: ByteBuffer, data: ByteArray, offset: Int) =

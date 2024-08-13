@@ -1,7 +1,5 @@
 package pw.binom.io
 
-import com.jakewharton.cite.__FILE__
-import com.jakewharton.cite.__LINE__
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.InternalLog
@@ -14,7 +12,8 @@ class AsyncBufferedAsciiInputReader private constructor(
 ) : AsyncReader, BufferedAsyncInput {
   private var buffer: ByteBuffer = ByteBuffer(0)
 
-  private val logger = InternalLog.file(__FILE__)
+  private val logger = InternalLog.file("AsyncBufferedAsciiInputReader")
+
 
   constructor(
     stream: AsyncInput,
@@ -84,17 +83,17 @@ class AsyncBufferedAsciiInputReader private constructor(
     try {
       buffer.compact()
 
-      logger.info(line = __LINE__) { "Reading from stream ${buffer.remaining} bytes... Stream: $stream" }
+      logger.info{ "Reading from stream ${buffer.remaining} bytes... Stream: $stream" }
       val len = stream.read(buffer)
       if (len.isNotAvailable) {
-        logger.info(line = __LINE__) { "Got from stream $len. mark stream as EOF. Stream: $stream" }
+        logger.info { "Got from stream $len. mark stream as EOF. Stream: $stream" }
         eof = true
       } else {
-        logger.info(line = __LINE__) { "Was read from stream $len bytes. Stream: $stream" }
+        logger.info { "Was read from stream $len bytes. Stream: $stream" }
       }
       buffer.flip()
     } catch (e: Throwable) {
-      logger.info(line = __LINE__) { "Can't read ${buffer.remaining} bytes from stream. Stream: $stream, e: $e" }
+      logger.info { "Can't read ${buffer.remaining} bytes from stream. Stream: $stream, e: $e" }
       buffer.empty()
       throw e
     }
@@ -112,10 +111,10 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
     buffer.close()
     if (closeParent) {
-      logger.info(line = __LINE__) { "Closing stream. Eof: $eof, Stream: $stream" }
+      logger.info { "Closing stream. Eof: $eof, Stream: $stream" }
       stream.asyncClose()
     } else {
-      logger.info(line = __LINE__) { "Closing without close parent stream. Eof: $eof, Stream: $stream" }
+      logger.info { "Closing without close parent stream. Eof: $eof, Stream: $stream" }
     }
   }
 
@@ -213,7 +212,7 @@ class AsyncBufferedAsciiInputReader private constructor(
 //        return DataTransferSize.EMPTY
 //      }
       val index = buffer.indexOfFirst(condition)
-      logger.info(line = __LINE__) { "readUntil index=$index buffer.remaining=${buffer.remaining}" }
+      logger.info { "readUntil index=$index buffer.remaining=${buffer.remaining}" }
       if (index == -1) {
         readSize += dest.writeFully(buffer)
       } else {
@@ -228,7 +227,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         break
       }
     }
-    logger.info(line = __LINE__) { "readed = $readSize" }
+    logger.info { "readed = $readSize" }
     return DataTransferSize.ofSize(readSize)
   }
 
