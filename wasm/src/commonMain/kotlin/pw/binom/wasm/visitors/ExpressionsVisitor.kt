@@ -1,5 +1,6 @@
 package pw.binom.wasm.visitors
 
+import pw.binom.wasm.DataId
 import pw.binom.wasm.FieldId
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.GlobalId
@@ -12,6 +13,17 @@ import pw.binom.wasm.Types
 interface ExpressionsVisitor {
   companion object {
     val STUB = object : ExpressionsVisitor {}
+  }
+
+  interface BrOnCastFailVisitor {
+    companion object {
+      val STUB = object : BrOnCastFailVisitor {}
+    }
+
+    fun start() {}
+    fun end() {}
+    fun source(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
+    fun target(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
   }
 
   fun start() {}
@@ -37,7 +49,14 @@ interface ExpressionsVisitor {
   fun indexArgument(opcode: UByte, label: LocalId) {}
   fun indexArgument(opcode: UByte, label: GlobalId) {}
   fun reinterpret(opcode: UByte) {}
-  fun array(opcode: UByte, type: TypeId) {}
+  fun arrayOp(opcode: UByte, type: TypeId) {}
   fun ref(opcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
   fun structNew(type: TypeId) = {}
+  fun arrayCopy(from: TypeId, to: TypeId) {}
+  fun newArray(type: TypeId, size: UInt) {}
+  fun newArray(type: TypeId, data: DataId) {}
+  fun brOnCastFail(flags: UByte, label: LabelId): BrOnCastFailVisitor = BrOnCastFailVisitor.STUB
+  fun arrayFull(type: TypeId) {}
+  fun newArrayDefault(type: TypeId) {}
+  fun arrayLen() {}
 }

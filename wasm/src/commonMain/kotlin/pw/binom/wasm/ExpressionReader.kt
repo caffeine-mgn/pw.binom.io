@@ -391,47 +391,43 @@ object ExpressionReader {
       Opcodes.GC_REF_CAST_NULL,
         -> input.readHeapType(visitor = visitor.ref(opcode = opcode)) // heapType
 
-      Opcodes.GC_ARRAY_NEW_DEFAULT -> {
-        TypeId(input.v32u())
-      }
+      Opcodes.GC_ARRAY_NEW_DEFAULT -> visitor.newArrayDefault(type = TypeId(input.v32u()))
 
       Opcodes.GC_ARRAY_GET,
       Opcodes.GC_ARRAY_SET,
       Opcodes.GC_ARRAY_GET_S,
       Opcodes.GC_ARRAY_GET_U,
-        -> visitor.array(
+        -> visitor.arrayOp(
         opcode = opcode,
         type = TypeId(input.v32u())
       )
 
-      Opcodes.GC_ARRAY_LEN -> {
+      Opcodes.GC_ARRAY_LEN -> visitor.arrayLen()
+      Opcodes.GC_ARRAY_FILL -> visitor.arrayFull(type = TypeId(input.v32u()))
+      Opcodes.GC_ARRAY_COPY -> visitor.arrayCopy(
+        from = TypeId(input.v32u()),
+        to = TypeId(input.v32u()),
+      )
 
-      }
+      Opcodes.GC_ARRAY_NEW_DATA -> visitor.newArray(
+        type = TypeId(input.v32u()),
+        data = DataId(input.v32u()),
+      )
 
-      Opcodes.GC_ARRAY_FILL -> {
-        TypeId(input.v32u())
-      }
-
-      Opcodes.GC_ARRAY_COPY -> {
-        TypeId(input.v32u()) // typeid
-        TypeId(input.v32u()) // typeid
-      }
-
-      Opcodes.GC_ARRAY_NEW_DATA -> {
-        TypeId(input.v32u()) // typeid
-        DataId(input.v32u()) // dataid
-      }
-
-      Opcodes.GC_ARRAY_NEW_FIXED -> {
-        input.v32u() // typeid
-        input.v32u()
-      }
+      Opcodes.GC_ARRAY_NEW_FIXED -> visitor.newArray(
+        type = TypeId(input.v32u()),
+        size = input.v32u()
+      )
 
       Opcodes.GC_BR_ON_CAST_FAIL -> {
-        input.readUByte() // flags
-        input.v32u() // branch
-        input.readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY) // source_imm
-        input.readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY) // target_imm
+        val visitor = visitor.brOnCastFail(
+          flags = input.readUByte(),
+          label = LabelId(input.v32u())
+        )
+        visitor.start()
+        input.readHeapType(visitor = visitor.source()) // source_imm
+        input.readHeapType(visitor = visitor.target()) // target_imm
+        visitor.end()
       }
 
       Opcodes.GC_EXTERN_CONVERT_ANY -> {
