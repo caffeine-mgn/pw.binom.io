@@ -83,26 +83,21 @@ object ExpressionReader {
       )
 
       Opcodes.BR_TABLE -> {
-        // targets
+        val visitor = visitor.br()
+        visitor.start()
         input.readVec {
-          LabelId(input.v32u())
+          visitor.target(LabelId(input.v32u()))
         }
-
-        // default target
-        LabelId(input.v32u())
+        visitor.default(LabelId(input.v32u()))
       }
 
       Opcodes.UNREACHABLE,
       Opcodes.NOP,
       Opcodes.ELSE,
       Opcodes.RETURN,
-        -> {
-//        visitor.controlFlow(opcode)
-      }
+        -> visitor.controlFlow(opcode)
 
-      Opcodes.DROP -> {
-        // TODO
-      }
+      Opcodes.DROP -> visitor.drop()
 
       Opcodes.I32_LOAD,
       Opcodes.I64_LOAD,
@@ -268,10 +263,7 @@ object ExpressionReader {
       Opcodes.F64_PROMOTE_F32,
         -> visitor.convert(opcode)
 
-      Opcodes.REF_FUNC -> {
-        FunctionId(input.v32u())
-        // TODO
-      }
+      Opcodes.REF_FUNC -> visitor.ref(FunctionId(input.v32u()))
 
       Opcodes.REF_IS_NULL -> {
         // TODO
@@ -281,9 +273,7 @@ object ExpressionReader {
         // TODO
       }
 
-      Opcodes.REF_NULL -> {
-        input.readHeapType(visitor = visitor.refNull())
-      }
+      Opcodes.REF_NULL -> input.readHeapType(visitor = visitor.refNull())
 
       Opcodes.CALL_INDIRECT -> visitor.call(
         opcode = opcode,

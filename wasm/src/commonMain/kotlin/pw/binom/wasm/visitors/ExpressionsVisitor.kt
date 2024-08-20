@@ -26,6 +26,17 @@ interface ExpressionsVisitor {
     fun target(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
   }
 
+  interface BrTableVisitor {
+    companion object {
+      val STUB = object : BrTableVisitor {}
+    }
+
+    fun start() {}
+    fun end() {}
+    fun target(label: LabelId) {}
+    fun default(label: LabelId) {}
+  }
+
   fun start() {}
   fun end() {}
 
@@ -33,6 +44,7 @@ interface ExpressionsVisitor {
   fun const(value: Double) {}
   fun const(value: Int) {}
   fun const(value: Long) {}
+  fun controlFlow(opcode: UByte) {}
 
   fun br(opcode: UByte, label: LabelId) {}
   fun endBlock() {}
@@ -59,4 +71,7 @@ interface ExpressionsVisitor {
   fun arrayFull(type: TypeId) {}
   fun newArrayDefault(type: TypeId) {}
   fun arrayLen() {}
+  fun ref(function: FunctionId) {}
+  fun drop() {}
+  fun br(): BrTableVisitor = BrTableVisitor.STUB
 }

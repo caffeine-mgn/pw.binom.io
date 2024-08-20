@@ -135,8 +135,9 @@ class StreamReader(
       null
     } else {
       if (isValueType(firstByte)) {
-        readValueType(firstByte,visitor = ValueVisitor.EMPTY)
+        readValueType(firstByte, visitor = ValueVisitor.EMPTY)
       } else {
+        TODO()
         val index = v32s()
         println("block type index: $index")
 //        readUnsignedLeb128(4)
