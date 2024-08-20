@@ -1,4 +1,8 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
+
+import pw.binom.wasm.ExpressionReader
+import pw.binom.wasm.visitors.ExpressionsVisitor
+import pw.binom.wasm.StreamReader
 
 object ElementSectionReader {
   private const val TYPE0: UByte = 0u
@@ -14,12 +18,13 @@ object ElementSectionReader {
       println("SECTION!!!")
       when (val type = input.readUByte()) {
         TYPE0 -> {
-          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.STUB)
+          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.STUB)
           input.readVec {
             input.v32u()
           }
         }
-        else-> TODO("Unknown type: $type")
+
+        else -> TODO("Unknown type: $type")
       }
     }
   }

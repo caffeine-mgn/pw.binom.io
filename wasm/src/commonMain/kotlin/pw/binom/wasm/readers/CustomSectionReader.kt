@@ -1,4 +1,7 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
+
+import pw.binom.wasm.visitors.CustomSectionVisitor
+import pw.binom.wasm.StreamReader
 
 object CustomSectionReader {
   fun read(input: StreamReader, visitor: CustomSectionVisitor) {

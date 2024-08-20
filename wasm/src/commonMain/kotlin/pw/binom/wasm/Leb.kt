@@ -7,8 +7,8 @@ object Leb {
     var result = 0uL
     var byte: UByte
     while (true) {
-      byte = readByte().toUByte();
-      result = result or (((byte and 0x7fu).toULong()) shl shift);
+      byte = readByte().toUByte()
+      result = result or (((byte and 0x7fu).toULong()) shl shift)
       if ((byte and 0x80u) == 0.toUByte()) {
         break
       }
@@ -29,8 +29,8 @@ object Leb {
 
     while (true) {
       byte = readByte().toUByte()
-      result = result or (((byte and 0x7fu).toULong()) shl shift).toLong();
-      shift += 7;
+      result = result or (((byte and 0x7fu).toULong()) shl shift).toLong()
+      shift += 7
       if ((byte and 0x80u.toUByte()) == 0u.toUByte())
         break
       maxBytes--
@@ -65,7 +65,7 @@ object Leb {
 
     while (hasMore) {
       hasMore = (remaining != end)
-        || ((remaining and 1) != ((value shr 6) and 1));
+        || ((remaining and 1) != ((value shr 6) and 1))
 
       write(((value and 0x7f) or (if (hasMore) 0x80 else 0)).toByte())
       value = remaining

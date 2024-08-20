@@ -6,6 +6,7 @@ import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.readByteArray
 import pw.binom.readByte
+import pw.binom.wasm.visitors.ValueVisitor
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -89,8 +90,17 @@ class StreamReader(
   fun v33u() =
     Leb.readUnsigned(maxBits = 32) { readByte() }
 
-  fun v33s() =
-    Leb.readSigned(maxBits = 32) { readByte() }
+  fun v33s(firstByte: Byte = readByte()): Long {
+    var first = false
+    return Leb.readSigned(maxBits = 32) {
+      if (!first) {
+        first = true
+        firstByte
+      } else {
+        readByte()
+      }
+    }
+  }
 
   fun v32u() =
     Leb.readUnsigned(maxBits = 32) { readByte() }.toUInt()
@@ -121,11 +131,11 @@ class StreamReader(
   fun readBlockType() {
     val firstByte1 = v33u()
     val firstByte = firstByte1.toUByte()
-    val type = if (firstByte == 0x40u.toUByte()) {
+    if (firstByte == 0x40u.toUByte()) {
       null
     } else {
       if (isValueType(firstByte)) {
-        readValueType(firstByte)
+        readValueType(firstByte,visitor = ValueVisitor.EMPTY)
       } else {
         val index = v32s()
         println("block type index: $index")

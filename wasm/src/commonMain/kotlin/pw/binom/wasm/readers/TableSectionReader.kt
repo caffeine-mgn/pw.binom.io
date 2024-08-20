@@ -1,4 +1,7 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
+
+import pw.binom.wasm.StreamReader
+import pw.binom.wasm.readRefType
 
 object TableSectionReader {
   fun read(input: StreamReader) {

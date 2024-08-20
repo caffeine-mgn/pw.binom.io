@@ -1,4 +1,6 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
+
+import pw.binom.wasm.StreamReader
 
 object ExportSectionReader {
   private const val FUNC: UByte = 0x00u

@@ -1,6 +1,8 @@
 package pw.binom.wasm
 
 import pw.binom.io.EOFException
+import pw.binom.wasm.visitors.ExpressionsVisitor
+import pw.binom.wasm.visitors.ValueVisitor
 
 object ExpressionReader {
   private class Context {
@@ -21,10 +23,10 @@ object ExpressionReader {
       }
       lastOpcode = opcode
       when (opcode) {
-        Opcodes.GC_PREFIX -> gc(visitor = ExpressionsVisitor.STUB, input = input)
-        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = ExpressionsVisitor.STUB)
-        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = ExpressionsVisitor.STUB)
-        else -> default(input = input, visitor = ExpressionsVisitor.STUB, opcode = opcode, context = context)
+        Opcodes.GC_PREFIX -> gc(visitor = ExpressionsVisitor.Companion.STUB, input = input)
+        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = ExpressionsVisitor.Companion.STUB)
+        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = ExpressionsVisitor.Companion.STUB)
+        else -> default(input = input, visitor = ExpressionsVisitor.Companion.STUB, opcode = opcode, context = context)
       }
     }
 //    input.skipOther()
@@ -45,17 +47,11 @@ object ExpressionReader {
       Opcodes.GET_LOCAL,
       Opcodes.SET_LOCAL,
       Opcodes.TEE_LOCAL,
-        -> {
-        LocalId(input.v32u())
-//        LocalId(input.readVarUInt32AsInt().toUInt())
-      }
+        -> visitor.indexArgument(opcode = opcode, label = LocalId(input.v32u()))
 
       Opcodes.GET_GLOBAL,
       Opcodes.SET_GLOBAL,
-        -> {
-        GlobalId(input.v32u())
-//        visitor.indexArgument(opcode, input.readVarUInt32AsInt())
-      }
+        -> visitor.indexArgument(opcode = opcode, label = GlobalId(input.v32u()))
 
       Opcodes.SELECT -> {
         // TODO
@@ -72,7 +68,7 @@ object ExpressionReader {
       }
 
       Opcodes.END -> {
-        visitor.end()
+        visitor.endBlock()
         context.depth--
 //        visitor.controlFlow(opcode)
       }
@@ -246,6 +242,7 @@ object ExpressionReader {
       Opcodes.F64_GT,
       Opcodes.F64_LE,
       Opcodes.F64_GE,
+      Opcodes.REF_EQ,
         -> visitor.compare(opcode)
 
       Opcodes.I32_WRAP_I64,
@@ -271,10 +268,6 @@ object ExpressionReader {
       Opcodes.F64_PROMOTE_F32,
         -> visitor.convert(opcode)
 
-      Opcodes.REF_EQ -> {
-
-      }
-
       Opcodes.REF_FUNC -> {
         FunctionId(input.v32u())
         // TODO
@@ -289,24 +282,24 @@ object ExpressionReader {
       }
 
       Opcodes.REF_NULL -> {
-        input.readHeapType()
-        // TODO
+        input.readHeapType(visitor = visitor.refNull())
       }
 
-      Opcodes.CALL_INDIRECT -> {
-        TypeId(input.v32u())
-        TableId(input.v32u())
-        // TODO
-      }
+      Opcodes.CALL_INDIRECT -> visitor.call(
+        opcode = opcode,
+        type = TypeId(input.v32u()),
+        table = TableId(input.v32u()),
+      )
 
       Opcodes.CALL -> visitor.call(
         opcode = opcode,
         function = FunctionId(input.v32u()),
       )
 
-      Opcodes.CALL_REF -> {
-        TypeId(input.v32u())
-      }
+      Opcodes.CALL_REF -> visitor.call(
+        opcode = opcode,
+        typeRef = TypeId(input.v32u()),
+      )
 
       Opcodes.MEMORY_SIZE -> {
         input.v32u()
@@ -340,16 +333,14 @@ object ExpressionReader {
       Opcodes.SELECT_WITH_TYPE -> {
         val typeCount = input.v32s()
         check(typeCount == 1)
-        input.readValueType()
+        input.readValueType(visitor = ValueVisitor.EMPTY)
       }
 
       Opcodes.I32_REINTERPRET_F32,
       Opcodes.I64_REINTERPRET_F64,
       Opcodes.F32_REINTERPRET_I32,
       Opcodes.F64_REINTERPRET_I64,
-        -> {
-
-      }
+        -> visitor.reinterpret(opcode = opcode)
 
       else -> TODO("Unknown opcode: 0x${opcode.toString(16)}")
     }
@@ -382,37 +373,23 @@ object ExpressionReader {
     val opcode = input.readUByte()
     println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
     when (opcode) {
-      Opcodes.GC_STRUCT_NEW -> {
-        // ref.null type_id
-        TypeId(input.v32u())
-      }
+      Opcodes.GC_STRUCT_NEW -> visitor.structNew(type = TypeId(input.v32u()))
 
       Opcodes.GC_STRUCT_SET,
       Opcodes.GC_STRUCT_GET,
       Opcodes.GC_STRUCT_GET_S,
       Opcodes.GC_STRUCT_GET_U,
-        -> visitor.struct(
+        -> visitor.structOp(
         opcode = opcode,
         type = TypeId(input.v32u()),
         field = FieldId(input.v32u())
       )
 
-      Opcodes.GC_REF_CAST_NULL -> {
-        // ref.cast heapType
-        input.readHeapType() // heapType
-      }
-
-      Opcodes.GC_REF_TEST -> {
-        input.readHeapType()
-      }
-
-      Opcodes.GC_REF_TEST_NULL -> {
-        input.readHeapType()
-      }
-
-      Opcodes.GC_REF_CAST -> {
-        input.readHeapType()
-      }
+      Opcodes.GC_REF_CAST,
+      Opcodes.GC_REF_TEST_NULL,
+      Opcodes.GC_REF_TEST,
+      Opcodes.GC_REF_CAST_NULL,
+        -> input.readHeapType(visitor = visitor.ref(opcode = opcode)) // heapType
 
       Opcodes.GC_ARRAY_NEW_DEFAULT -> {
         TypeId(input.v32u())
@@ -422,9 +399,10 @@ object ExpressionReader {
       Opcodes.GC_ARRAY_SET,
       Opcodes.GC_ARRAY_GET_S,
       Opcodes.GC_ARRAY_GET_U,
-        -> {
-        TypeId(input.v32u())
-      }
+        -> visitor.array(
+        opcode = opcode,
+        type = TypeId(input.v32u())
+      )
 
       Opcodes.GC_ARRAY_LEN -> {
 
@@ -452,8 +430,8 @@ object ExpressionReader {
       Opcodes.GC_BR_ON_CAST_FAIL -> {
         input.readUByte() // flags
         input.v32u() // branch
-        input.readHeapType() // source_imm
-        input.readHeapType() // target_imm
+        input.readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY) // source_imm
+        input.readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY) // target_imm
       }
 
       Opcodes.GC_EXTERN_CONVERT_ANY -> {

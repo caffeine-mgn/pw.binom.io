@@ -3,6 +3,17 @@ package pw.binom.wasm
 import pw.binom.io.ByteBuffer
 import pw.binom.io.EOFException
 import pw.binom.io.use
+import pw.binom.wasm.readers.CodeSectionReader
+import pw.binom.wasm.readers.CustomSectionReader
+import pw.binom.wasm.readers.DataCountSectionReader
+import pw.binom.wasm.readers.DataSectionReader
+import pw.binom.wasm.readers.ElementSectionReader
+import pw.binom.wasm.readers.ExportSectionReader
+import pw.binom.wasm.readers.FunctionSectionReader
+import pw.binom.wasm.readers.GlobalSectionReader
+import pw.binom.wasm.readers.MemorySectionReader
+import pw.binom.wasm.readers.TableSectionReader
+import pw.binom.wasm.readers.TagSectionReader
 
 /**
  * https://webassembly.github.io/exception-handling/core/binary/modules.html
@@ -32,70 +43,54 @@ object WasmReader {
         if (sectionId > Sections.maxIndex) throw RuntimeException("IoErr.InvalidSectionId($sectionId), cursor: ${input.cursor}")
         val section = Sections.byIndex(sectionId)
         println("Section $section 0x${(input.globalCursor - 1).toUInt().toString(16)}")
-//        if (sectionId != 0)
-//          require(sectionId > maxSectionId) { "Section ID $sectionId came after $maxSectionId" }.also {
-//            maxSectionId = sectionId
-//          }
         val sectionLen = input.v32u()
 
         input.withLimit(sectionLen).use { sectionInput ->
           when (section) {
-            Sections.CUSTOM_SECTION -> {
-              CustomSectionReader.read(input = sectionInput, visitor = visitor.customSection())
-            }
-
-            Sections.TYPE_SECTION -> {
-              sectionInput.readVec({ visitor.typeSection(it) }) {
-                TypeSectionReader.read(
-                  input = sectionInput,
-                  visitor = it
-                )
-              }
-            }
-
-            Sections.IMPORT_SECTION -> sectionInput.readVec({ visitor.importSection(it) }) {
-              ImportSectionReader.readImportSection(
+            Sections.CUSTOM_SECTION -> CustomSectionReader.read(input = sectionInput, visitor = visitor.customSection())
+            Sections.TYPE_SECTION -> sectionInput.readVec {
+              TypeSectionReader.read(
                 input = sectionInput,
-                visitor = it,
+                visitor = visitor.typeSection()
               )
             }
 
-            Sections.FUNCTION_SECTION -> sectionInput.readVec({ visitor.functionSection(it) }) {
+            Sections.IMPORT_SECTION -> sectionInput.readVec {
+              ImportSectionReader.readImportSection(
+                input = sectionInput,
+                visitor = visitor.importSection(),
+              )
+            }
+
+            Sections.FUNCTION_SECTION -> sectionInput.readVec {
               FunctionSectionReader.read(
                 input = sectionInput,
-                visitor = it
+                visitor = visitor.functionSection()
               )
             }
 
             Sections.TABLE_SECTION -> TableSectionReader.read(sectionInput)
             Sections.MEMORY_SECTION -> MemorySectionReader.read(sectionInput)
             Sections.GLOBAL_SECTION -> GlobalSectionReader.read(sectionInput)
-            Sections.EXPORT_SECTION -> {
-              sectionInput.readVec {
-                ExportSectionReader.read(sectionInput)
-              }
+            Sections.EXPORT_SECTION -> sectionInput.readVec {
+              ExportSectionReader.read(sectionInput)
             }
 
-            Sections.START_SECTION -> {
-              sectionInput.v32u()
-            }
-
+            Sections.START_SECTION -> visitor.startSection(function = FunctionId(sectionInput.v32u()))
             Sections.ELEMENT_SECTION -> ElementSectionReader.read(input = sectionInput)
-
-
-            Sections.CODE_SECTION -> sectionInput.readVec({ visitor.codeVisitor(it) }) {
-              CodeSectionReader.read(input = sectionInput, visitor = it)
+            Sections.CODE_SECTION -> sectionInput.readVec {
+              CodeSectionReader.read(
+                input = sectionInput,
+                visitor = visitor.codeVisitor(),
+              )
             }
 
             Sections.DATA_SECTION -> DataSectionReader.read(input = sectionInput)
             Sections.DATA_COUNT_SECTION -> DataCountSectionReader.read(input = sectionInput)
             Sections.TAG_SECTION -> TagSectionReader.read(input = sectionInput)
-
             else -> sectionInput.skipOther()
           }
           sectionInput.skipOther()
-//        input.skip(sectionLen.toLong())
-//        sections += sectionId to b.read(sectionLen)
         }
       }
       visitor.end()

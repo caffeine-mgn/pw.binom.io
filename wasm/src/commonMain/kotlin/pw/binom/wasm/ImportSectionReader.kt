@@ -1,12 +1,14 @@
 package pw.binom.wasm
 
+import pw.binom.wasm.visitors.ImportSectionVisitor
+
 internal object ImportSectionReader {
 
   private fun readTable(
-    input: StreamReader,
-    module: String,
-    field: String,
-    visitor: ImportSectionVisitor,
+      input: StreamReader,
+      module: String,
+      field: String,
+      visitor: ImportSectionVisitor,
   ) {
     val refType = input.readRefType()
     val limitExist = input.v1u()

@@ -1,5 +1,8 @@
 package pw.binom.wasm
 
+import pw.binom.wasm.visitors.TypeSectionVisitor
+import pw.binom.wasm.visitors.ValueVisitor
+
 /**
  * https://webassembly.github.io/exception-handling/core/binary/modules.html#type-section
  * https://www.w3.org/TR/wasm-core-2/#type-section%E2%91%A0
@@ -20,11 +23,11 @@ object TypeSectionReader {
   private fun consume_sig(input: StreamReader, visitor: TypeSectionVisitor) {
     input.readVec {
       // args
-      input.readValueType()
+      input.readValueType(visitor = ValueVisitor.EMPTY)
     }
     input.readVec {
       // results
-      input.readValueType()
+      input.readValueType(visitor = ValueVisitor.EMPTY)
     }
   }
 
@@ -49,12 +52,11 @@ object TypeSectionReader {
 
   private fun consume_array(input: StreamReader, visitor: TypeSectionVisitor) {
     input.readStorageType()
-    val mutable = consume_mutability(input)
+    consume_mutability(input)
   }
 
   private fun consume_base_type_definition(kind: UByte?, input: StreamReader, visitor: TypeSectionVisitor) {
-    var kind = kind?:input.readUByte()
-    val is_final = true
+    var kind = kind ?: input.readUByte()
     var shared = false
     if (kind == kSharedFlagCode) {
       println("is shared")
@@ -80,9 +82,9 @@ object TypeSectionReader {
   }
 
   private fun consume_subtype_definition(kind: UByte?, input: StreamReader, visitor: TypeSectionVisitor) {
-    val kind = kind?:input.readUByte()
+    val kind = kind ?: input.readUByte()
     if (kind == kWasmSubtypeCode || kind == kWasmSubtypeFinalCode) {
-      val is_final = kind == kWasmSubtypeFinalCode
+      kind == kWasmSubtypeFinalCode
       // is_wasm_gc = true
       val supertype_count = input.v32u()
       var supertype = UInt.MAX_VALUE
@@ -113,7 +115,7 @@ object TypeSectionReader {
   }
 
   fun read(input: StreamReader, visitor: TypeSectionVisitor) {
-    DecodeTypeSection(input=input,visitor=visitor)
+    DecodeTypeSection(input = input, visitor = visitor)
 //    check(byte == kWasmFunctionTypeCode) {
 //      "Invalid marker 0x${byte.toString(16)}, position=0x${
 //        (input.globalCursor - 1).toUInt().toString(16)

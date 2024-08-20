@@ -4,6 +4,11 @@ import pw.binom.io.Input
 import pw.binom.io.file.File
 import pw.binom.io.file.openRead
 import pw.binom.io.use
+import pw.binom.wasm.visitors.CodeSectionVisitor
+import pw.binom.wasm.visitors.CustomSectionVisitor
+import pw.binom.wasm.visitors.FunctionSectionVisitor
+import pw.binom.wasm.visitors.ImportSectionVisitor
+import pw.binom.wasm.visitors.TypeSectionVisitor
 import kotlin.test.Test
 
 class ReadFromFileTest {
@@ -12,7 +17,8 @@ class ReadFromFileTest {
 //    val path = "/home/subochev/tmp/wasm-test/c/dot.o"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/developmentExecutable/kotlin/www-wasm-wasi.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/kotlin/www-wasm-wasi.wasm"
-    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/developmentExecutable/kotlin/www-wasm-js.wasm"
+    val path =
+      "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/developmentExecutable/kotlin/www-wasm-js.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/productionExecutable/kotlin/www-wasm-js.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/productionExecutable/optimized/www-wasm-js.wasm"
     File(path)
@@ -30,11 +36,13 @@ class MyWasmVisitor : WasmVisitor {
   override fun end() {
   }
 
-  override fun importSection(count: Int): ImportSectionVisitor = MyImportSectionVisitor()
-  override fun functionSection(count: Int): FunctionSectionVisitor = MyFunctionSectionVisitor()
-  override fun codeVisitor(count: Int): CodeSectionVisitor = MyCodeSectionVisitor(count = count)
-  override fun typeSection(count: Int): TypeSectionVisitor = MyTypeSectionVisitor()
+  override fun importSection(): ImportSectionVisitor = MyImportSectionVisitor()
+  override fun functionSection(): FunctionSectionVisitor = MyFunctionSectionVisitor()
+  override fun codeVisitor(): CodeSectionVisitor = MyCodeSectionVisitor()
+  override fun typeSection(): TypeSectionVisitor = MyTypeSectionVisitor()
   override fun customSection(): CustomSectionVisitor = MyCustomSectionVisitor()
+  override fun startSection(function: FunctionId) {
+  }
 }
 
 class MyCustomSectionVisitor : CustomSectionVisitor {
@@ -110,16 +118,17 @@ class MyImportSectionVisitor : ImportSectionVisitor {
   override fun table(module: String, field: String, type: ValueType.Ref, min: UInt, max: UInt) {
     println("Import $module->$field table $type with range $min->$max")
   }
+
   override fun table(module: String, field: String, type: ValueType.Ref, min: UInt) {
     println("Import $module->$field table $type with range $min->unlimited")
   }
 }
 
-class MyCodeSectionVisitor(val count:Int) : CodeSectionVisitor {
+class MyCodeSectionVisitor() : CodeSectionVisitor {
   private var c = 0
   override fun start(size: UInt) {
     c++
-    println("---------------Start CODE (size=$size) $c/$count---------------")
+    println("---------------Start CODE (size=$size) $c---------------")
   }
 
   override fun end() {
