@@ -103,24 +103,12 @@ class MyImportSectionVisitor : ImportSectionVisitor {
   override fun end() {
   }
 
-  override fun function(module: String, field: String, index: UInt) {
-    println("Import $module->$field function: #$index")
-  }
-
   override fun memory(module: String, field: String, initial: UInt, maximum: UInt) {
     println("Import $module->$field memory with range $initial->$maximum")
   }
 
   override fun memory(module: String, field: String, initial: UInt) {
     println("Import $module->$field memory with range $initial->unlimited")
-  }
-
-  override fun table(module: String, field: String, type: ValueType.Ref, min: UInt, max: UInt) {
-    println("Import $module->$field table $type with range $min->$max")
-  }
-
-  override fun table(module: String, field: String, type: ValueType.Ref, min: UInt) {
-    println("Import $module->$field table $type with range $min->unlimited")
   }
 }
 

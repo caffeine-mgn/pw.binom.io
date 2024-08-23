@@ -13,6 +13,7 @@ class StreamWriter(val out: Output) : Output {
 
   override fun flush() = out.flush()
 
+  fun write(byte: UByte) = write(byte.toByte())
   fun write(byte: Byte) {
     buffer.clear()
     buffer[0] = byte
@@ -79,11 +80,26 @@ class StreamWriter(val out: Output) : Output {
     writeByteArray(data, buffer)
   }
 
+  fun limit(inital: UInt) {
+    v1u(false)
+    v32u(inital)
+  }
+
+  fun limit(inital: UInt, max: UInt) {
+    v1u(true)
+    v32u(inital)
+    v32u(max)
+  }
+
   override fun close() {
     try {
       out.close()
     } finally {
       buffer.close()
     }
+  }
+
+  fun v1u(b: Boolean) {
+    write(if (b) 1 else 0)
   }
 }

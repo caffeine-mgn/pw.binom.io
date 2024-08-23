@@ -45,7 +45,6 @@ sealed interface StorageType {
   }
 }
 
-
 /**
  * reftype
  *
@@ -94,15 +93,15 @@ fun StreamReader.readStorageType() =
 
 fun StreamReader.readAbsHeapType(byte: UByte = readUByte()) = when (byte) {
   Types.TYPE_REF_ABS_HEAP_NO_FUNC -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_NO_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_NONE -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_FUNC_REF -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_ANY -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_EQ -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_I31 -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_STRUCT -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_ARRAY -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
+  Types.TYPE_REF_ABS_HEAP_NO_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN
+  Types.TYPE_REF_ABS_HEAP_NONE -> AbsHeapType.TYPE_REF_ABS_HEAP_NONE
+  Types.TYPE_REF_ABS_HEAP_FUNC_REF -> AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF
+  Types.TYPE_REF_ABS_HEAP_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN
+  Types.TYPE_REF_ABS_HEAP_ANY -> AbsHeapType.TYPE_REF_ABS_HEAP_ANY
+  Types.TYPE_REF_ABS_HEAP_EQ -> AbsHeapType.TYPE_REF_ABS_HEAP_EQ
+  Types.TYPE_REF_ABS_HEAP_I31 -> AbsHeapType.TYPE_REF_ABS_HEAP_I31
+  Types.TYPE_REF_ABS_HEAP_STRUCT -> AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT
+  Types.TYPE_REF_ABS_HEAP_ARRAY -> AbsHeapType.TYPE_REF_ABS_HEAP_ARRAY
   else -> TODO()
 }
 
@@ -145,6 +144,23 @@ fun StreamReader.readRefType(
 //  }
 //}
 
+fun StreamReader.readNumType(byte: UByte = readUByte(), visitor: ValueVisitor.NumberVisitor) {
+  when (byte) {
+    Types.TYPE_NUM_I32 -> visitor.i32()
+    Types.TYPE_NUM_I64 -> visitor.i64()
+    Types.TYPE_NUM_F32 -> visitor.f32()
+    Types.TYPE_NUM_F64 -> visitor.f64()
+    else -> TODO()
+  }
+}
+
+fun StreamReader.readVecType(byte: UByte = readUByte(), visitor: ValueVisitor.VectorVisitor) {
+  when (byte) {
+    Types.TYPE_VEC_V128 -> visitor.v128()
+    else -> TODO()
+  }
+}
+
 /**
  * valtype
  *
@@ -152,11 +168,13 @@ fun StreamReader.readRefType(
  */
 fun StreamReader.readValueType(byte: UByte = readUByte(), visitor: ValueVisitor) =
   when (val value = byte) {
-    Types.TYPE_NUM_I32 -> visitor.numType().i32()
-    Types.TYPE_NUM_I64 -> visitor.numType().i64()
-    Types.TYPE_NUM_F32 -> visitor.numType().f32()
-    Types.TYPE_NUM_F64 -> visitor.numType().f64()
-    Types.TYPE_VEC_V128 -> visitor.vecType().v128()
+    Types.TYPE_NUM_I32,
+    Types.TYPE_NUM_I64,
+    Types.TYPE_NUM_F32,
+    Types.TYPE_NUM_F64,
+      -> readNumType(byte = byte, visitor = visitor.numType())
+
+    Types.TYPE_VEC_V128 -> readVecType(byte = byte, visitor = visitor.vecType())
     Types.TYPE_REF_ABS_HEAP_FUNC_REF -> visitor.refType().ref().type(AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF)
     Types.TYPE_REF_EXTERN_REF -> visitor.refType().ref().type(AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN)
     Types.TYPE_REF_NULL -> readHeapType(visitor = visitor.refType().refNull())

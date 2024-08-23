@@ -1,35 +1,33 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
 
+import pw.binom.wasm.FunctionId
+import pw.binom.wasm.StreamReader
+import pw.binom.wasm.readRefType
 import pw.binom.wasm.visitors.ImportSectionVisitor
 
 internal object ImportSectionReader {
 
   private fun readTable(
-      input: StreamReader,
-      module: String,
-      field: String,
-      visitor: ImportSectionVisitor,
+    input: StreamReader,
+    module: String,
+    field: String,
+    visitor: ImportSectionVisitor,
   ) {
-    val refType = input.readRefType()
+    val tableVisitor = visitor.table(
+      module = module,
+      field = field,
+    )
+    tableVisitor.start()
+    input.readRefType(visitor = tableVisitor.type())
     val limitExist = input.v1u()
     val min = input.v32u()
-    if (limitExist) {
-      visitor.table(
-        module = module,
-        field = field,
-        min = min,
-        max = input.v32u(),
-        type = refType,
-      )
-    } else {
-      visitor.table(
-        module = module,
-        field = field,
-        min = min,
-        type = refType,
-      )
-    }
 
+    if (limitExist) {
+      tableVisitor.range(min = min, max = input.v32u())
+    } else {
+      tableVisitor.range(min = min)
+    }
+    tableVisitor.end()
   }
 
   private fun readMemory(module: String, field: String, input: StreamReader, visitor: ImportSectionVisitor) {
@@ -60,7 +58,7 @@ internal object ImportSectionReader {
       0.toByte() -> visitor.function(
         module = module,
         field = field,
-        index = input.v32u()
+        index = FunctionId(input.v32u())
       )
 
       1.toByte() -> readTable(

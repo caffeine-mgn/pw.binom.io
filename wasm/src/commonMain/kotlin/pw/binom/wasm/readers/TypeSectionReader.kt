@@ -1,5 +1,8 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
 
+import pw.binom.wasm.StreamReader
+import pw.binom.wasm.readStorageType
+import pw.binom.wasm.readValueType
 import pw.binom.wasm.visitors.TypeSectionVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
