@@ -318,7 +318,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
 
     private var closed = AtomicBoolean(false)
 
-    override fun close() {
+    actual override fun close() {
         if (!closed.compareAndSet(false, true)) {
             throw IllegalStateException("SSLSession already closed")
         }

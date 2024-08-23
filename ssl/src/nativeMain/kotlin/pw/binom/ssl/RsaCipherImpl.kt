@@ -1,11 +1,14 @@
+@file:OptIn(ExperimentalNativeApi::class)
+
 package pw.binom.ssl
 
 import kotlinx.cinterop.*
 import platform.openssl.*
 import pw.binom.checkTrue
 import pw.binom.crypto.RsaPadding
-import kotlin.native.internal.Cleaner
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.Cleaner
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalForeignApi::class)
 class RsaCipherImpl(args: List<String>) : Cipher {

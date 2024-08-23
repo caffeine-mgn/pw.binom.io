@@ -1,6 +1,8 @@
+@file:OptIn(DelicateCoroutinesApi::class)
 package pw.binom.mq.nats
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel

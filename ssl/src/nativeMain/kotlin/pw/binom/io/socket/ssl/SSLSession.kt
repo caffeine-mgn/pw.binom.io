@@ -20,6 +20,7 @@ internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
 fun getLastError() = ERR_error_string(ERR_peek_last_error(), null)?.toKString()
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class SSLSession(
   ctx: CPointer<SSL_CTX>,
   ssl: CPointer<SSL>,
@@ -279,7 +280,7 @@ actual class SSLSession(
   }
 
   private var closed = AtomicBoolean(false)
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(expected = false, new = true)) {
       throw IllegalStateException("SSLSession already closed")
     }

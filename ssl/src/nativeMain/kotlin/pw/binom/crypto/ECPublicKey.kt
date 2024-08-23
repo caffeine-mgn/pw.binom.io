@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalNativeApi::class)
+
 package pw.binom.crypto
 
 import kotlinx.cinterop.CPointer
@@ -13,14 +15,16 @@ import pw.binom.ssl.ECKey
 import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 import pw.binom.throwError
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class ECPublicKey(val native: CPointer<EC_KEY>/*private val curve: ECCurve, actual val q: EcPoint*/) :
   Key.Public, ECKey {
-  override val algorithm: KeyAlgorithm
+  actual override val algorithm: KeyAlgorithm
     get() = KeyAlgorithm.ECDSA
-  override val data: ByteArray
+  actual override val data: ByteArray
     get() =
       Bio.mem().use { bio ->
         PEM_write_bio_EC_PUBKEY(bio.self, native)
@@ -37,7 +41,7 @@ actual class ECPublicKey(val native: CPointer<EC_KEY>/*private val curve: ECCurv
         str = str.substring(26, str.length - 24)
         Base64.decode(str)
       }
-  override val format: String
+  actual override val format: String
     get() = "X.509"
   actual val q: EcPoint by lazy {
     val curve =

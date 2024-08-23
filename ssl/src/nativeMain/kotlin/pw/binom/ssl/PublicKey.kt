@@ -6,6 +6,7 @@ import platform.openssl.EVP_PKEY
 import pw.binom.io.Closeable
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual interface PublicKey : Closeable {
   actual companion object
 

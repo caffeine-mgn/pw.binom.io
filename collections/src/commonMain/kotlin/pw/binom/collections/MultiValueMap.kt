@@ -15,6 +15,7 @@ value class MultiValueMap<K, V>(val map: MutableMap<K, MutableCollection<V>>) {
     map[key] = value
   }
 
+  @Suppress("NOTHING_TO_INLINE")
   inline fun asSequence() = map.asSequence()
 
   fun asValueSequence() = map.asSequence().flatMap { pair -> pair.value.asSequence().map { pair.key to it } }

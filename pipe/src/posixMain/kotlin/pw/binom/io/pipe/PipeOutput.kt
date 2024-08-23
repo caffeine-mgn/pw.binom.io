@@ -1,8 +1,5 @@
 package pw.binom.io.pipe
 
-import com.jakewharton.cite.__FILE__
-import com.jakewharton.cite.__LINE__
-import com.jakewharton.cite.__TYPE__
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.UnsafeNumber
 import kotlinx.cinterop.convert
@@ -10,7 +7,6 @@ import platform.posix.EBADF
 import platform.posix.errno
 import pw.binom.io.ByteBuffer
 import pw.binom.io.DataTransferSize
-import pw.binom.io.IOException
 import pw.binom.io.Output
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
@@ -26,7 +22,7 @@ actual class PipeOutput private constructor(fd: PipePair) : Output {
 
   actual constructor(input: PipeInput) : this(PipePair(writeFd = input.writeFd, readFd = input.readFd))
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     if (cloesd) {
       return DataTransferSize.CLOSED
     }
@@ -54,12 +50,11 @@ actual class PipeOutput private constructor(fd: PipePair) : Output {
     return DataTransferSize.ofSize(wrote)
   }
 
-  override fun flush() {
+  actual override fun flush() {
     // Do nonthing
   }
 
-  override fun close() {
-    println("$__TYPE__: close fd=$writeFd ($__FILE__:$__LINE__)")
+  actual override fun close() {
     platform.posix.close(writeFd)
   }
 }

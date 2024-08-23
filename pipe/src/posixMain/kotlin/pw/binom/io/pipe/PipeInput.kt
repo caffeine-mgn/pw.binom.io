@@ -26,7 +26,7 @@ actual class PipeInput private constructor(fd: PipePair) : Input {
 
   actual constructor(output: PipeOutput) : this(PipePair(writeFd = output.writeFd, readFd = output.readFd))
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     var readed = 0
     while (true) {
       if (endded.getValue()) {
@@ -61,7 +61,7 @@ actual class PipeInput private constructor(fd: PipePair) : Input {
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     platform.posix.close(readFd)
   }
 }

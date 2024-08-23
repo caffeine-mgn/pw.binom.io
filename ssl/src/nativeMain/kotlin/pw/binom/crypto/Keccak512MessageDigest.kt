@@ -6,6 +6,7 @@ import platform.openssl.sha3_Init512
 import pw.binom.security.MessageDigest
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class Keccak512MessageDigest : MessageDigest, AbstractKeccakMessageDigest() {
   override fun initContext(ctx: COpaquePointer) {
     sha3_Init512(ctx)

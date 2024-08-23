@@ -12,27 +12,27 @@ actual class TcpClientUnixSocket(override val native: SocketChannel) : TcpClient
     return ConnectStatus.OK
   }
 
-  override fun close() {
+  actual override fun close() {
     native.close()
   }
 
-  override fun send(data: ByteBuffer): Int =
+  actual override fun send(data: ByteBuffer): Int =
     native.write(data.native)
 
-  override fun receive(data: ByteBuffer): Int =
+  actual override fun receive(data: ByteBuffer): Int =
     native.read(data.native)
 
-  override var blocking: Boolean = false
+  actual override var blocking: Boolean = false
     set(value) {
       field = value
       native.configureBlocking(value)
     }
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = native.socket().tcpNoDelay
 
-  override fun setTcpNoDelay(value: Boolean): Boolean {
+  actual override fun setTcpNoDelay(value: Boolean): Boolean {
     native.socket().tcpNoDelay = value
     return true
   }

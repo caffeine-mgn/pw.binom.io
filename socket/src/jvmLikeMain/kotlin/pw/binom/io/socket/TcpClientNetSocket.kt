@@ -1,8 +1,5 @@
 package pw.binom.io.socket
 
-import com.jakewharton.cite.__FILE__
-import com.jakewharton.cite.__LINE__
-import com.jakewharton.cite.__TYPE__
 import pw.binom.InternalLog
 import pw.binom.io.ByteBuffer
 import java.io.IOException
@@ -15,65 +12,65 @@ import kotlin.math.absoluteValue
 actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpClientSocket, NetSocket {
   actual constructor() : this(SocketChannel.open())
 
-  private val logger = InternalLog.file(__FILE__)
+  private val logger = InternalLog.file("TcpClientNetSocket")
   actual fun connect(address: InetSocketAddress): ConnectStatus {
     return try {
-      logger.info(line = __LINE__) { "Start connecting to $address" }
+      logger.info { "Start connecting to $address" }
       if (native.connect(address.native)) {
-        logger.info(line = __LINE__) { "Connected success" }
+        logger.info { "Connected success" }
         ConnectStatus.OK
       } else {
-        logger.info(line = __LINE__) { "Connection in process" }
+        logger.info { "Connection in process" }
         ConnectStatus.IN_PROGRESS
       }
     } catch (e: AlreadyConnectedException) {
-      logger.info(line = __LINE__) { "Already connected" }
+      logger.info { "Already connected" }
       ConnectStatus.ALREADY_CONNECTED
     } catch (e: ConnectException) {
-      logger.info(line = __LINE__) { "Can't connect: connection_refused" }
+      logger.info { "Can't connect: connection_refused" }
       ConnectStatus.CONNECTION_REFUSED
     }
   }
 
-  override fun close() {
-    logger.info(line = __LINE__) { "Closing" }
+  actual override fun close() {
+    logger.info { "Closing" }
     runCatching { native.shutdownInput() }
     runCatching { native.shutdownOutput() }
     native.close()
   }
 
-  override fun send(data: ByteBuffer): Int =
+  actual override fun send(data: ByteBuffer): Int =
     try {
       val r = data.remaining
       val s = native.write(data.native) ?: throw IllegalStateException()
-      logger.info(line = __LINE__) { "Success send $s/$r bytes" }
+      logger.info { "Success send $s/$r bytes" }
       s
     } catch (e: IOException) {
-      logger.info(line = __LINE__) { "Can't send $e" }
+      logger.info { "Can't send $e" }
 //        throw RuntimeException("Can't write ${data.remaining}", e)
       -1
     }
 
-  override fun receive(data: ByteBuffer): Int =
+  actual override fun receive(data: ByteBuffer): Int =
     try {
       val r = data.remaining
       val s = native.read(data.native)
-      logger.info(line = __LINE__) { "Received $s/$r bytes" }
+      logger.info { "Received $s/$r bytes" }
       s
     } catch (e: java.net.SocketException) {
-      logger.info(line = __LINE__) { "Can't receive: $e" }
+      logger.info { "Can't receive: $e" }
       -1
     }
 
-  override var blocking: Boolean = false
+  actual override var blocking: Boolean = false
     set(value) {
       field = value
-      logger.info(line = __LINE__) { "set blocking to $value" }
+      logger.info { "set blocking to $value" }
       native.configureBlocking(value)
     }
-  override val id: String
+  actual override val id: String
     get() = System.identityHashCode(native).absoluteValue.toString()
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() =
       try {
         native.socket().tcpNoDelay
@@ -81,17 +78,17 @@ actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpCl
         false
       }
 
-  override fun setTcpNoDelay(value: Boolean): Boolean =
+  actual override fun setTcpNoDelay(value: Boolean): Boolean =
     try {
       native.socket().tcpNoDelay = value
-      logger.info(line = __LINE__) { "set TcpNoDelay to $value" }
+      logger.info { "set TcpNoDelay to $value" }
       true
     } catch (e: SocketException) {
-      logger.info(line = __LINE__) { "set TcpNoDelay to $value" }
+      logger.info { "set TcpNoDelay to $value" }
       false
     }
 
   private var internalPort = 0
-  override val port: Int?
+  actual override val port: Int?
     get() = internalPort.takeIf { it != 0 }
 }

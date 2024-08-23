@@ -9,4 +9,5 @@ expect class Inflater : Closeable {
     fun end()
 
     fun inflate(input: ByteBuffer, output: ByteBuffer): Int
+  override fun close()
 }

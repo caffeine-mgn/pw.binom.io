@@ -19,8 +19,9 @@ import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class ECPrivateKey(val native: CPointer<EC_KEY>) : Key.Private, ECKey {
-  override val algorithm: KeyAlgorithm
+  actual override val algorithm: KeyAlgorithm
     get() = KeyAlgorithm.ECDSA
 
   private val cleaner =
@@ -34,7 +35,7 @@ actual class ECPrivateKey(val native: CPointer<EC_KEY>) : Key.Private, ECKey {
       return BigNum(num).toBigInt()
     }
 
-  override val data: ByteArray
+  actual override val data: ByteArray
     get() =
       Bio.mem().use { mem ->
 //            Bio.mem().use { m ->
@@ -75,7 +76,7 @@ actual class ECPrivateKey(val native: CPointer<EC_KEY>) : Key.Private, ECKey {
         str = str.substring(27, str.length - 25)
         Base64.decode(str)
       }
-  override val format: String
+  actual override val format: String
     get() = "PKCS#8"
 
   actual companion object {

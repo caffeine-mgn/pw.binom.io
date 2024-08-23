@@ -6,6 +6,7 @@ import platform.openssl.*
 import pw.binom.security.MessageDigest
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class Sha3MessageDigest actual constructor(val size: Size) : MessageDigest, OpenSSLMessageDigest() {
   actual enum class Size {
     S224,

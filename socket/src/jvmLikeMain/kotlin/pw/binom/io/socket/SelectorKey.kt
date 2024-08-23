@@ -1,18 +1,15 @@
 package pw.binom.io.socket
 
-import com.jakewharton.cite.__FILE__
-import com.jakewharton.cite.__LINE__
-import com.jakewharton.cite.__TYPE__
 import pw.binom.InternalLog
 import pw.binom.io.Closeable
 import java.nio.channels.SelectionKey
 import kotlin.math.absoluteValue
 
 actual class SelectorKey(val native: SelectionKey, actual val selector: Selector) : Closeable {
-  private val logger = InternalLog.file(__FILE__)
+  private val logger = InternalLog.file("SelectorKey")
 
-  override fun close() {
-    logger.info(line = __LINE__) { "Closing" }
+  actual override fun close() {
+    logger.info { "Closing" }
     closed = true
     native.cancel()
   }
@@ -43,16 +40,16 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     internalListenFlags = ListenFlags.ZERO
     try {
       native.interestOps(0)
-      logger.info(line = __LINE__) { "Cleared listener flags" }
+      logger.info { "Cleared listener flags" }
     } catch (e: java.nio.channels.CancelledKeyException) {
-      logger.info(line = __LINE__) { "Can't clear listener flags" }
+      logger.info { "Can't clear listener flags" }
       closed = true
     }
   }
 
   actual fun updateListenFlags(listenFlags: ListenFlags): Boolean {
     if (closed) {
-      logger.info(line = __LINE__) { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
+      logger.info { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
       return false
     }
     val old = internalListenFlags
@@ -68,12 +65,12 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     }
     return try {
       native.interestOps(r and native.channel().validOps())
-      logger.info(line = __LINE__) {
+      logger.info {
         "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}"
       }
       true
     } catch (e: java.nio.channels.CancelledKeyException) {
-      logger.info(line = __LINE__) {
+      logger.info {
         "Can't update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}: Locks like socket closed. Set state to close"
       }
       closed = true

@@ -1,3 +1,4 @@
+@file:OptIn(DelicateCoroutinesApi::class)
 package pw.binom.db.tarantool
 
 import kotlinx.coroutines.*

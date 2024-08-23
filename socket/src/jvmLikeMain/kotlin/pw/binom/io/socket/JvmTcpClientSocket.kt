@@ -1,6 +1,5 @@
 package pw.binom.io.socket
 
-import com.jakewharton.cite.__LINE__
 import pw.binom.InternalLog
 import pw.binom.io.ByteBuffer
 import java.io.IOException
@@ -18,7 +17,7 @@ class JvmTcpClientSocket(
   private val logger = InternalLog.file("ClientSocket_$id")
 
   override fun close() {
-    logger.info(line = __LINE__) { "Closing" }
+    logger.info { "Closing" }
     runCatching { native.shutdownInput() }
     runCatching { native.shutdownOutput() }
     native.close()
@@ -77,10 +76,10 @@ class JvmTcpClientSocket(
     try {
       val r = data.remaining
       val s = native.write(data.native) ?: throw IllegalStateException()
-      logger.info(line = __LINE__) { "Success send $s/$r bytes" }
+      logger.info { "Success send $s/$r bytes" }
       s
     } catch (e: IOException) {
-      logger.info(line = __LINE__) { "Can't send $e" }
+      logger.info { "Can't send $e" }
 //        throw RuntimeException("Can't write ${data.remaining}", e)
       -1
     }
@@ -89,10 +88,10 @@ class JvmTcpClientSocket(
     try {
       val r = data.remaining
       val s = native.read(data.native)
-      logger.info(line = __LINE__) { "Received $s/$r bytes" }
+      logger.info { "Received $s/$r bytes" }
       return s
     } catch (e: java.net.SocketException) {
-      logger.info(line = __LINE__) { "Can't receive: $e" }
+      logger.info { "Can't receive: $e" }
       return -1
     }
   }
@@ -107,7 +106,7 @@ class JvmTcpClientSocket(
   override var blocking: Boolean = false
     set(value) {
       field = value
-      logger.info(line = __LINE__) { "set blocking to $value" }
+      logger.info { "set blocking to $value" }
       native.configureBlocking(value)
     }
   override val tcpNoDelay: Boolean
@@ -121,10 +120,10 @@ class JvmTcpClientSocket(
   override fun setTcpNoDelay(value: Boolean): Boolean =
     try {
       native.socket().tcpNoDelay = value
-      logger.info(line = __LINE__) { "set TcpNoDelay to $value" }
+      logger.info { "set TcpNoDelay to $value" }
       true
     } catch (e: SocketException) {
-      logger.info(line = __LINE__) { "set TcpNoDelay to $value" }
+      logger.info { "set TcpNoDelay to $value" }
       false
     }
 }

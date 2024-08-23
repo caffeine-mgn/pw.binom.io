@@ -9,8 +9,9 @@ import platform.openssl.*
 import pw.binom.io.Closeable
 import pw.binom.io.use
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class X509Certificate internal constructor(val ptr: CPointer<X509>) : Closeable {
-  override fun close() {
+  actual override fun close() {
     X509_free(ptr)
   }
 
@@ -34,6 +35,7 @@ inline val CPointer<stack_st_X509>.size: Int
   get() = internal_sk_X509_num(this).let { if (it < 0) 0 else it }
 //    get() = sk_X509_num(this).let { if (it < 0) 0 else it }
 
+@Suppress("NOTHING_TO_INLINE")
 inline operator fun CPointer<stack_st_X509>.get(index: Int): CPointer<X509> {
   if (index < 0 || index >= size) {
     throw IndexOutOfBoundsException()

@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.socket.*
 import pw.binom.io.InHeap
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class)
 actual open class InetSocketAddress : SocketAddress {
   actual companion object {
@@ -46,7 +47,7 @@ actual open class InetSocketAddress : SocketAddress {
     }
 
   val native: InHeap<NInetSocketNetworkAddress> = InHeap.create<NInetSocketNetworkAddress>()
-  override val host: String
+  actual override val host: String
     get() = memScoped {
       native.use { ptr ->
         val buf = allocArray<ByteVar>(50)
@@ -54,7 +55,7 @@ actual open class InetSocketAddress : SocketAddress {
         buf.toKString()
       }
     }
-  override val port: Int
+  actual override val port: Int
     get() = native.use { ptr ->
       NInetSocketNetworkAddress_getPort(ptr)
     }

@@ -22,6 +22,7 @@ const val MD4 = "MD4"
 const val MD5 = "MD5"
 const val SM3 = "SM3"
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual interface Signature {
   actual companion object {
     actual fun getInstance(algorithm: String): Signature = when (algorithm) {

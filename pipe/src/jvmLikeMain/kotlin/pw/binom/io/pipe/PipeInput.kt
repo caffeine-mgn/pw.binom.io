@@ -15,7 +15,7 @@ actual class PipeInput private constructor(val native: PipedInputStream) : Input
 
   actual constructor() : this(PipedInputStream())
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     val readed = channel.read(dest.native)
     return when {
       readed == 0 -> DataTransferSize.EMPTY
@@ -24,7 +24,7 @@ actual class PipeInput private constructor(val native: PipedInputStream) : Input
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     native.close()
   }
 }

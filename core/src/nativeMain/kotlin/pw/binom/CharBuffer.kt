@@ -28,6 +28,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     }
   }
 
+  @Suppress("NOTHING_TO_INLINE")
   private inline fun div2(value: Int): Int {
     if (value == 0) {
       return 0
@@ -35,21 +36,21 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     return value / 2
   }
 
-  override val capacity: Int
+  actual override val capacity: Int
     get() = div2(bytes.capacity)
-  override val hasRemaining: Boolean
+  actual override val hasRemaining: Boolean
     get() = remaining > 0
 
-  override val remaining: Int
+  actual override val remaining: Int
     get() = div2(bytes.remaining)
 
-  override var position: Int
+  actual override var position: Int
     get() = div2(bytes.position)
     set(value) {
       bytes.position = value * 2
     }
 
-  override var limit: Int
+  actual override var limit: Int
     get() = div2(bytes.limit)
     set(value) {
       bytes.limit = value * 2
@@ -68,7 +69,7 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     return CharBuffer(newBytes)
   }
 
-  override fun close() {
+  actual override fun close() {
     bytes.close()
   }
 
@@ -109,12 +110,12 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     return this
   }
 
-  override fun clear() {
+  actual override fun clear() {
     position = 0
     limit = capacity
   }
 
-  override val elementSizeInBytes: Int
+  actual override val elementSizeInBytes: Int
     get() = Char.SIZE_BYTES
 
   actual override fun toString(): String {
@@ -129,11 +130,11 @@ actual class CharBuffer constructor(val bytes: ByteBuffer) : CharSequence, Close
     return sb.toString()
   }
 
-  override fun flip() {
+  actual override fun flip() {
     bytes.flip()
   }
 
-  override fun compact() {
+  actual override fun compact() {
     bytes.compact()
   }
 

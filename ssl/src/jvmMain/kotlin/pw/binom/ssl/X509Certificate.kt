@@ -4,7 +4,7 @@ import pw.binom.io.Closeable
 import java.io.ByteArrayInputStream
 
 actual class X509Certificate(val native: java.security.cert.X509Certificate) : Closeable {
-    override fun close() {
+    actual override fun close() {
     }
 
     actual companion object {

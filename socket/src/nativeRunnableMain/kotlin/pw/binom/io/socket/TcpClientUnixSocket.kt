@@ -9,6 +9,7 @@ import pw.binom.io.IOException
 import pw.binom.io.InHeap
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class TcpClientUnixSocket(init: Boolean) : TcpClientSocket,AbstractTcpSocket(init) {
   actual constructor() : this(true)
 

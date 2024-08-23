@@ -16,18 +16,18 @@ actual class PipeOutput private constructor(val native: PipedOutputStream) : Out
 
   actual constructor() : this(PipedOutputStream())
 
-  override fun write(data: ByteBuffer): DataTransferSize =
+  actual override fun write(data: ByteBuffer): DataTransferSize =
     try {
       DataTransferSize.ofSize(channel.write(data.native))
     } catch (e: IOException) {
       DataTransferSize.CLOSED
     }
 
-  override fun flush() {
+  actual override fun flush() {
     native.flush()
   }
 
-  override fun close() {
+  actual override fun close() {
     native.close()
   }
 }

@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package pw.binom.db.radis
 
 import pw.binom.DEFAULT_BUFFER_SIZE

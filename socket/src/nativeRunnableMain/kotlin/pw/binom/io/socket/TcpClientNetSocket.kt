@@ -9,6 +9,7 @@ import pw.binom.io.IOException
 import pw.binom.io.InHeap
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual open class TcpClientNetSocket(init: Boolean) : TcpClientSocket, NetSocket,AbstractTcpSocket(init) {
 
   actual constructor() : this(true)
@@ -21,7 +22,7 @@ actual open class TcpClientNetSocket(init: Boolean) : TcpClientSocket, NetSocket
     }
   }
 
-  override val port: Int?
+  actual override val port: Int?
     get() = data.use { ptr ->
       NSocket_getSocketPort(ptr).takeIf { it != -1 }
     }

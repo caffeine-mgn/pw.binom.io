@@ -2,6 +2,7 @@ package pw.binom.crypto
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class ECCurve {
     companion object {
         fun generate(params: X9ECParameters): ECCurve

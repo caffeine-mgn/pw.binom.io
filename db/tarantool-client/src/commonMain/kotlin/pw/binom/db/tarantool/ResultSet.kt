@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package pw.binom.db.tarantool
 
 import pw.binom.collections.defaultMutableList

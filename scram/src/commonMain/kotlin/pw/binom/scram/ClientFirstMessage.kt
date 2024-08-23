@@ -130,11 +130,11 @@ class ClientFirstMessage : StringWritable {
                 throw ScramParseException("Illegal series of attributes in client-first-message", e)
             }
             val user: ScramAttributeValue = ScramAttributeValue.parse(userNonceString[0])
-            if (ScramAttributes.USERNAME.getChar() !== user.getChar()) {
+            if (ScramAttributes.USERNAME.getChar() != user.getChar()) {
                 throw ScramParseException("user must be the 3rd element of the client-first-message")
             }
             val nonce: ScramAttributeValue = ScramAttributeValue.parse(userNonceString[1])
-            if (ScramAttributes.NONCE.getChar() !== nonce.getChar()) {
+            if (ScramAttributes.NONCE.getChar() != nonce.getChar()) {
                 throw ScramParseException("nonce must be the 4th element of the client-first-message")
             }
             return ClientFirstMessage(gs2Header, user.getValue(), nonce.getValue())

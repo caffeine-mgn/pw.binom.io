@@ -28,9 +28,9 @@ actual open class InetSocketAddress(var native: JvmInetSocketAddress) : SocketAd
     }
   actual val isMulticastAddress: Boolean
     get() = native.address.isMulticastAddress
-  override val host: String
+  actual override val host: String
     get() = native.address.hostAddress
-  override val port: Int
+  actual override val port: Int
     get() = native.port
 
   actual fun toMutable(): MutableInetSocketAddress {

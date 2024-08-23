@@ -8,6 +8,7 @@ import pw.binom.checkTrue
 import pw.binom.throwError
 import pw.binom.toBigNum
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class)
 actual class ECDSASigner {
   private val privateKey: ECPrivateKey?

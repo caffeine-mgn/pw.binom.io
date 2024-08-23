@@ -1,5 +1,8 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package pw.binom.io.http
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import pw.binom.DEFAULT_BUFFER_SIZE

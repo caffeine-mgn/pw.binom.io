@@ -10,7 +10,7 @@ import platform.socket.NEvent_setEventFlags
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.IOException
-
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 actual class EpollInterceptor actual constructor(selector: Selector) : Closeable {
   private val pipeRead: Int
@@ -46,7 +46,7 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
     wakeupFlag.setValue(false)
   }
 
-  override fun close() {
+  actual override fun close() {
     epoll.delete(pipeRead)
     platform.posix.close(pipeRead)
     platform.posix.close(pipeWrite)

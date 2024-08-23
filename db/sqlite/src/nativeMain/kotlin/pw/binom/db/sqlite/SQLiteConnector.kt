@@ -15,10 +15,12 @@ import pw.binom.db.SQLException
 import pw.binom.db.async.DatabaseInfo
 import pw.binom.db.sync.SyncConnection
 import pw.binom.db.sync.SyncPreparedStatement
+import pw.binom.db.sync.SyncStatement
 import pw.binom.io.ClosedException
 import pw.binom.io.IOException
 import pw.binom.io.file.File
 
+@OptIn(ExperimentalForeignApi::class)
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<sqlite3>>) : SyncConnection {
   actual companion object {
@@ -73,12 +75,12 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     }
   }
 
-  override fun createStatement(): SQLiteStatement {
+  actual override fun createStatement(): SyncStatement {
     checkClosed()
     return SQLiteStatement(this)
   }
 
-  override fun prepareStatement(query: String): SyncPreparedStatement {
+  actual override fun prepareStatement(query: String): SyncPreparedStatement {
     checkClosed()
     val stmt = nativeHeap.allocArray<CPointerVar<sqlite3_stmt>>(1)
     val statement = try {
@@ -103,33 +105,33 @@ actual class SQLiteConnector private constructor(val ctx: CPointer<CPointerVar<s
     return statement
   }
 
-  override fun beginTransaction() {
+  actual override fun beginTransaction() {
     checkClosed()
     beginSt.executeUpdate()
   }
 
-  override fun commit() {
+  actual override fun commit() {
     checkClosed()
     commitSt.executeUpdate()
 //        beginSt.executeUpdate()
   }
 
-  override fun rollback() {
+  actual override fun rollback() {
     checkClosed()
     rollbackSt.executeUpdate()
 //        beginSt.executeUpdate()
   }
 
-  override val type: String
+  actual override val type: String
     get() = TYPE
 
-  override val isConnected: Boolean
+  actual override val isConnected: Boolean
     get() = !closed.getValue()
 
-  override val dbInfo: DatabaseInfo
+  actual override val dbInfo: DatabaseInfo
     get() = SQLiteSQLDatabaseInfo
 
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(false, true)) {
       return
     }

@@ -41,6 +41,7 @@ open class CRC32Basic(private val init: UInt, val crcTable: IntArray) : MessageD
     }
   }
 
+  @Suppress("NOTHING_TO_INLINE")
   inline fun apply(byte: Byte, c: Int): Int {
     val o = byte.toInt() and 0xFF
     return (c ushr 8) xor crcTable[o xor (c and 0xff)]

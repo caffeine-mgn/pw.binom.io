@@ -8,13 +8,13 @@ buildscript {
   }
 
   dependencies {
-    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.10")
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.20")
     classpath("com.android.tools.build:gradle:7.0.0")
   }
 }
 
 plugins {
-  kotlin("jvm") version "2.0.10"
+  kotlin("jvm") version "2.0.20"
   id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 val kotlinVersion = kotlin.coreLibrariesVersion

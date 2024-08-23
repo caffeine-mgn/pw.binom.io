@@ -69,4 +69,16 @@ expect class CharBuffer : CharSequence, Closeable, Buffer {
   override fun toString(): String
   fun read(array: CharArray, offset: Int = 0, length: Int = array.size - offset): Int
   fun write(array: CharArray, offset: Int = 0, length: Int = array.size - offset): Int
+  override fun close()
+  override fun flip()
+  override fun compact()
+  override val capacity: Int
+  override val elementSizeInBytes: Int
+  override val hasRemaining: Boolean
+  override var limit: Int
+  override var position: Int
+  override val remaining: Int
+  override fun clear()
+  override fun closeAnyway(): Boolean
+  override fun hashCode(): Int
 }

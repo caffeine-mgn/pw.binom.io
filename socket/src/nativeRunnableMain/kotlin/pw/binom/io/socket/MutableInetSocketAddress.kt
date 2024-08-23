@@ -6,6 +6,7 @@ import platform.socket.NInetSocketNetworkAddress_setPort
 import pw.binom.io.IOException
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class MutableInetSocketAddress actual constructor() : InetSocketAddress() {
   actual companion object;
 

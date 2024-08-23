@@ -11,6 +11,7 @@ import pw.binom.BigNumContext
 import pw.binom.throwError
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class X9ECParameters(actual val curve: ECCurve) {
 
   actual val seed: ByteArray?

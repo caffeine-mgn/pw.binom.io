@@ -20,8 +20,8 @@ import kotlin.time.measureTime
 internal val STUB_BYTE = byteArrayOf(1).pin()
 private const val MAX_ELEMENTS = 1042
 
-@Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(UnsafeNumber::class, ExperimentalTime::class, ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "OPT_IN_IS_NOT_ENABLED")
+@OptIn(ExperimentalForeignApi::class)
 actual class Selector : Closeable {
   private val selectLock = ReentrantLock()
 
@@ -327,7 +327,7 @@ actual class Selector : Closeable {
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     selectLock.synchronize {
       epollInterceptor.close()
       usingEventPtr { eventMem ->

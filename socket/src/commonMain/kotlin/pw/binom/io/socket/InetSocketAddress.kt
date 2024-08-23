@@ -1,5 +1,6 @@
 package pw.binom.io.socket
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect open class InetSocketAddress : SocketAddress {
   companion object {
     fun resolveOrNull(host: String, port: Int): InetSocketAddress?
@@ -12,4 +13,6 @@ expect open class InetSocketAddress : SocketAddress {
   val address: ByteArray
   val protocolFamily: ProtocolFamily
   val isMulticastAddress: Boolean
+  override val host: String
+  override val port: Int
 }

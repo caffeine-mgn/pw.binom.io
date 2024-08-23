@@ -6,7 +6,6 @@ import pw.binom.url.URL
 
 interface HttpConnectionPool : AsyncCloseable {
     fun interface Factory {
-        @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
         suspend fun connect(factory: HttpConnectionPool, url: URL): HttpConnect
     }
 

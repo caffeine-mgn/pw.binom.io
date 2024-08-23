@@ -10,6 +10,7 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class EpollInterceptor actual constructor(selector: Selector) : Closeable {
 
   private val udpReadSocket = UdpNetSocket()
@@ -46,7 +47,7 @@ actual class EpollInterceptor actual constructor(selector: Selector) : Closeable
     wakeupFlag.setValue(false)
   }
 
-  override fun close() {
+  actual override fun close() {
     epoll.delete(udpReadSocket.native)
     udpReadSocket.close()
     udpWriteSocket.close()

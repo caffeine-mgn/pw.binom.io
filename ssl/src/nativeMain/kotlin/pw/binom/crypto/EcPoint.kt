@@ -9,6 +9,7 @@ import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class, UnsafeNumber::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class EcPoint(actual val curve: ECCurve, val ptr: CPointer<EC_POINT>) {
   @OptIn(ExperimentalStdlibApi::class)
   private val cleaner = createCleaner(ptr) { ptr ->

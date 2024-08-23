@@ -26,13 +26,13 @@ actual class ReentrantLock : Lock {
     nativeHeap.free(native)
   }
 
-  override fun tryLock(): Boolean = TryEnterCriticalSection(native.ptr) != 0
+  actual override fun tryLock(): Boolean = TryEnterCriticalSection(native.ptr) != 0
 
-  override fun lock() {
+  actual override fun lock() {
     EnterCriticalSection(native.ptr)
   }
 
-  override fun unlock() {
+  actual override fun unlock() {
     LeaveCriticalSection(native.ptr)
   }
 

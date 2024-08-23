@@ -401,6 +401,7 @@ class RESP3Impl(
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   private suspend fun writeValue(value: Any?) {
     when (value) {
       null -> writeNull()

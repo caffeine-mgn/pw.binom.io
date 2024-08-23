@@ -7,6 +7,7 @@ import pw.binom.io.IOException
 import pw.binom.io.InHeap
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class TcpNetServerSocket actual constructor() : TcpServerSocket, NetSocket {
 
   override val data = InHeap.create<NSocket>()
@@ -69,14 +70,14 @@ actual class TcpNetServerSocket actual constructor() : TcpServerSocket, NetSocke
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     data.use { ptr ->
       NSocket_close(ptr)
     }
   }
 
 
-  override var blocking: Boolean
+  actual override var blocking: Boolean
     get() = data.use { ptr ->
       NSocket_getBlockedMode(ptr) > 0
     }
@@ -91,19 +92,19 @@ actual class TcpNetServerSocket actual constructor() : TcpServerSocket, NetSocke
   override var keyHash: Int
     get() = TODO("Not yet implemented")
     set(value) {}
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = data.use { ptr ->
       NSocket_getNoDelay(ptr) > 0
     }
 
-  override fun setTcpNoDelay(value: Boolean): Boolean =
+  actual override fun setTcpNoDelay(value: Boolean): Boolean =
     data.use { ptr ->
       NSocket_setNoDelay(ptr, if (value) 1 else 0)
     } > 0
 
-  override val port: Int?
+  actual  override val port: Int?
     get() = data.use { ptr ->
       NSocket_getSocketPort(ptr).takeIf { it > 0 }
     }

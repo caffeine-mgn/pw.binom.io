@@ -6,13 +6,13 @@ import pw.binom.security.MessageDigest
 
 actual class Keccak512MessageDigest : MessageDigest {
     private var ctx: Keccak.Digest512? = null
-    override fun init() {
+    actual override fun init() {
         ctx = Keccak.Digest512()
     }
 
     private fun getCtx() = ctx ?: throw IllegalStateException("Keccak context not inited")
 
-    override fun update(byte: Byte) {
+    actual override fun update(byte: Byte) {
         getCtx().update(byte)
     }
 
@@ -24,7 +24,7 @@ actual class Keccak512MessageDigest : MessageDigest {
         getCtx().update(buffer.native)
     }
 
-    override fun finish(): ByteArray {
+    actual override fun finish(): ByteArray {
         val ret = getCtx().digest()
         ctx = null
         return ret

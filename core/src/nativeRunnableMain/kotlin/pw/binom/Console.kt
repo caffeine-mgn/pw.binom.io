@@ -40,7 +40,7 @@ actual object Console {
           return DataTransferSize.EMPTY
         }
         return dest.refTo(dest.position) { dest2 ->
-          write(STDIN_FILENO, dest2, dest.remaining.convert()).convert()
+          DataTransferSize.ofSize(write(STDIN_FILENO, dest2, dest.remaining.convert()).convert())
         } ?: DataTransferSize.EMPTY
       }
 

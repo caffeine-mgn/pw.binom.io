@@ -6,7 +6,7 @@ import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.readByteArray
 import pw.binom.readByte
-import pw.binom.wasm.visitors.ValueVisitor
+import pw.binom.wasm.visitors.ExpressionsVisitor
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -128,14 +128,15 @@ class StreamReader(
     return bytes.decodeToString()
   }
 
-  fun readBlockType() {
+  fun readBlockType(visitor: ExpressionsVisitor.BlockStartVisitor) {
     val firstByte1 = v33u()
     val firstByte = firstByte1.toUByte()
     if (firstByte == 0x40u.toUByte()) {
+      visitor.withoutType()
       null
     } else {
       if (isValueType(firstByte)) {
-        readValueType(firstByte, visitor = ValueVisitor.EMPTY)
+        readValueType(firstByte, visitor = visitor.valueType())
       } else {
         TODO()
         val index = v32s()

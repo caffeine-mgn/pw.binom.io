@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -14,7 +16,7 @@ import pw.binom.uuid.UUID
 class SQLEncoderImpl(val ctx: SQLEncoderPool, val onClose: () -> Unit) : SQLEncoder {
   var name = ""
   var useQuotes: Boolean = false
-  override var serializersModule: SerializersModule = EmptySerializersModule
+  override var serializersModule: SerializersModule = EmptySerializersModule()
   var output: DateContainer = DateContainer.EMPTY
   var excludeGenerated: Boolean = false
 

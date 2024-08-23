@@ -9,6 +9,7 @@ import pw.binom.io.InHeap
 import kotlin.time.Duration
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class MulticastUdpSocket actual constructor(
   networkInterface: NetworkInterface,
   port: Int,
@@ -110,13 +111,13 @@ actual class MulticastUdpSocket actual constructor(
     TODO()
   }
 
-  override fun close() {
+  actual override fun close() {
     data.use { socketPtr ->
       NSocket_close(socketPtr)
     }
   }
 
-  override fun setSoTimeout(duration: Duration) {
+  actual override fun setSoTimeout(duration: Duration) {
     data.use { socketPtr ->
       if (NSocket_setSoTimeout(socketPtr, duration.inWholeMilliseconds.toULong()) != 1) {
         throw IOException("Can't set SoTimeout $duration")
@@ -124,7 +125,7 @@ actual class MulticastUdpSocket actual constructor(
     }
   }
 
-  override var blocking: Boolean
+  actual override var blocking: Boolean
     get() = data.use { NSocket_getBlockedMode(it) == 1 }
     set(value) {
       data.use { NSocket_setBlockedMode(it, if (value) 1 else 0) }
@@ -134,17 +135,17 @@ actual class MulticastUdpSocket actual constructor(
   override var keyHash: Int
     get() = TODO("Not yet implemented")
     set(value) {}
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = TODO("Not yet implemented")
 
-  override fun setTcpNoDelay(value: Boolean): Boolean =
+  actual override fun setTcpNoDelay(value: Boolean): Boolean =
     data.use { socketPtr ->
       NSocket_setNoDelay(socketPtr, if (value) 1 else 0) == 1
     }
 
-  override val port: Int?
+  actual override val port: Int?
     get() = data.use { socketPtr ->
       NSocket_getSocketPort(socketPtr)
     }.takeIf { it > 0 }

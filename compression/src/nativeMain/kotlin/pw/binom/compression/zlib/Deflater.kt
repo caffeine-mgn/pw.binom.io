@@ -59,7 +59,7 @@ actual class Deflater actual constructor(level: Int, wrap: Boolean, val syncFlus
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(false, true)) {
       throw ClosedException()
     }

@@ -62,7 +62,7 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
   }
 
   @OptIn(UnsafeNumber::class)
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     if (dest.remaining <= 0) {
       return DataTransferSize.EMPTY
@@ -96,14 +96,14 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(false, true)) {
       throw ClosedException()
     }
     fclose(handler)
   }
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     if (feof(handler) != 0) {
       return DataTransferSize.EMPTY
@@ -122,7 +122,7 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
 //        return fwrite(data.refTo(offset), 1.convert(), length.convert(), handler).convert()
 //    }
 
-  override fun flush() {
+  actual override fun flush() {
     checkClosed()
     fflush(handler)
   }
@@ -131,12 +131,12 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
     fseek(handler, 0, SEEK_END)
   }
 
-  override var position: Long
+  actual override var position: Long
     get() = ftell(handler).convert()
     set(value) {
       fseek(handler, value.convert(), SEEK_SET)
     }
-  override val size: Long
+  actual override val size: Long
     get() {
       val pos = position
       gotoEnd()

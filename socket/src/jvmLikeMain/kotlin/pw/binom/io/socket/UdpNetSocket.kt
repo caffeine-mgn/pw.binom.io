@@ -40,27 +40,27 @@ actual class UdpNetSocket(override val native: DatagramChannel) : UdpSocket, Net
     return data.position - before
   }
 
-  override fun close() {
+  actual override fun close() {
     native.close()
   }
 
-  override fun setSoTimeout(duration: Duration) {
+  actual override fun setSoTimeout(duration: Duration) {
     native.socket().soTimeout = duration.inWholeMilliseconds.toInt()
   }
 
-  override var blocking: Boolean = false
+  actual override var blocking: Boolean = false
     set(value) {
       field = value
       native.configureBlocking(value)
     }
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = false
 
-  override fun setTcpNoDelay(value: Boolean): Boolean = false
+  actual override fun setTcpNoDelay(value: Boolean): Boolean = false
 
-  override val port: Int?
+  actual override val port: Int?
     get() = native.socket().localPort.takeIf { it > 0 }
   actual var ttl: UByte
     get() = native.socket().getOption(StandardSocketOptions.IP_MULTICAST_TTL).toUByte()

@@ -16,13 +16,14 @@ import pw.binom.throwError
 import pw.binom.toBigNum
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class RSAPublicKey(
   actual val e: BigInteger,
   actual val n: BigInteger,
 ) : Key.Public {
-  override val algorithm: KeyAlgorithm
+  actual override val algorithm: KeyAlgorithm
     get() = KeyAlgorithm.RSA
-  override val data: ByteArray
+  actual override val data: ByteArray
     get() {
       val rsa = RSA_new() ?: throwError("RSA_new fail")
       val nNum = n.toBigNum()
@@ -50,6 +51,6 @@ actual class RSAPublicKey(
         Base64.decode(str)
       }
     }
-  override val format: String
+  actual override val format: String
     get() = "X.509"
 }

@@ -57,7 +57,7 @@ actual class FileChannel actual constructor(
     return (endOfFile - position).toLong()
   }
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     if (feof(handler) != 0) {
       return DataTransferSize.EMPTY
@@ -76,7 +76,7 @@ actual class FileChannel actual constructor(
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     try {
       checkClosed()
       fclose(handler)
@@ -85,7 +85,7 @@ actual class FileChannel actual constructor(
     }
   }
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     if (feof(handler) != 0) {
       return DataTransferSize.EMPTY
@@ -99,7 +99,7 @@ actual class FileChannel actual constructor(
     return DataTransferSize.ofSize(wroted)
   }
 
-  override fun flush() {
+  actual override fun flush() {
     checkClosed()
     fflush(handler)
   }
@@ -109,7 +109,7 @@ actual class FileChannel actual constructor(
     fseek(handler, 0, SEEK_END)
   }
 
-  override var position: Long
+  actual override var position: Long
     get() {
       checkClosed()
       return ftell(handler).convert()
@@ -117,7 +117,7 @@ actual class FileChannel actual constructor(
     set(value) {
       fseek(handler, value.convert(), SEEK_SET)
     }
-  override val size: Long
+  actual override val size: Long
     get() {
       val pos = position
       gotoEnd()

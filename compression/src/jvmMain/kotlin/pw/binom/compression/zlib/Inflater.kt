@@ -21,7 +21,7 @@ actual class Inflater actual constructor(wrap: Boolean) : Closeable {
         }
     }
 
-    override fun close() {
+    actual override fun close() {
         if (!closed.compareAndSet(false, true)) {
             throw ClosedException()
         }

@@ -8,6 +8,7 @@ import platform.openssl.*
 import pw.binom.io.Closeable
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual object KeyGenerator {
 
   actual fun generate(algorithm: KeyAlgorithm, keySize: Int): KeyPair {
@@ -27,7 +28,7 @@ actual object KeyGenerator {
   }
 
   actual class KeyPair(val native: CPointer<EVP_PKEY>) : Closeable {
-    override fun close() {
+    actual override fun close() {
       EVP_PKEY_free(native)
     }
 

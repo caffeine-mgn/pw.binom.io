@@ -12,6 +12,7 @@ import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, actual val d: BigInteger) : Key.Private {
   actual companion object {
     actual fun load(encodedKeySpec: KeySpec): RSAPrivateKey =
@@ -53,9 +54,9 @@ actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, a
       }
   }
 
-  override val algorithm: KeyAlgorithm
+  actual override val algorithm: KeyAlgorithm
     get() = KeyAlgorithm.RSA
-  override val data: ByteArray
+  actual override val data: ByteArray
     get() {
       val rsa = RSA_new() ?: throwError("RSA_new fail")
       val eNum = e.toBigNum()
@@ -94,6 +95,6 @@ actual class RSAPrivateKey(actual val n: BigInteger, actual val e: BigInteger, a
         Base64.decode(str)
       }
     }
-  override val format: String
+  actual override val format: String
     get() = "X.509"
 }

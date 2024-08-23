@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package pw.binom.ssl
 
 import java.net.Socket

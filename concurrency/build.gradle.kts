@@ -23,6 +23,11 @@ kotlin {
     jvmTest.dependencies {
       api(kotlin("test-junit"))
     }
+    val posixMain by getting
+    androidNativeMain {
+      dependsOn(posixMain)
+    }
+    dependsOn("linux*Main", posixMain)
 //    val jvmLikeMain by creating {
 //      dependsOn(commonMain.get())
 //    }

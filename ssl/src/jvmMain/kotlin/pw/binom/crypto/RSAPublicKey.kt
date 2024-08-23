@@ -6,11 +6,11 @@ import pw.binom.ssl.Key
 import pw.binom.ssl.KeyAlgorithm
 
 actual class RSAPublicKey(val native: BCRSAPublicKey) : Key.Public {
-    override val algorithm: KeyAlgorithm
+    actual override val algorithm: KeyAlgorithm
         get() = KeyAlgorithm.RSA
-    override val data: ByteArray
+    actual override val data: ByteArray
         get() = native.encoded
-    override val format: String
+    actual override val format: String
         get() = "X.509"
     actual val e: BigInteger
         get() = native.publicExponent.toBigInteger()

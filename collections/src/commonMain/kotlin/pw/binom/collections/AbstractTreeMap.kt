@@ -1,13 +1,11 @@
 package pw.binom.collections
 
 import kotlin.js.JsName
-import kotlin.native.concurrent.SharedImmutable
 
 private const val RED = -1
 private const val BLACK = 1
 
 @Suppress("UNCHECKED_CAST")
-@SharedImmutable
 private val COMPARATOR: Comparator<Any> = Comparator<Any> { a, b ->
   (a as? Comparable<Any>)?.compareTo(b)?.let {
     return@Comparator it

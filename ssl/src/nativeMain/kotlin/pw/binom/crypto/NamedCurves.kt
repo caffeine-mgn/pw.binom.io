@@ -6,6 +6,7 @@ import pw.binom.ssl.Nid
 import pw.binom.throwError
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual object NamedCurves {
 
   actual fun getByName(nid: Nid): X9ECParameters {

@@ -8,6 +8,7 @@ import platform.openssl.SHA256_DIGEST_LENGTH
 import pw.binom.security.MessageDigest
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class Sha256MessageDigest : MessageDigest, OpenSSLMessageDigest() {
 
   override fun createEvp(): CPointer<EVP_MD> = EVP_sha256()!!

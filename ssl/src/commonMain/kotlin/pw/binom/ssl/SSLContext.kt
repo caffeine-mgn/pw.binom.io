@@ -15,6 +15,7 @@ enum class SSLMethod {
     TLSv1_2
 }
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class SSLContext {
 //    val socketFactory: SSLSocketFactory
 

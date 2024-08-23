@@ -37,11 +37,11 @@ actual class HMac actual constructor(algorithm: AlgorithmType, key: ByteArray) :
     }
   }
 
-  override fun init() {
+  actual override fun init() {
     native.reset()
   }
 
-  override fun update(byte: Byte) {
+  actual override fun update(byte: Byte) {
     native.update(byte)
   }
 
@@ -57,6 +57,6 @@ actual class HMac actual constructor(algorithm: AlgorithmType, key: ByteArray) :
     native.update(buffer.native)
   }
 
-  override fun finish(): ByteArray =
+  actual override fun finish(): ByteArray =
     native.doFinal()
 }

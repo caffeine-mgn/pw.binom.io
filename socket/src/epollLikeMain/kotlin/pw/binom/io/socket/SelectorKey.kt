@@ -7,6 +7,7 @@ import platform.posix.errno
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class)
 actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
   AbstractNativeKey(), Closeable {
@@ -84,7 +85,7 @@ actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
     freeSelfClose()
   }
 
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(false, true)) {
       return
     }

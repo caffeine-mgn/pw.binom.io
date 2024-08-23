@@ -1,4 +1,5 @@
 @file:Suppress("ktlint:standard:no-wildcard-imports")
+@file:OptIn(DelicateCoroutinesApi::class)
 
 package pw.binom.coroutines
 

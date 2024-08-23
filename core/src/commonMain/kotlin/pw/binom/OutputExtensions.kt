@@ -87,6 +87,8 @@ fun <T : Output> T.writeLong(buffer: ByteBuffer, value: Long): T {
   return this
 }
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun <T : Output> T.writeFloat(buffer: ByteBuffer, value: Float) = writeInt(buffer, value.toBits())
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun <T : Output> T.writeDouble(buffer: ByteBuffer, value: Double) = writeLong(buffer, value.toBits())

@@ -41,7 +41,7 @@ actual open class InetAddress(var native: JvmInetAddress) : NetworkAddress {
     }
   actual val isMulticastAddress: Boolean
     get() = native.isMulticastAddress
-  override val host: String
+  actual override val host: String
     get() = native.hostAddress
   actual val address: ByteArray
     get() = native.address
@@ -51,8 +51,8 @@ actual open class InetAddress(var native: JvmInetAddress) : NetworkAddress {
     return InetSocketAddress(JvmInetSocketAddress(native, port))
   }
 
-  override fun resolve(): InetAddress = this
-  override fun resolveAll(): List<InetAddress> = listOf(this)
+  actual override fun resolve(): InetAddress? = this
+  actual override fun resolveAll(): List<InetAddress> = listOf(this)
   actual fun toMutable(): MutableInetAddress {
     val result = MutableInetAddress()
     result.native = native

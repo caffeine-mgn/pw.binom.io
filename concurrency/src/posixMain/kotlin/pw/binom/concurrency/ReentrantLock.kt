@@ -3,7 +3,7 @@ package pw.binom.concurrency
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.internal.createCleaner
+import kotlin.native.ref.createCleaner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
 
@@ -35,7 +35,7 @@ actual class ReentrantLock : Lock {
     free(native)
   }
 
-  override fun tryLock(): Boolean {
+  actual override fun tryLock(): Boolean {
     val r = pthread_mutex_trylock(native)
     if (r == EBUSY) {
       return false
@@ -46,13 +46,13 @@ actual class ReentrantLock : Lock {
     return true
   }
 
-  override fun lock() {
+  actual override fun lock() {
     if (pthread_mutex_lock(native) != 0) {
       error("Can't lock mutex")
     }
   }
 
-  override fun unlock() {
+  actual override fun unlock() {
     if (pthread_mutex_unlock(native) != 0) {
       error("Can't unlock mutex")
     }
@@ -72,6 +72,7 @@ actual class ReentrantLock : Lock {
       }
     }
 
+    @OptIn(ExperimentalNativeApi::class)
     private val cleaner = createCleaner(native) { native ->
       pthread_cond_destroy(native)
       free(native)

@@ -53,9 +53,7 @@ object ExpressionReader {
       Opcodes.SET_GLOBAL,
         -> visitor.indexArgument(opcode = opcode, label = GlobalId(input.v32u()))
 
-      Opcodes.SELECT -> {
-        // TODO
-      }
+      Opcodes.SELECT -> visitor.select()
 
       Opcodes.LOOP,
       Opcodes.BLOCK,
@@ -63,8 +61,10 @@ object ExpressionReader {
       Opcodes.IF,
         -> {
         context.depth++
-        input.readBlockType()
-        // TODO
+        val v = visitor.startBlock(opcode)
+        v.start()
+        input.readBlockType(v)
+        v.end()
       }
 
       Opcodes.END -> {
@@ -265,13 +265,9 @@ object ExpressionReader {
 
       Opcodes.REF_FUNC -> visitor.ref(FunctionId(input.v32u()))
 
-      Opcodes.REF_IS_NULL -> {
-        // TODO
-      }
+      Opcodes.REF_IS_NULL -> visitor.refIsNull()
 
-      Opcodes.REF_AS_NON_NULL -> {
-        // TODO
-      }
+      Opcodes.REF_AS_NON_NULL -> visitor.refAsNonNull()
 
       Opcodes.REF_NULL -> input.readHeapType(visitor = visitor.refNull())
 
@@ -299,17 +295,12 @@ object ExpressionReader {
         input.v32u()
       }
 
-      Opcodes.THROW -> {
-        TagId(input.v32u())
-        // TODO
-      }
+      Opcodes.THROW -> visitor.throwOp(tag = TagId(input.v32u()))
 
-      Opcodes.THROW_REF -> {
-        // TODO
-      }
+      Opcodes.THROW_REF -> visitor.throwRef()
 
       Opcodes.RETHROW -> {
-        input.v32s()
+        input.v32u()
       }
 
       Opcodes.CATCH -> {
@@ -318,6 +309,7 @@ object ExpressionReader {
       }
 
       Opcodes.CATCH_ALL -> {
+        visitor.catchAll()
       }
 
       Opcodes.SELECT_WITH_TYPE -> {

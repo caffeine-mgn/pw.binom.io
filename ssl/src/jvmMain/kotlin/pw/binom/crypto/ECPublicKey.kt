@@ -9,11 +9,11 @@ import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 
 actual class ECPublicKey(val native: BCECPublicKey) : Key.Public, ECKey {
-    override val algorithm: KeyAlgorithm
+    actual override val algorithm: KeyAlgorithm
         get() = KeyAlgorithm.ECDSA
-    override val data: ByteArray
+    actual override val data: ByteArray
         get() = native.encoded
-    override val format: String
+    actual override val format: String
         get() = "X.509"
     actual val q: EcPoint by lazy {
         EcPoint(native.q, ECCurve(native.q.curve))

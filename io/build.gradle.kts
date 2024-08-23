@@ -39,7 +39,9 @@ kotlin {
       api(project(":metric"))
       api(project(":memory"))
     }
-    val nonJvmMain by creating
+    val nonJvmMain by creating {
+      dependsOn(commonMain.get())
+    }
     jsMain {
       dependsOn(nonJvmMain)
     }

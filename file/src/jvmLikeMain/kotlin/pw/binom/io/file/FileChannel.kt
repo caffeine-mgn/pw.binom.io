@@ -49,7 +49,7 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
     return l
   }
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     checkClosed()
     return native.read(dest.native).let {
       if (it == -1) DataTransferSize.EMPTY else DataTransferSize.ofSize(it)
@@ -62,7 +62,7 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
 //        }
 //    }
 
-  override fun close() {
+  actual override fun close() {
     if (closed) {
       return
     }
@@ -70,7 +70,7 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
     native.close()
   }
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     return DataTransferSize.ofSize(native.write(data.native))
   }
@@ -81,19 +81,19 @@ actual class FileChannel actual constructor(file: File, mode: AccessMode) :
 //        }
 //    }
 
-  override fun flush() {
+  actual override fun flush() {
     checkClosed()
     native.force(true)
   }
 
-  override var position: Long
+  actual override var position: Long
     get() = native.position()
     set(value) {
       checkClosed()
       native.position(value)
     }
 
-  override val size: Long
+  actual override val size: Long
     get() {
       checkClosed()
       return native.size()

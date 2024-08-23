@@ -2,6 +2,7 @@ package pw.binom.crypto
 
 import pw.binom.security.MessageDigest
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class HMac : MessageDigest {
     constructor(algorithm: AlgorithmType, key: ByteArray)
 
@@ -17,4 +18,8 @@ expect class HMac : MessageDigest {
             fun get(name: String): AlgorithmType
         }
     }
+
+  override fun finish(): ByteArray
+  override fun init()
+  override fun update(byte: Byte)
 }

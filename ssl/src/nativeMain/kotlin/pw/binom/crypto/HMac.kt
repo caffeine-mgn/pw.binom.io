@@ -7,6 +7,7 @@ import pw.binom.security.MessageDigest
 import pw.binom.security.NoSuchAlgorithmException
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class HMac actual constructor(val algorithm: AlgorithmType, val key: ByteArray) : MessageDigest {
   private var ctx: CPointer<HMAC_CTX>? = null
 
@@ -48,7 +49,7 @@ actual class HMac actual constructor(val algorithm: AlgorithmType, val key: Byte
     this.ctx = ctx
   }
 
-  override fun init() {
+  actual override fun init() {
     if (ctx != null) {
       HMAC_CTX_free(ctx)
       ctx = null
@@ -56,7 +57,7 @@ actual class HMac actual constructor(val algorithm: AlgorithmType, val key: Byte
     checkInit()
   }
 
-  override fun update(byte: Byte) {
+  actual override fun update(byte: Byte) {
     update(ByteArray(1) { byte })
   }
 
@@ -76,7 +77,7 @@ actual class HMac actual constructor(val algorithm: AlgorithmType, val key: Byte
     }
   }
 
-  override fun finish(): ByteArray {
+  actual override fun finish(): ByteArray {
     checkInit()
     val out = ByteArray(algorithm.size)
     out.usePinned { outPinned ->

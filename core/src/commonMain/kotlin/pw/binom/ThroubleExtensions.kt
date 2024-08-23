@@ -13,15 +13,15 @@ inline fun Continuation<*>.resumeOnException(afterCall: (Throwable?) -> Unit = {
     callsInPlace(afterCall, InvocationKind.EXACTLY_ONCE)
     callsInPlace(func, InvocationKind.EXACTLY_ONCE)
   }
-  return try {
+  try {
     func()
-    afterCall(null)
-    false
   } catch (e: Throwable) {
     resumeWithException(e)
     afterCall(e)
-    true
+    return true
   }
+  afterCall(null)
+  return false
 }
 
 /**

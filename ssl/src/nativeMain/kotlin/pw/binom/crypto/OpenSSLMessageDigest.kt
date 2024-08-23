@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalNativeApi::class)
+
 package pw.binom.crypto
 
 import kotlinx.cinterop.*
@@ -5,7 +7,8 @@ import platform.openssl.*
 import pw.binom.checkTrue
 import pw.binom.io.ByteBuffer
 import pw.binom.security.MessageDigest
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 abstract class OpenSSLMessageDigest : MessageDigest {

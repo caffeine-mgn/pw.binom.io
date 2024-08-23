@@ -14,6 +14,7 @@ abstract class AbstractLocalService : CrossService {
         override fun getValue(thisRef: Any, property: KProperty<*>): CrossService.CrossMethod<T> = this
     }
 
+  @Suppress("UNCHECKED_CAST")
     inner class Provider<T>(val func: suspend (Map<String, Any?>) -> T) :
         PropertyDelegateProvider<Any, LocalMethod<T>> {
         override fun provideDelegate(thisRef: Any, property: KProperty<*>): LocalMethod<T> {

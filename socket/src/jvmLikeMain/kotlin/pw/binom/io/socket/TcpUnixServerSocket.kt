@@ -20,19 +20,19 @@ actual class TcpUnixServerSocket(override val native: ServerSocketChannel) : Tcp
       BindStatus.ALREADY_BINDED
     }
 
-  override fun close() {
+  actual override fun close() {
     native.close()
   }
 
-  override var blocking: Boolean = false
+  actual override var blocking: Boolean = false
     set(value) {
       field = value
       native.configureBlocking(value)
     }
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = false
 
-  override fun setTcpNoDelay(value: Boolean): Boolean = false
+  actual override fun setTcpNoDelay(value: Boolean): Boolean = false
 }

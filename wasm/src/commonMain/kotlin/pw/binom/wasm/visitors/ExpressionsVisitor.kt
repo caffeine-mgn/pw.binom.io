@@ -7,6 +7,7 @@ import pw.binom.wasm.GlobalId
 import pw.binom.wasm.LabelId
 import pw.binom.wasm.LocalId
 import pw.binom.wasm.TableId
+import pw.binom.wasm.TagId
 import pw.binom.wasm.TypeId
 import pw.binom.wasm.Types
 
@@ -35,6 +36,17 @@ interface ExpressionsVisitor {
     fun end() {}
     fun target(label: LabelId) {}
     fun default(label: LabelId) {}
+  }
+
+  interface BlockStartVisitor {
+    companion object {
+      val STUB = object : BlockStartVisitor {}
+    }
+
+    fun start() {}
+    fun withoutType() {}
+    fun valueType(): ValueVisitor = ValueVisitor.EMPTY
+    fun end() {}
   }
 
   fun start() {}
@@ -74,4 +86,11 @@ interface ExpressionsVisitor {
   fun ref(function: FunctionId) {}
   fun drop() {}
   fun br(): BrTableVisitor = BrTableVisitor.STUB
+  fun select() {}
+  fun throwOp(tag: TagId) {}
+  fun startBlock(opcode: UByte): BlockStartVisitor = BlockStartVisitor.STUB
+  fun refIsNull() {}
+  fun refAsNonNull() {}
+  fun throwRef() {}
+  fun catchAll() {}
 }

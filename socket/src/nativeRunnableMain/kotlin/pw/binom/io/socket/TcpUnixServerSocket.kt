@@ -8,6 +8,7 @@ import pw.binom.io.IOException
 import pw.binom.io.InHeap
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class TcpUnixServerSocket(init: Boolean) : TcpServerSocket {
   actual constructor() : this(true)
 
@@ -52,13 +53,13 @@ actual class TcpUnixServerSocket(init: Boolean) : TcpServerSocket {
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     data.use { socketPtr ->
       NSocket_close(socketPtr)
     }
   }
 
-  override var blocking: Boolean
+  actual override var blocking: Boolean
     get() = data.use { NSocket_getBlockedMode(it) == 1 }
     set(value) {
       data.use { NSocket_setBlockedMode(it, if (value) 1 else 0) }
@@ -68,12 +69,12 @@ actual class TcpUnixServerSocket(init: Boolean) : TcpServerSocket {
   override var keyHash: Int
     get() = TODO("Not yet implemented")
     set(value) {}
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = data.use { NSocket_getNoDelay(it) == 1 }
 
-  override fun setTcpNoDelay(value: Boolean): Boolean =
+  actual override fun setTcpNoDelay(value: Boolean): Boolean =
     data.use { NSocket_setNoDelay(it, if (value) 1 else 0) } != 1
 }
 

@@ -53,7 +53,7 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
             val item = last.getValue()!!
             last.setValue(item.previous.getValue())
             last.getValue()?.next?.setValue(null)
-            if (first == item) {
+            if (first.getValue() == item) {
                 first.setValue(null)
             }
 
@@ -76,7 +76,7 @@ class BlockingExchange<T : Any?> : BlockingExchangeInput<T>, BlockingExchangeOut
             val item = last.getValue()!!
             last.setValue(item.previous.getValue())
             last.getValue()?.next?.setValue(null)
-            if (first == item) {
+            if (first.getValue() == item) {
                 first.setValue(null)
             }
             val value = item.value

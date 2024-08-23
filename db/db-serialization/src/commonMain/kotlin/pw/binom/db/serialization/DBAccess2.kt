@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package pw.binom.db.serialization
 
 import kotlinx.coroutines.flow.Flow

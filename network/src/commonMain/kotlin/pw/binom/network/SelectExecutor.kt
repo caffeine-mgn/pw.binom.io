@@ -1,7 +1,5 @@
 package pw.binom.network
 
-import com.jakewharton.cite.__FILE__
-import com.jakewharton.cite.__LINE__
 import pw.binom.InternalLog
 import pw.binom.io.socket.Selector
 import pw.binom.thread.Thread
@@ -46,7 +44,7 @@ object SelectExecutor {
           )
         }
       }
-      InternalLog.info(line = __LINE__, file = __FILE__) { "Select finished in ${now.elapsedNow()}" }
+      InternalLog.info { "Select finished in ${now.elapsedNow()}" }
     }
   }
 }

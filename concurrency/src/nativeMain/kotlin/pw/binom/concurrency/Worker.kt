@@ -8,7 +8,6 @@ import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.Worker as KWorker
 
-@ThreadLocal
 private var privateCurrentWorker: Worker? = null
 
 actual class Worker actual constructor(name: String?) {
@@ -45,10 +44,6 @@ actual class Worker actual constructor(name: String?) {
 
     actual val isInterrupted: Boolean
         get() = _isInterrupted.getValue()
-
-    init {
-        freeze()
-    }
 
     actual companion object {
         actual val current: Worker?

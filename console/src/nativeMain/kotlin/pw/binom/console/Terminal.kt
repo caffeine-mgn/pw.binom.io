@@ -40,12 +40,13 @@ actual object Terminal {
   actual val isConsoleExist: Boolean
     get() = internal_is_console() > 0
 
-  actual fun readEvent(): Event = pw.binom.console.readEvent()
+  actual fun readEvent(): Event = TODO()//pw.binom.console.readEvent()
 
   actual var mouseTracking: MouseTracking = MouseTracking.OFF
     set(value) {
       field = value
-      pw.binom.console.setMouseTracking(value)
+      TODO()
+//      pw.binom.console.setMouseTracking(value)
     }
 
   actual fun restoreState() {

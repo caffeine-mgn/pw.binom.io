@@ -10,8 +10,6 @@ import kotlinx.serialization.encoding.Encoder
 import pw.binom.date.DateTime
 import pw.binom.db.serialization.codes.SQLDecoder
 import pw.binom.db.serialization.codes.SQLEncoder
-@OptIn(ExperimentalSerializationApi::class)
-@Serializer(forClass = DateTime::class)
 object DateTimeSerializer : KSerializer<DateTime> {
 
   override val descriptor: SerialDescriptor = Long.serializer().descriptor

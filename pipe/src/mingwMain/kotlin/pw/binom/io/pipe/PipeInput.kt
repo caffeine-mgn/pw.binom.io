@@ -54,7 +54,7 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
     }
   }
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     if (!dest.isReferenceAccessAvailable()) {
       return DataTransferSize.EMPTY
     }
@@ -90,7 +90,7 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
     }
   }
 
-  override fun close() {
+  actual override fun close() {
     CloseHandle(readFd)
   }
 }

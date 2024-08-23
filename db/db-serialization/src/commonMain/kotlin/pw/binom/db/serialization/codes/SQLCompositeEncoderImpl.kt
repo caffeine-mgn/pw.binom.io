@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.ExperimentalSerializationApi

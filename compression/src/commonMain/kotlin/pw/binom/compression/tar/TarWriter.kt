@@ -264,6 +264,7 @@ class TarWriter(val stream: Output, val closeStream: Boolean = true) : Closeable
   var isFinished = false
     private set
 
+  @Suppress("NOTHING_TO_INLINE")
   private inline fun checkFinished() {
     check(!isFinished) { "TarWrite already finished" }
   }

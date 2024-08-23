@@ -1,7 +1,9 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package pw.binom.network
 
-import com.jakewharton.cite.__LINE__
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.InternalLog
 import pw.binom.concurrency.SpinLock
@@ -103,23 +105,23 @@ class TcpConnection(
   }
 
   override fun readyForRead(key: SelectorKey) {
-    logger.info(line = __LINE__) { "readyForRead:: Started" }
+    logger.info { "readyForRead:: Started" }
     if (checkConnect()) {
-      logger.info(line = __LINE__) { "readyForRead:: not connected" }
+      logger.info { "readyForRead:: not connected" }
       return
     }
     readLock.lock()
     val continuation = readData.continuation
     val data = readData.data
     if (continuation == null) {
-      logger.info(line = __LINE__) { "readyForRead:: no any continuation set. Cleaning keys" }
+      logger.info { "readyForRead:: no any continuation set. Cleaning keys" }
       readLock.unlock()
       return
     }
     data ?: error("readData.data is not set")
     val readed = channel.receive(data)
     if (readed == -1) {
-      logger.info(line = __LINE__) { "readyForRead:: during reading find that connection lost" }
+      logger.info { "readyForRead:: during reading find that connection lost" }
       readData.reset()
       readLock.unlock()
       close()
@@ -128,7 +130,7 @@ class TcpConnection(
     }
     if (readed == 0) {
       readLock.unlock()
-      logger.info(line = __LINE__) { "readyForRead:: no data for read. Try to wait a data" }
+      logger.info { "readyForRead:: no data for read. Try to wait a data" }
       currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
       return
     }
@@ -141,7 +143,7 @@ class TcpConnection(
         currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
       }
     } else {
-      logger.info(line = __LINE__) { "readyForRead:: data was read success. $readed bytes" }
+      logger.info { "readyForRead:: data was read success. $readed bytes" }
       readData.reset()
       readLock.unlock()
       continuation.resume(value = DataTransferSize.ofSize(readed), onCancellation = null)
@@ -150,9 +152,9 @@ class TcpConnection(
 
   override fun error() {
     val connect = this.connect
-    logger.info(line = __LINE__) { "error:: Happened!" }
+    logger.info { "error:: Happened!" }
     if (connect != null) {
-      logger.info(line = __LINE__) { "error:: Connect error" }
+      logger.info { "error:: Connect error" }
       this.connect = null
       close()
       connect.resumeWithException(SocketConnectException())
@@ -161,7 +163,7 @@ class TcpConnection(
     error = true
 
     if (readData.continuation != null) {
-      logger.info(line = __LINE__) { "error:: stopped reading" }
+      logger.info { "error:: stopped reading" }
       val c = readLock.synchronize {
         val c = readData.continuation
         readData.reset()
@@ -170,7 +172,7 @@ class TcpConnection(
       c?.resumeWith(Result.failure(SocketClosedException()))
     }
     if (sendData.continuation != null) {
-      logger.info(line = __LINE__) { "error:: stopped sending" }
+      logger.info { "error:: stopped sending" }
       val c = sendData.continuation
       sendData.reset()
       c?.resumeWith(Result.failure(SocketClosedException()))
@@ -178,7 +180,7 @@ class TcpConnection(
   }
 
   override suspend fun connection() {
-    logger.info(line = __LINE__) { "connection:: start connect process" }
+    logger.info { "connection:: start connect process" }
     val connect = this.connect
     check(connect == null) { "Connection already try connect" }
     suspendCancellableCoroutine<Unit> {
@@ -225,7 +227,7 @@ class TcpConnection(
   }
 
   override fun close() {
-    logger.info(line = __LINE__) { "close:: closing" }
+    logger.info { "close:: closing" }
     if (currentKey.isClosed) {
       return
     }

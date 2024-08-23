@@ -12,9 +12,9 @@ actual class DirectoryStream internal actual constructor(val path: File) : Itera
 
     private val files = path.native.listFiles()
     private var cursor = 0
-    override fun hasNext(): Boolean = cursor < files.size
+    actual override fun hasNext(): Boolean = cursor < files.size
 
-    override fun next(): File {
+    actual override fun next(): File {
         if (!hasNext()) {
             throw NoSuchElementException()
         }

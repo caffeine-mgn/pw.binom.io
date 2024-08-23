@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalNativeApi::class, ExperimentalNativeApi::class)
+
 package pw.binom.crypto
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
@@ -6,9 +8,11 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.openssl.*
 import pw.binom.*
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class ECCurve(
   val native: CPointer<EC_GROUP>,
 ) {
@@ -20,7 +24,7 @@ actual class ECCurve(
 
   @OptIn(ExperimentalStdlibApi::class)
   private val cleaner = createCleaner(native) {
-    EC_GROUP_free(native)
+    EC_GROUP_free(it)
   }
 
   actual fun createPoint(

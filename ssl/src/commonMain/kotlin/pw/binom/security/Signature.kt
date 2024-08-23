@@ -3,6 +3,7 @@ package pw.binom.security
 import pw.binom.io.ByteBuffer
 import pw.binom.ssl.Key
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect interface Signature {
     companion object {
         fun getInstance(algorithm: String): Signature

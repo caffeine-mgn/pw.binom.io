@@ -103,12 +103,12 @@ actual open class ByteBuffer private constructor(
     },
   )
 
-  override val capacity: Int
+  actual override val capacity: Int
     get() = data.capacity
-  override val hasRemaining: Boolean
+  actual override val hasRemaining: Boolean
     get() = remaining > 0
 
-  override val elementSizeInBytes: Int
+  actual override val elementSizeInBytes: Int
     get() = 1
 
   @PublishedApi
@@ -117,17 +117,17 @@ actual open class ByteBuffer private constructor(
   private var _position = 0 // = AtomicInt(0)
   private var _limit = data.capacity // = AtomicInt(data.capacity)
 
-  override val remaining: Int
+  actual override val remaining: Int
     get() = _limit - _position
 
-  override var position: Int
+  actual override var position: Int
     get() = _position
     set(value) {
       require(value in 0.._limit) { "Position should be in range between 0 and limit. limit: $_limit, new position: $value" }
       _position = value
     }
 
-  override var limit: Int
+  actual override var limit: Int
     get() {
       return _limit
     }
@@ -208,7 +208,7 @@ actual open class ByteBuffer private constructor(
       func(ptr, capacity)
     }
 
-  override fun flip() {
+  actual override fun flip() {
     ensureOpen()
     limit = position
     position = 0
@@ -263,16 +263,16 @@ actual open class ByteBuffer private constructor(
     return r
   }
 
-  override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
+  actual override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
 
   @OptIn(ExperimentalTime::class)
-  override fun write(data: ByteBuffer) = DataTransferSize.ofSize(data.readInto(this))
+  actual override fun write(data: ByteBuffer) = DataTransferSize.ofSize(data.readInto(this))
 
-  override fun flush() {
+  actual override fun flush() {
 
   }
 
-  override fun close() {
+  actual override fun close() {
     if (!closed) {
 
       preClose()
@@ -373,7 +373,7 @@ actual open class ByteBuffer private constructor(
     return true
   }
 
-  override fun clear() {
+  actual override fun clear() {
     ensureOpen()
     limit = capacity
     position = 0
@@ -457,7 +457,7 @@ actual open class ByteBuffer private constructor(
     return len
   }
 
-  override fun compact() {
+  actual override fun compact() {
     ensureOpen()
     if (remaining > 0) {
       val size = remaining
@@ -541,12 +541,12 @@ actual open class ByteBuffer private constructor(
     }
   }
 
-  override fun get(): ByteBuffer {
+  actual override fun get(): ByteBuffer {
     ensureOpen()
     return this
   }
 
-  override fun reestablish(buffer: ByteBuffer) {
+  actual override fun reestablish(buffer: ByteBuffer) {
     require(buffer === this) { "Buffer should equals this buffer" }
     check(!closed) { "Buffer closed" }
   }

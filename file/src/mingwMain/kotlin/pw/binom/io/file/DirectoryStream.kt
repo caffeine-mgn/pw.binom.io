@@ -25,7 +25,7 @@ actual class DirectoryStream internal actual constructor(private val path: File)
   private var next: dirent? = null
   private var end = false
 
-  override fun hasNext(): Boolean {
+  actual override fun hasNext(): Boolean {
     while (true) {
       if (end) {
         return false
@@ -48,7 +48,7 @@ actual class DirectoryStream internal actual constructor(private val path: File)
     }
   }
 
-  override fun next(): File {
+  actual override fun next(): File {
     if (!hasNext()) {
       throw NoSuchElementException()
     }

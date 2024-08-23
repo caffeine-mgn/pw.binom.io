@@ -1,5 +1,7 @@
+@file:OptIn(DelicateCoroutinesApi::class)
 package pw.binom.db.tarantool
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch

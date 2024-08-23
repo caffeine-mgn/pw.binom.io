@@ -503,6 +503,7 @@ private fun <T> Array<T>.subarrayContentEquals(
   return true
 }
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <T> Array<out T>.subarrayContentToStringImpl(
   offset: Int,
   length: Int,

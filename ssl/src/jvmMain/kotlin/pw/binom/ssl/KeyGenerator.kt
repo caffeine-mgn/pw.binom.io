@@ -12,7 +12,7 @@ actual object KeyGenerator {
     }
 
     actual class KeyPair(val algorithm: KeyAlgorithm, val native: java.security.KeyPair) : Closeable {
-        override fun close() {
+        actual override fun close() {
         }
 
         actual fun createPrivateKey(): PrivateKey = PrivateKeyImpl(algorithm = algorithm, native = native.private)

@@ -8,7 +8,8 @@ import platform.posix.dirent
 import platform.posix.opendir
 import platform.posix.readdir
 import pw.binom.io.IOException
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class)
 actual class DirectoryStream internal actual constructor(private val path: File) : Iterator<File> {
@@ -23,7 +24,7 @@ actual class DirectoryStream internal actual constructor(private val path: File)
   private var next: dirent? = null
   private var end = false
 
-  override fun hasNext(): Boolean {
+  actual override fun hasNext(): Boolean {
     while (true) {
       if (end) {
         return false
@@ -46,7 +47,7 @@ actual class DirectoryStream internal actual constructor(private val path: File)
     }
   }
 
-  override fun next(): File {
+  actual override fun next(): File {
     if (!hasNext()) {
       throw NoSuchElementException()
     }
@@ -55,7 +56,7 @@ actual class DirectoryStream internal actual constructor(private val path: File)
     return result
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
+  @OptIn(ExperimentalStdlibApi::class, ExperimentalNativeApi::class)
   private val cleaner = createCleaner(handler) {
     closedir(it)
   }

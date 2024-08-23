@@ -1,3 +1,5 @@
+@file:OptIn(UnsafeNumber::class)
+
 package pw.binom.io.socket
 
 import kotlinx.cinterop.*
@@ -6,7 +8,8 @@ import platform.socket.*
 import pw.binom.io.IOException
 import pw.binom.io.InHeap
 
-@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+@OptIn(ExperimentalForeignApi::class)
 actual open class InetAddress : NetworkAddress {
   actual companion object {
     actual fun resolveOrNull(host: String): InetAddress? = memScoped {
@@ -73,7 +76,7 @@ actual open class InetAddress : NetworkAddress {
     get() = native.use { ptr ->
       NNetworkAddress_isMulticast(ptr) == 1
     }
-  override val host: String
+  actual override val host: String
     get() = native.use { ptr ->
       memScoped {
         val buf = allocArray<ByteVar>(50)
@@ -117,8 +120,8 @@ actual open class InetAddress : NetworkAddress {
     return result
   }
 
-  override fun resolve(): InetAddress = this
-  override fun resolveAll(): List<InetAddress> = listOf(this)
+  actual override fun resolve(): InetAddress? = this
+  actual override fun resolveAll(): List<InetAddress> = listOf(this)
   actual fun toMutable(): MutableInetAddress {
     val result = MutableInetAddress()
     native.copyInto(result.native)

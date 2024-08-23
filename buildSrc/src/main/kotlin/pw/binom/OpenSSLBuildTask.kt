@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import pw.binom.kotlin.clang.CLang
-import pw.binom.kotlin.clang.CLangLinker
-import pw.binom.kotlin.clang.KonanVersion
-import pw.binom.kotlin.clang.StreamGobblerAppendable
+import pw.binom.kotlin.clang.*
 import pw.binom.publish.propertyOrNull
 import java.io.File
 
@@ -76,7 +73,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         project.propertyOrNull("pw.binom.openssl-dir")?.let { File(it) }
       }
 
-    val config = KonanVersion.findVersion(Versions.KOTLIN_VERSION)!!
+    val config = KonanVersion.findVersion(Version(Versions.KOTLIN_VERSION))!!
     val compiler = config.getCppCompiler(target.get()) as CLang
     val linker = config.getLinked(target.get()) as CLangLinker
 

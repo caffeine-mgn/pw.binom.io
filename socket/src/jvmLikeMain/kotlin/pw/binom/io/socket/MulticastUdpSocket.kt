@@ -70,28 +70,28 @@ actual class MulticastUdpSocket(override val native: DatagramChannel) : UdpSocke
     TODO()
   }
 
-  override fun close() {
+  actual override fun close() {
     native.close()
   }
 
-  override fun setSoTimeout(duration: Duration) {
+  actual override fun setSoTimeout(duration: Duration) {
     TODO("Not yet implemented")
   }
 
-  override var blocking: Boolean
+  actual override var blocking: Boolean
     get() = native.isBlocking
     set(value) {
       native.configureBlocking(value)
     }
-  override val id: String
+  actual override val id: String
     get() = TODO("Not yet implemented")
-  override val tcpNoDelay: Boolean
+  actual override val tcpNoDelay: Boolean
     get() = TODO("Not yet implemented")
 
-  override fun setTcpNoDelay(value: Boolean): Boolean {
+  actual override fun setTcpNoDelay(value: Boolean): Boolean {
     TODO("Not yet implemented")
   }
 
-  override val port: Int?
+  actual override val port: Int?
     get() = TODO("Not yet implemented")
 }

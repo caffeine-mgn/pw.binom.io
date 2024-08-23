@@ -4,6 +4,7 @@ import pw.binom.collections.defaultMutableList
 import pw.binom.concurrency.ReentrantLock
 import pw.binom.concurrency.synchronize
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class SelectedKeys actual constructor() {
 
     //    internal val native = nativeHeap.allocArray<epoll_event>(maxElements)

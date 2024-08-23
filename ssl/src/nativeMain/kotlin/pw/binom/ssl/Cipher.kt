@@ -1,5 +1,6 @@
 package pw.binom.ssl
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual interface Cipher {
   actual companion object {
     actual fun getInstance(transformation: String): Cipher {

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -16,7 +18,7 @@ import pw.binom.uuid.UUID
 class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> Unit) : SQLDecoder {
   var name = ""
   var input: DataProvider = DataProvider.EMPTY
-  override var serializersModule: SerializersModule = EmptySerializersModule
+  override var serializersModule: SerializersModule = EmptySerializersModule()
 
   companion object {
     private fun findByAlias(

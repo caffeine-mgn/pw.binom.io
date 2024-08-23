@@ -2,6 +2,7 @@ package pw.binom.crypto
 
 import pw.binom.security.MessageDigest
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class Sha3MessageDigest(size: Size) : MessageDigest {
 
     enum class Size {
@@ -11,4 +12,8 @@ expect class Sha3MessageDigest(size: Size) : MessageDigest {
         S384,
         S512,
     }
+
+  override fun init()
+  override fun finish(): ByteArray
+  override fun update(byte: Byte)
 }

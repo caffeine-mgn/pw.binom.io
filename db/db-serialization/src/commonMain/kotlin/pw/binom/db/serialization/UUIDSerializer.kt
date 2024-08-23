@@ -1,18 +1,14 @@
 package pw.binom.db.serialization
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import pw.binom.date.DateTime
 import pw.binom.db.serialization.codes.SQLDecoder
 import pw.binom.db.serialization.codes.SQLEncoder
 import pw.binom.uuid.UUID
-@OptIn(ExperimentalSerializationApi::class)
-@Serializer(forClass = UUID::class)
+
 object UUIDSerializer : KSerializer<UUID> {
   override fun deserialize(decoder: Decoder): UUID {
     if (decoder !is SQLDecoder) {

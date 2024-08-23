@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.DeserializationStrategy
@@ -10,7 +12,7 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.db.serialization.SQLCompositeDecoder
 
 class ByteArraySQLCompositeDecoder(val onClose: (ByteArraySQLCompositeDecoder) -> Unit) : SQLCompositeDecoder {
-    override var serializersModule: SerializersModule = EmptySerializersModule
+    override var serializersModule: SerializersModule = EmptySerializersModule()
         private set
     var data: ByteArray = ByteArray(0)
         private set
@@ -70,7 +72,6 @@ class ByteArraySQLCompositeDecoder(val onClose: (ByteArraySQLCompositeDecoder) -
         onClose(this)
     }
 
-    @ExperimentalSerializationApi
     override fun decodeInlineElement(descriptor: SerialDescriptor, index: Int): SQLDecoder = throwNotSupported()
 
     private fun throwNotSupported(): Nothing = throw SerializationException("Not supported")

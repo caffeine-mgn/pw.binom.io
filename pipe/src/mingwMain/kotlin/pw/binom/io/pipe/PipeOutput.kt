@@ -24,7 +24,7 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
 
   actual constructor(input: PipeInput) : this(input.writeFd to input.readFd)
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     if (!data.isReferenceAccessAvailable()) {
       return DataTransferSize.EMPTY
     }
@@ -49,11 +49,11 @@ actual class PipeOutput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Output
     }
   }
 
-  override fun flush() {
+  actual override fun flush() {
     // Do nonthing
   }
 
-  override fun close() {
+  actual override fun close() {
     CloseHandle(writeFd)
   }
 }
