@@ -1,13 +1,10 @@
 package pw.binom.wasm.writers
 
-import pw.binom.io.ByteArrayOutput
-import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.*
 import pw.binom.wasm.visitors.MemorySectionVisitor
 
-class MemorySectionWriter(private val out: StreamWriter) : MemorySectionVisitor {
-
-  private val data = ByteArrayOutput()
-  private val stream = StreamWriter(data)
+class MemorySectionWriter(private val out: WasmOutput) : MemorySectionVisitor {
+  private val stream = InMemoryWasmOutput()
   private var count = 0
   private var state = 0
 
@@ -32,9 +29,7 @@ class MemorySectionWriter(private val out: StreamWriter) : MemorySectionVisitor 
     check(state == 1)
     state = 0
     out.v32u(count.toUInt())
-    data.locked {
-      out.writeFully(it)
-    }
-    data.clear()
+    out.write(stream)
+    stream.clear()
   }
 }

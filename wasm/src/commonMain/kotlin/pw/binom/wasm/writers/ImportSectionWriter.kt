@@ -2,10 +2,12 @@ package pw.binom.wasm.writers
 
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.WasmOutput
+import pw.binom.wasm.limit
 import pw.binom.wasm.visitors.ImportSectionVisitor
 import pw.binom.wasm.visitors.TableVisitor
 
-class ImportSectionWriter(private val out: StreamWriter) : ImportSectionVisitor {
+class ImportSectionWriter(private val out: WasmOutput) : ImportSectionVisitor {
   private var state = 0
   override fun start() {
     check(state == 0)
@@ -22,7 +24,7 @@ class ImportSectionWriter(private val out: StreamWriter) : ImportSectionVisitor 
     state++
     out.string(module)
     out.string(field)
-    out.write(0)
+    out.i8s(0)
     out.v32u(index.id)
   }
 
@@ -31,7 +33,7 @@ class ImportSectionWriter(private val out: StreamWriter) : ImportSectionVisitor 
     state++
     out.string(module)
     out.string(field)
-    out.write(1)
+    out.i8s(1)
     return TableWriter(out)
   }
 
@@ -40,7 +42,7 @@ class ImportSectionWriter(private val out: StreamWriter) : ImportSectionVisitor 
     state++
     out.string(module)
     out.string(field)
-    out.write(2)
+    out.i8s(2)
     out.limit(inital = initial)
   }
 
@@ -49,7 +51,7 @@ class ImportSectionWriter(private val out: StreamWriter) : ImportSectionVisitor 
     state++
     out.string(module)
     out.string(field)
-    out.write(2)
+    out.i8s(2)
     out.limit(inital = initial, max = maximum)
   }
 }

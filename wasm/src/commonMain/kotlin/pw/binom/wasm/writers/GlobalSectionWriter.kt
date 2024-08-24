@@ -1,20 +1,22 @@
 package pw.binom.wasm.writers
 
 import pw.binom.io.ByteArrayOutput
+import pw.binom.wasm.InMemoryWasmOutput
 import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.GlobalSectionVisitor
 import pw.binom.wasm.visitors.ValueVisitor
+import pw.binom.wasm.write
 
-class GlobalSectionWriter(private val out: StreamWriter) : GlobalSectionVisitor {
+class GlobalSectionWriter(private val out: WasmOutput) : GlobalSectionVisitor {
   companion object {
     const val NONE = 0
     const val STARTED = 1
     const val TYPE_STARTED = 2
   }
 
-  private val data = ByteArrayOutput()
-  private val stream = StreamWriter(data)
+  private val stream = InMemoryWasmOutput()
   private var count = 0
   private var state = 0
 
@@ -26,11 +28,9 @@ class GlobalSectionWriter(private val out: StreamWriter) : GlobalSectionVisitor 
   override fun end() {
     check(state == STARTED)
     out.v32u(count.toUInt())
-    data.locked {
-      out.write(it)
-    }
+    out.write(stream)
+    stream.clear()
     count = 0
-    data.clear()
     state = NONE
   }
 

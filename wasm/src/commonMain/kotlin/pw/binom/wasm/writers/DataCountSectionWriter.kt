@@ -1,9 +1,9 @@
 package pw.binom.wasm.writers
 
-import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.DataCountSectionVisitor
 
-class DataCountSectionWriter(private val out: StreamWriter) : DataCountSectionVisitor {
+class DataCountSectionWriter(private val out: WasmOutput) : DataCountSectionVisitor {
   private var state = 0
   override fun start() {
     check(state == 0)

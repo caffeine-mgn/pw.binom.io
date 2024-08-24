@@ -1,9 +1,6 @@
 package pw.binom.wasm
 
-import pw.binom.io.ByteBuffer
-import pw.binom.io.DataTransferSize
-import pw.binom.io.Output
-import pw.binom.io.writeByteArray
+import pw.binom.io.*
 
 class StreamWriter(val out: Output) : WasmOutput {
 
@@ -104,17 +101,6 @@ class StreamWriter(val out: Output) : WasmOutput {
     writeByteArray(data, buffer)
   }
 
-  fun limit(inital: UInt) {
-    v1u(false)
-    v32u(inital)
-  }
-
-  fun limit(inital: UInt, max: UInt) {
-    v1u(true)
-    v32u(inital)
-    v32u(max)
-  }
-
   override fun close() {
     try {
       out.close()
@@ -123,7 +109,30 @@ class StreamWriter(val out: Output) : WasmOutput {
     }
   }
 
-  fun v1u(b: Boolean) {
+  override fun v1u(b: Boolean) {
     write(if (b) 1 else 0)
   }
+
+
+  private class VectorWriterImpl(val main: WasmOutput) : VectorWriter {
+
+    private var vectorCount = 0
+    private val vectorData = ByteArrayOutput()
+    private val vectorStream = StreamWriter(ByteArrayOutput())
+
+    override fun element(value: (WasmOutput) -> Unit) {
+      vectorCount++
+      value(vectorStream)
+    }
+
+    override fun close() {
+      main.v32u(vectorCount.toUInt())
+      vectorData.locked {
+        main.write(it)
+      }
+      vectorData.close()
+    }
+  }
+
+  override fun vec(): VectorWriter = VectorWriterImpl(this)
 }

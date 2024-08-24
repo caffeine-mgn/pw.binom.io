@@ -1,12 +1,14 @@
 package pw.binom.wasm.writers
 
 import pw.binom.io.ByteArrayOutput
+import pw.binom.wasm.InMemoryWasmOutput
 import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.CodeSectionVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
-class CodeSectionWriter(private val out: StreamWriter) : CodeSectionVisitor {
+class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
   companion object {
     private const val NONE = 0
     private const val STARTED = 1
@@ -17,10 +19,8 @@ class CodeSectionWriter(private val out: StreamWriter) : CodeSectionVisitor {
   private var state = 0
   private var localCount = 0
 
-  private val localData = ByteArrayOutput()
-  private val localStream = StreamWriter(localData)
-  private val codeData = ByteArrayOutput()
-  private val codeStream = StreamWriter(codeData)
+  private val localStream = InMemoryWasmOutput()
+  private val codeStream = InMemoryWasmOutput()
 
   override fun start() {
     check(state == NONE)
@@ -32,10 +32,10 @@ class CodeSectionWriter(private val out: StreamWriter) : CodeSectionVisitor {
       STARTED -> out.v32u(0u) // size of block is 0
       LOCAL_START -> {
         val localCountData = ByteArrayOutput()
-        val localCountStream = StreamWriter(codeData)
+        val localCountStream = StreamWriter(codeStream)
         localCountStream.v32u(localCount.toUInt())
         localCountData.locked { localCountBuffer ->
-          localData.locked { localDataBuffer ->
+          localStream.locked { localDataBuffer ->
             out.v32u((localCountBuffer.remaining + localDataBuffer.remaining).toUInt()) // size of block
             out.write(localCountBuffer) // count of locals
             out.write(localDataBuffer) // locals
@@ -45,11 +45,11 @@ class CodeSectionWriter(private val out: StreamWriter) : CodeSectionVisitor {
 
       CODE_START -> {
         val localCountData = ByteArrayOutput()
-        val localCountStream = StreamWriter(codeData)
+        val localCountStream = StreamWriter(codeStream)
         localCountStream.v32u(localCount.toUInt())
         localCountData.locked { localCountBuffer ->
-          localData.locked { localDataBuffer ->
-            codeData.locked { codeDataBuffer ->
+          localStream.locked { localDataBuffer ->
+            codeStream.locked { codeDataBuffer ->
               out.v32u((localCountBuffer.remaining + localDataBuffer.remaining + codeDataBuffer.remaining).toUInt()) // size of block
               out.write(localCountBuffer) // count of locals
               out.write(localDataBuffer) // locals
@@ -63,8 +63,8 @@ class CodeSectionWriter(private val out: StreamWriter) : CodeSectionVisitor {
     }
     state = NONE
     localCount = 0
-    localData.clear()
-    codeData.clear()
+    localStream.clear()
+    codeStream.clear()
   }
 
   override fun local(size: UInt): ValueVisitor {

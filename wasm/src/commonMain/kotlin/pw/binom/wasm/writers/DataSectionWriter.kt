@@ -4,8 +4,7 @@ import pw.binom.copyTo
 import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Input
 import pw.binom.io.use
-import pw.binom.wasm.MemoryId
-import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.*
 import pw.binom.wasm.readers.DataSectionReader
 import pw.binom.wasm.visitors.DataSectionVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor
@@ -13,10 +12,9 @@ import pw.binom.wasm.visitors.ExpressionsVisitor
 /**
  * https://webassembly.github.io/gc/core/binary/modules.html#binary-datasec
  */
-class DataSectionWriter(private val out: StreamWriter) : DataSectionVisitor {
+class DataSectionWriter(private val out: WasmOutput) : DataSectionVisitor {
 
-  private val data = ByteArrayOutput()
-  private val stream = StreamWriter(data)
+  private val stream = InMemoryWasmOutput()
   private var count = 0
   private var state = 0
 
@@ -24,7 +22,7 @@ class DataSectionWriter(private val out: StreamWriter) : DataSectionVisitor {
     check(state == 2)
     state++
     count++
-    stream.write(DataSectionReader.ACTIVE_MEM_X)
+    stream.i8u(DataSectionReader.ACTIVE_MEM_X)
     return ExpressionsWriter(stream)
   }
 
@@ -32,7 +30,7 @@ class DataSectionWriter(private val out: StreamWriter) : DataSectionVisitor {
     check(state == 2)
     state++
     count++
-    stream.write(DataSectionReader.ACTIVE_MEM_0)
+    stream.i8u(DataSectionReader.ACTIVE_MEM_0)
     stream.v32u(memoryId.raw)
     return ExpressionsWriter(stream)
   }
@@ -41,7 +39,7 @@ class DataSectionWriter(private val out: StreamWriter) : DataSectionVisitor {
     check(state == 2)
     state++
     count++
-    stream.write(DataSectionReader.PASSIVE)
+    stream.i8u(DataSectionReader.PASSIVE)
   }
 
   override fun data(input: Input) {
@@ -73,9 +71,7 @@ class DataSectionWriter(private val out: StreamWriter) : DataSectionVisitor {
 
   override fun end() {
     out.v32u(count.toUInt())
-    data.locked {
-      out.write(it)
-    }
-    data.clear()
+    out.write(stream)
+    stream.clear()
   }
 }
