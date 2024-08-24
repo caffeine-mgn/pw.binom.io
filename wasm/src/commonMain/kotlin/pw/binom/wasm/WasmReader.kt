@@ -60,12 +60,10 @@ object WasmReader {
               )
             }
 
-            Sections.TABLE_SECTION -> TableSectionReader.read(sectionInput)
-            Sections.MEMORY_SECTION -> MemorySectionReader.read(sectionInput)
-            Sections.GLOBAL_SECTION -> GlobalSectionReader.read(sectionInput)
-            Sections.EXPORT_SECTION -> sectionInput.readVec {
-              ExportSectionReader.read(sectionInput)
-            }
+            Sections.TABLE_SECTION -> TableSectionReader.read(input = sectionInput, visitor = visitor.tableSection())
+            Sections.MEMORY_SECTION -> MemorySectionReader.read(input = sectionInput, visitor = visitor.memorySection())
+            Sections.GLOBAL_SECTION -> GlobalSectionReader.read(input = sectionInput, visitor=visitor.globalSection())
+            Sections.EXPORT_SECTION -> ExportSectionReader.read(input = sectionInput, visitor=visitor.exportSection())
 
             Sections.START_SECTION -> visitor.startSection(function = FunctionId(sectionInput.v32u()))
             Sections.ELEMENT_SECTION -> ElementSectionReader.read(input = sectionInput)
@@ -77,7 +75,7 @@ object WasmReader {
             }
 
             Sections.DATA_SECTION -> DataSectionReader.read(input = sectionInput)
-            Sections.DATA_COUNT_SECTION -> DataCountSectionReader.read(input = sectionInput)
+            Sections.DATA_COUNT_SECTION -> DataCountSectionReader.read(input = sectionInput, visitor=visitor.dataCountSection())
             Sections.TAG_SECTION -> TagSectionReader.read(input = sectionInput)
             else -> sectionInput.skipOther()
           }

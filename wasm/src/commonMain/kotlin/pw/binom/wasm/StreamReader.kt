@@ -133,10 +133,9 @@ class StreamReader(
     val firstByte = firstByte1.toUByte()
     if (firstByte == 0x40u.toUByte()) {
       visitor.withoutType()
-      null
     } else {
       if (isValueType(firstByte)) {
-        readValueType(firstByte, visitor = visitor.valueType())
+        readValueType(byte = firstByte, visitor = visitor.valueType())
       } else {
         TODO()
         val index = v32s()

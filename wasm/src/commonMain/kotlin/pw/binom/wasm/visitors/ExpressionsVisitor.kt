@@ -64,8 +64,7 @@ interface ExpressionsVisitor {
   fun numeric(opcode: UByte) {}
   fun compare(opcode: UByte) {}
   fun convert(opcode: UByte) {}
-  fun structOp(opcode: UByte, type: TypeId, field: FieldId) {}
-  fun refNull(type: Types) {}
+  fun structOp(gcOpcode: UByte, type: TypeId, field: FieldId) {}
   fun refNull(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
   fun call(opcode: UByte, function: FunctionId) {}
   fun call(opcode: UByte, type: TypeId, table: TableId) {}
@@ -73,9 +72,9 @@ interface ExpressionsVisitor {
   fun indexArgument(opcode: UByte, label: LocalId) {}
   fun indexArgument(opcode: UByte, label: GlobalId) {}
   fun reinterpret(opcode: UByte) {}
-  fun arrayOp(opcode: UByte, type: TypeId) {}
-  fun ref(opcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
-  fun structNew(type: TypeId) = {}
+  fun arrayOp(gcOpcode: UByte, type: TypeId) {}
+  fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
+  fun structNew(type: TypeId) {}
   fun arrayCopy(from: TypeId, to: TypeId) {}
   fun newArray(type: TypeId, size: UInt) {}
   fun newArray(type: TypeId, data: DataId) {}
@@ -85,12 +84,19 @@ interface ExpressionsVisitor {
   fun arrayLen() {}
   fun ref(function: FunctionId) {}
   fun drop() {}
-  fun br(): BrTableVisitor = BrTableVisitor.STUB
+  fun brTable(): BrTableVisitor = BrTableVisitor.STUB
   fun select() {}
+  fun select(typeCount: Int): ValueVisitor = ValueVisitor.SKIP
   fun throwOp(tag: TagId) {}
   fun startBlock(opcode: UByte): BlockStartVisitor = BlockStartVisitor.STUB
   fun refIsNull() {}
   fun refAsNonNull() {}
   fun throwRef() {}
   fun catchAll() {}
+  fun memorySize(size: UInt) {}
+  fun memoryGrow(size: UInt) {}
+  fun rethrow(v32u: UInt) {}
+  fun catch(v32u: UInt) {}
+  fun convertNumeric(opcode: UByte) {}
+  fun gcConvert(opcode: UByte) {}
 }

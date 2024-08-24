@@ -9,14 +9,16 @@ object ExportSectionReader {
   const val MEM: UByte = 0x02u
   const val GLOBAL: UByte = 0x03u
   fun read(input: StreamReader, visitor: ExportSectionVisitor) {
-    val name = input.readString()
-    visitor.start(name)
-    when (val type = input.readUByte()) {
-      FUNC -> visitor.func(input.v32u())
-      TABLE -> visitor.table(input.v32u())
-      MEM -> visitor.memory(input.v32u())
-      GLOBAL -> visitor.global(input.v32u())
-      else -> TODO("Unknown export type: 0x${type.toString(16).padStart(2, '0')}")
+    visitor.start()
+    input.readVec {
+      val name = input.readString()
+      when (val type = input.readUByte()) {
+        FUNC -> visitor.func(name, input.v32u())
+        TABLE -> visitor.table(name, input.v32u())
+        MEM -> visitor.memory(name, input.v32u())
+        GLOBAL -> visitor.global(name, input.v32u())
+        else -> TODO("Unknown export type: 0x${type.toString(16).padStart(2, '0')}")
+      }
     }
     visitor.end()
   }

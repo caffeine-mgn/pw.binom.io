@@ -1,47 +1,60 @@
 package pw.binom.wasm.writers
 
+import pw.binom.io.ByteArrayOutput
 import pw.binom.wasm.StreamWriter
 import pw.binom.wasm.readers.ExportSectionReader
 import pw.binom.wasm.visitors.ExportSectionVisitor
 
 class ExportSectionWriter(private val out: StreamWriter) : ExportSectionVisitor {
   private var state = 0
-  override fun start(name: String) {
+  private val data = ByteArrayOutput()
+  private val stream = StreamWriter(data)
+
+  private var count = 0
+  override fun start() {
     check(state == 0)
     state++
-    out.string(name)
   }
 
   override fun end() {
-    check(state == 2)
+    check(state == 1)
+    out.v32u(count.toUInt())
+    data.locked {
+      out.write(it)
+    }
+    data.clear()
     state = 0
   }
 
-  override fun func(value: UInt) {
+  override fun func(name: String, value: UInt) {
     check(state == 1)
-    state++
-    out.write(ExportSectionReader.FUNC)
-    out.v32u(value)
+    count++
+    stream.string(name)
+    stream.write(ExportSectionReader.FUNC)
+    stream.v32u(value)
   }
 
-  override fun table(value: UInt) {
+  override fun table(name: String, value: UInt) {
     check(state == 1)
-    state++
-    out.write(ExportSectionReader.TABLE)
-    out.v32u(value)
+    count++
+    stream.string(name)
+    stream.write(ExportSectionReader.TABLE)
+    stream.v32u(value)
   }
 
-  override fun memory(value: UInt) {
+  override fun memory(name: String, value: UInt) {
     check(state == 1)
-    state++
-    out.write(ExportSectionReader.MEM)
-    out.v32u(value)
+    count++
+    stream.string(name)
+    stream.write(ExportSectionReader.MEM)
+    stream.v32u(value)
   }
 
-  override fun global(value: UInt) {
+  override fun global(name: String, value: UInt) {
     check(state == 1)
-    state++
-    out.write(ExportSectionReader.GLOBAL)
-    out.v32u(value)
+    count++
+    stream.string(name)
+    stream.write(ExportSectionReader.GLOBAL)
+    stream.v32u(value)
   }
 }

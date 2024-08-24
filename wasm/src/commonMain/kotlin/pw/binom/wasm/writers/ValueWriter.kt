@@ -26,6 +26,16 @@ class ValueWriter(private val out: StreamWriter) :
     type(type)
   }
 
+  override fun refType(type: AbsHeapType) {
+    when (type) {
+      AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> out.write(Types.TYPE_REF_ABS_HEAP_FUNC_REF)
+      AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN -> out.write(Types.TYPE_REF_EXTERN_REF)
+      AbsHeapType.TYPE_REF_ABS_HEAP_NONE -> out.write(Types.TYPE_REF_ABS_HEAP_NONE)
+      AbsHeapType.TYPE_REF_ABS_HEAP_ANY -> out.write(Types.TYPE_REF_ABS_HEAP_ANY)
+      else -> TODO()
+    }
+  }
+
   override fun ref(): ValueVisitor.HeapVisitor {
     out.write(0x64u)
     return this

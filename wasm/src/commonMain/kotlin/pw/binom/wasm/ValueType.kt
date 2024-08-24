@@ -51,14 +51,6 @@ sealed interface StorageType {
  * https://www.w3.org/TR/wasm-core-2/#binary-reftype
  * https://webassembly.github.io/gc/core/binary/types.html#reference-types
  */
-fun StreamReader.readRefType() =
-  when (val value = readByte().toUByte()) {
-    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> ValueType.Ref.FUNC_REF
-    Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
-    Types.TYPE_REF_ABS_HEAP_STRUCT -> ValueType.Ref.STRUCT
-    Types.TYPE_REF_ABS_HEAP_NONE -> ValueType.Ref.NONE
-    else -> TODO("Unknown type 0x${value.toString(16)}")
-  }
 
 fun StreamReader.readStorageType() =
   when (val value = readUByte()) {
@@ -175,12 +167,13 @@ fun StreamReader.readValueType(byte: UByte = readUByte(), visitor: ValueVisitor)
       -> readNumType(byte = byte, visitor = visitor.numType())
 
     Types.TYPE_VEC_V128 -> readVecType(byte = byte, visitor = visitor.vecType())
-    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> visitor.refType().ref().type(AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF)
-    Types.TYPE_REF_EXTERN_REF -> visitor.refType().ref().type(AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN)
-    Types.TYPE_REF_NULL -> readHeapType(visitor = visitor.refType().refNull())
 
-    Types.TYPE_REF_ABS_HEAP_NONE -> visitor.refType().ref().type(AbsHeapType.TYPE_REF_ABS_HEAP_NONE)
-    Types.TYPE_REF_ABS_HEAP_ANY -> visitor.refType().ref().type(AbsHeapType.TYPE_REF_ABS_HEAP_ANY)
+    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF)
+    Types.TYPE_REF_EXTERN_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN)
+    Types.TYPE_REF_ABS_HEAP_NONE -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_NONE)
+    Types.TYPE_REF_ABS_HEAP_ANY -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_ANY)
+
+    Types.TYPE_REF_NULL -> readHeapType(visitor = visitor.refType().refNull())
     Types.TYPE_REF -> readHeapType(visitor = visitor.refType().ref())
 
     else -> TODO("Unknown type 0x${value.toString(16)}")

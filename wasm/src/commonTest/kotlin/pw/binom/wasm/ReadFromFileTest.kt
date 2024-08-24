@@ -62,10 +62,6 @@ class MyFunctionSectionVisitor : FunctionSectionVisitor {
   override fun start() {
   }
 
-  override fun value(int: UInt) {
-    println("function($int)")
-  }
-
   override fun end() {
   }
 
@@ -114,46 +110,5 @@ class MyImportSectionVisitor : ImportSectionVisitor {
 
 class MyCodeSectionVisitor() : CodeSectionVisitor {
   private var c = 0
-  override fun start(size: UInt) {
-    c++
-    println("---------------Start CODE (size=$size) $c---------------")
-  }
-
-  override fun end() {
-  }
-
-  override fun indexArgument(opcode: UByte, index: Int) {
-  }
-
-  override fun memOpAlignOffsetArg(opcode: UByte, readVarUInt32AsInt: Int, readVarUInt32: Long) {
-  }
-
-  override fun numOp(opcode: UByte) {
-  }
-
-  override fun controlFlow(opcode: UByte, type: ValueType?) {
-  }
-
-  override fun controlFlow(opcode: UByte, labelIndex: Int) {
-  }
-
-  override fun controlFlow(opcode: UByte) {
-  }
-
-  override fun const(opcode: UByte, fromBits: Float) {
-  }
-
-  override fun const(opcode: UByte, value: Int) {
-    println("const $value")
-  }
-
-  override fun compare(opcode: UByte) {
-  }
-
-  override fun convert(opcode: UByte) {
-  }
-
-  override fun local(type: ValueType) {
-  }
 
 }

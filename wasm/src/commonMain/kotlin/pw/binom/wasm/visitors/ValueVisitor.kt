@@ -19,6 +19,7 @@ interface ValueVisitor {
   companion object {
     val SKIP = object : ValueVisitor {}
   }
+
   interface HeapVisitor {
     companion object {
       val EMPTY = object : HeapVisitor {}
@@ -59,5 +60,6 @@ interface ValueVisitor {
 
   fun numType(): NumberVisitor = NumberVisitor.EMPTY
   fun refType(): RefVisitor = RefVisitor.EMPTY
+  fun refType(type: AbsHeapType){}
   fun vecType(): VectorVisitor = VectorVisitor.EMPTY
 }

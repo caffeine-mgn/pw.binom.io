@@ -27,6 +27,7 @@ object CodeSectionReader {
       }
       ExpressionReader.readExpressions(input = sectionInput, visitor = visitor.code())
     }
+    visitor.end()
   }
 
 

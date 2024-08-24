@@ -84,7 +84,7 @@ object ExpressionReader {
       )
 
       Opcodes.BR_TABLE -> {
-        val visitor = visitor.br()
+        val visitor = visitor.brTable()
         visitor.start()
         input.readVec {
           visitor.target(LabelId(input.v32u()))
@@ -288,35 +288,24 @@ object ExpressionReader {
         typeRef = TypeId(input.v32u()),
       )
 
-      Opcodes.MEMORY_SIZE -> {
-        input.v32u()
-      }
+      Opcodes.MEMORY_SIZE -> visitor.memorySize(size = input.v32u())
 
-      Opcodes.MEMORY_GROW -> {
-        input.v32u()
-      }
+      Opcodes.MEMORY_GROW -> visitor.memoryGrow(size = input.v32u())
 
       Opcodes.THROW -> visitor.throwOp(tag = TagId(input.v32u()))
 
       Opcodes.THROW_REF -> visitor.throwRef()
 
-      Opcodes.RETHROW -> {
-        input.v32u()
-      }
+      Opcodes.RETHROW -> visitor.rethrow(input.v32u())
 
-      Opcodes.CATCH -> {
-        input.v32u()
-//        input.readLebUnsigned()
-      }
+      Opcodes.CATCH -> visitor.catch(input.v32u())
 
-      Opcodes.CATCH_ALL -> {
-        visitor.catchAll()
-      }
+      Opcodes.CATCH_ALL -> visitor.catchAll()
 
       Opcodes.SELECT_WITH_TYPE -> {
         val typeCount = input.v32s()
         check(typeCount == 1)
-        input.readValueType(visitor = ValueVisitor.SKIP)
+        input.readValueType(visitor = visitor.select(typeCount))
       }
 
       Opcodes.I32_REINTERPRET_F32,
@@ -346,6 +335,7 @@ object ExpressionReader {
       Opcodes.NUMERIC_I64S_CONVERT_SAT_F64,
       Opcodes.NUMERIC_I64U_CONVERT_SAT_F64,
         -> {
+        visitor.convertNumeric(opcode)
       }
 
       else -> TODO("Unknown MISC code: 0x${opcode.toString(16)}")
@@ -363,7 +353,7 @@ object ExpressionReader {
       Opcodes.GC_STRUCT_GET_S,
       Opcodes.GC_STRUCT_GET_U,
         -> visitor.structOp(
-        opcode = opcode,
+        gcOpcode = opcode,
         type = TypeId(input.v32u()),
         field = FieldId(input.v32u())
       )
@@ -372,7 +362,7 @@ object ExpressionReader {
       Opcodes.GC_REF_TEST_NULL,
       Opcodes.GC_REF_TEST,
       Opcodes.GC_REF_CAST_NULL,
-        -> input.readHeapType(visitor = visitor.ref(opcode = opcode)) // heapType
+        -> input.readHeapType(visitor = visitor.ref(gcOpcode = opcode)) // heapType
 
       Opcodes.GC_ARRAY_NEW_DEFAULT -> visitor.newArrayDefault(type = TypeId(input.v32u()))
 
@@ -381,7 +371,7 @@ object ExpressionReader {
       Opcodes.GC_ARRAY_GET_S,
       Opcodes.GC_ARRAY_GET_U,
         -> visitor.arrayOp(
-        opcode = opcode,
+        gcOpcode = opcode,
         type = TypeId(input.v32u())
       )
 
@@ -413,13 +403,10 @@ object ExpressionReader {
         visitor.end()
       }
 
-      Opcodes.GC_EXTERN_CONVERT_ANY -> {
+        Opcodes.GC_ANY_CONVERT_EXTERN,
+        Opcodes.GC_EXTERN_CONVERT_ANY,
+            -> visitor.gcConvert(opcode)
 
-      }
-
-      Opcodes.GC_ANY_CONVERT_EXTERN -> {
-
-      }
 
       else -> TODO(
         "Unknown GC code: 0x${Opcodes.GC_PREFIX.toString(16).padStart(2, '0')}${

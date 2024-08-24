@@ -1,10 +1,6 @@
 package pw.binom.wasm
 
-import pw.binom.wasm.visitors.CodeSectionVisitor
-import pw.binom.wasm.visitors.CustomSectionVisitor
-import pw.binom.wasm.visitors.FunctionSectionVisitor
-import pw.binom.wasm.visitors.ImportSectionVisitor
-import pw.binom.wasm.visitors.TypeSectionVisitor
+import pw.binom.wasm.visitors.*
 
 interface WasmVisitor {
   fun start() {}
@@ -16,4 +12,9 @@ interface WasmVisitor {
   fun typeSection(): TypeSectionVisitor = TypeSectionVisitor.STUB
   fun customSection(): CustomSectionVisitor = CustomSectionVisitor.Companion.STUB
   fun startSection(function: FunctionId) {}
+  fun tableSection(): TableSectionVisitor = TableSectionVisitor.SKIP
+  fun memorySection(): MemorySectionVisitor = MemorySectionVisitor.SKIP
+  fun globalSection(): GlobalSectionVisitor = GlobalSectionVisitor.SKIP
+  fun exportSection(): ExportSectionVisitor = ExportSectionVisitor.SKIP
+  fun dataCountSection(): DataCountSectionVisitor = DataCountSectionVisitor.SKIP
 }

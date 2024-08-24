@@ -1,10 +1,14 @@
 package pw.binom.wasm.visitors
 
 interface ExportSectionVisitor {
-  fun start(name: String) {}
+  companion object {
+    val SKIP = object : ExportSectionVisitor {}
+  }
+
+  fun start() {}
   fun end() {}
-  fun func(value: UInt) {}
-  fun table(value: UInt) {}
-  fun memory(value: UInt) {}
-  fun global(value: UInt) {}
+  fun func(name: String, value: UInt) {}
+  fun table(name: String, value: UInt) {}
+  fun memory(name: String, value: UInt) {}
+  fun global(name: String, value: UInt) {}
 }
