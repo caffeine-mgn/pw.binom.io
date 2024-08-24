@@ -7,9 +7,17 @@ import pw.binom.io.writeByteArray
 
 class StreamWriter(val out: Output) : Output {
 
+  var cursor = 0
+    private set
   private val buffer = ByteBuffer(8)
 
-  override fun write(data: ByteBuffer): DataTransferSize = out.write(data)
+  override fun write(data: ByteBuffer): DataTransferSize {
+    val e = out.write(data)
+    if (e.isAvailable) {
+      cursor += e.length
+    }
+    return e
+  }
 
   override fun flush() = out.flush()
 

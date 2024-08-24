@@ -17,7 +17,7 @@ enum class AbsHeapType {
 
 interface ValueVisitor {
   companion object {
-    val EMPTY = object : ValueVisitor {}
+    val SKIP = object : ValueVisitor {}
   }
   interface HeapVisitor {
     companion object {

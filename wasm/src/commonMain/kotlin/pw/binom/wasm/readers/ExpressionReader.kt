@@ -1,6 +1,7 @@
-package pw.binom.wasm
+package pw.binom.wasm.readers
 
 import pw.binom.io.EOFException
+import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
@@ -23,10 +24,10 @@ object ExpressionReader {
       }
       lastOpcode = opcode
       when (opcode) {
-        Opcodes.GC_PREFIX -> gc(visitor = ExpressionsVisitor.Companion.STUB, input = input)
-        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = ExpressionsVisitor.Companion.STUB)
-        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = ExpressionsVisitor.Companion.STUB)
-        else -> default(input = input, visitor = ExpressionsVisitor.Companion.STUB, opcode = opcode, context = context)
+        Opcodes.GC_PREFIX -> gc(visitor = ExpressionsVisitor.SKIP, input = input)
+        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = ExpressionsVisitor.SKIP)
+        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = ExpressionsVisitor.SKIP)
+        else -> default(input = input, visitor = ExpressionsVisitor.SKIP, opcode = opcode, context = context)
       }
     }
 //    input.skipOther()
@@ -315,7 +316,7 @@ object ExpressionReader {
       Opcodes.SELECT_WITH_TYPE -> {
         val typeCount = input.v32s()
         check(typeCount == 1)
-        input.readValueType(visitor = ValueVisitor.EMPTY)
+        input.readValueType(visitor = ValueVisitor.SKIP)
       }
 
       Opcodes.I32_REINTERPRET_F32,

@@ -26,11 +26,11 @@ object TypeSectionReader {
   private fun consume_sig(input: StreamReader, visitor: TypeSectionVisitor) {
     input.readVec {
       // args
-      input.readValueType(visitor = ValueVisitor.EMPTY)
+      input.readValueType(visitor = ValueVisitor.SKIP)
     }
     input.readVec {
       // results
-      input.readValueType(visitor = ValueVisitor.EMPTY)
+      input.readValueType(visitor = ValueVisitor.SKIP)
     }
   }
 

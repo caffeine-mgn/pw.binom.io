@@ -2,11 +2,8 @@ package pw.binom.wasm.readers
 
 import pw.binom.io.use
 import pw.binom.wasm.visitors.CodeSectionVisitor
-import pw.binom.wasm.ExpressionReader
-import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.StreamReader
 import pw.binom.wasm.readValueType
-import pw.binom.wasm.visitors.ValueVisitor
 
 /**
  * https://webassembly.github.io/exception-handling/core/binary/modules.html#binary-codesec
@@ -18,7 +15,7 @@ import pw.binom.wasm.visitors.ValueVisitor
 object CodeSectionReader {
   fun read(input: StreamReader, visitor: CodeSectionVisitor) {
     val sizeInBytes = input.v32u()
-    visitor.start(sizeInBytes)
+    visitor.start()
     if (sizeInBytes == 0u) {
       visitor.end()
       return
@@ -26,13 +23,9 @@ object CodeSectionReader {
     input.withLimit(sizeInBytes).use { sectionInput ->
       sectionInput.readVec {
         val size = sectionInput.v32u()
-        val type = sectionInput.readValueType(visitor = ValueVisitor.EMPTY)
-        repeat(size.toInt()) {
-          // TODO
-//          visitor.local(type)
-        }
+        sectionInput.readValueType(visitor = visitor.local(size))
       }
-      ExpressionReader.readExpressions(input = sectionInput, visitor = ExpressionsVisitor.Companion.STUB)
+      ExpressionReader.readExpressions(input = sectionInput, visitor = visitor.code())
     }
   }
 

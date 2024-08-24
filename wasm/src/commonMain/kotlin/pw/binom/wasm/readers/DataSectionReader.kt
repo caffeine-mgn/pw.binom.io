@@ -1,6 +1,5 @@
 package pw.binom.wasm.readers
 
-import pw.binom.wasm.ExpressionReader
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.StreamReader
 
@@ -13,7 +12,7 @@ object DataSectionReader {
     input.readVec {
       when (val type = input.readUByte()) {
         TYPE0 -> {
-          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.STUB)
+          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.SKIP)
           input.skip(input.v32u().toInt()) // data
         }
 
@@ -23,7 +22,7 @@ object DataSectionReader {
 
         TYPE2 -> {
           input.v32u()
-          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.STUB)
+          ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.SKIP)
           input.skip(input.v32u().toInt()) // data
         }
 

@@ -13,7 +13,7 @@ import pw.binom.wasm.Types
 
 interface ExpressionsVisitor {
   companion object {
-    val STUB = object : ExpressionsVisitor {}
+    val SKIP = object : ExpressionsVisitor {}
   }
 
   interface BrOnCastFailVisitor {
@@ -45,7 +45,7 @@ interface ExpressionsVisitor {
 
     fun start() {}
     fun withoutType() {}
-    fun valueType(): ValueVisitor = ValueVisitor.EMPTY
+    fun valueType(): ValueVisitor = ValueVisitor.SKIP
     fun end() {}
   }
 
