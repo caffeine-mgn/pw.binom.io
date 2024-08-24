@@ -4,11 +4,8 @@ import pw.binom.io.Input
 import pw.binom.io.file.File
 import pw.binom.io.file.openRead
 import pw.binom.io.use
-import pw.binom.wasm.visitors.CodeSectionVisitor
-import pw.binom.wasm.visitors.CustomSectionVisitor
-import pw.binom.wasm.visitors.FunctionSectionVisitor
-import pw.binom.wasm.visitors.ImportSectionVisitor
-import pw.binom.wasm.visitors.TypeSectionVisitor
+import pw.binom.wasm.readers.WasmReader
+import pw.binom.wasm.visitors.*
 import kotlin.test.Test
 
 class ReadFromFileTest {

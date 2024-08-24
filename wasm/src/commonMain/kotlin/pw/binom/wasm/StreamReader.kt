@@ -6,6 +6,7 @@ import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.readByteArray
 import pw.binom.readByte
+import pw.binom.wasm.readers.toUnsignedLong
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
