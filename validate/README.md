@@ -8,9 +8,9 @@
 @Retention(AnnotationRetention.BINARY)
 annotation class IntFormat
 
-object NumberFormatValidator:: Validator.FieldValidator<IntFormat> {
+object NumberFormatValidator : Validator.FieldValidator<IntFormat> {
     override fun valid(annotation: NotNull, descriptor: SerialDescriptor, value: String?): ValueValidateResult {
-        value?:return ValueValidateResult.success() 
+        value ?: return ValueValidateResult.success()
         value.toIntOrNull() ?: return ValueValidateResult.fail("Value \"$value\" is not Integer")
         return ValueValidateResult.success()
     }
@@ -23,8 +23,11 @@ val myValidatorModule = ValidatorModule.default + ValidatorModule {
 @Serializable
 class Data(
     @IntFormat
-    val age:String,
+    val age: String,
 )
 
-Validation.validateAndCheck(Data("123"))
+Validation.validateAndCheck(
+    value = Data("123"),
+    validatorModule = myValidatorModule,
+)
 ```
