@@ -1,10 +1,10 @@
 package pw.binom.wasm.writers
 
 import pw.binom.wasm.FunctionId
-import pw.binom.wasm.StreamWriter
+import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.FunctionSectionVisitor
 
-class FunctionSectionWriter(private val out: StreamWriter) : FunctionSectionVisitor {
+class FunctionSectionWriter(private val out: WasmOutput) : FunctionSectionVisitor {
   private var state = 0
 
   override fun start() {

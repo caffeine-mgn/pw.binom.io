@@ -5,7 +5,7 @@ import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor.BrOnCastFailVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
-class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
+class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
   private val blockStartWriter = object : ExpressionsVisitor.BlockStartVisitor {
     private var status = 0
     override fun start() {
@@ -27,7 +27,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
     override fun withoutType() {
       check(status == 1)
       status++
-      out.write(0x40u)
+      out.i8u(0x40u)
     }
   }
 
@@ -100,7 +100,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.TRY,
       Opcodes.IF,
         -> {
-        out.write(opcode)
+        out.i8u(opcode)
         return blockStartWriter
       }
 
@@ -109,11 +109,11 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
   }
 
   override fun endBlock() {
-    out.write(Opcodes.END)
+    out.i8u(Opcodes.END)
   }
 
   override fun select() {
-    out.write(Opcodes.SELECT)
+    out.i8u(Opcodes.SELECT)
   }
 
   override fun indexArgument(opcode: UByte, label: GlobalId) {
@@ -121,7 +121,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.GET_GLOBAL,
       Opcodes.SET_GLOBAL,
         -> {
-        out.write(opcode)
+        out.i8u(opcode)
         out.v32u(label.id)
       }
 
@@ -135,7 +135,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.SET_LOCAL,
       Opcodes.TEE_LOCAL,
         -> {
-        out.write(opcode)
+        out.i8u(opcode)
         out.v32u(label.id)
       }
 
@@ -150,7 +150,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.BR_ON_NULL,
       Opcodes.BR_ON_NON_NULL,
         -> {
-        out.write(opcode)
+        out.i8u(opcode)
         out.v32u(label.id)
       }
 
@@ -159,7 +159,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
   }
 
   override fun brTable(): ExpressionsVisitor.BrTableVisitor {
-    out.write(Opcodes.BR_TABLE)
+    out.i8u(Opcodes.BR_TABLE)
     return brTableWriter
   }
 
@@ -169,14 +169,14 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.NOP,
       Opcodes.ELSE,
       Opcodes.RETURN,
-        -> out.write(opcode)
+        -> out.i8u(opcode)
 
       else -> throw IllegalArgumentException()
     }
   }
 
   override fun drop() {
-    out.write(Opcodes.DROP)
+    out.i8u(Opcodes.DROP)
   }
 
   override fun memory(opcode: UByte, align: UInt, offset: UInt) {
@@ -205,6 +205,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.I64_STORE16,
       Opcodes.I64_STORE32,
         -> {
+        out.i8u(opcode)
         out.v32u(align)
         out.v32u(offset)
       }
@@ -280,7 +281,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.F64_MAX,
       Opcodes.F64_COPYSIGN,
         -> {
-        out.write(opcode)
+        out.i8u(opcode)
       }
 
       else -> throw IllegalArgumentException()
@@ -340,7 +341,7 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.F64_LE,
       Opcodes.F64_GE,
       Opcodes.REF_EQ,
-        -> out.write(opcode)
+        -> out.i8u(opcode)
 
       else -> throw IllegalArgumentException()
     }
@@ -369,52 +370,52 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.F64_CONVERT_S_I64,
       Opcodes.F64_CONVERT_U_I64,
       Opcodes.F64_PROMOTE_F32,
-        -> out.write(opcode)
+        -> out.i8u(opcode)
 
       else -> throw IllegalArgumentException()
     }
   }
 
   override fun ref(function: FunctionId) {
-    out.write(Opcodes.REF_FUNC)
+    out.i8u(Opcodes.REF_FUNC)
     out.v32u(function.id)
   }
 
   override fun refIsNull() {
-    out.write(Opcodes.REF_IS_NULL)
+    out.i8u(Opcodes.REF_IS_NULL)
   }
 
   override fun refAsNonNull() {
-    out.write(Opcodes.REF_AS_NON_NULL)
+    out.i8u(Opcodes.REF_AS_NON_NULL)
   }
 
   override fun call(opcode: UByte, type: TypeId, table: TableId) {
-    out.write(Opcodes.CALL_INDIRECT)
+    out.i8u(Opcodes.CALL_INDIRECT)
     out.v32u(type.value)
     out.v32u(table.id)
   }
 
   override fun call(opcode: UByte, function: FunctionId) {
-    out.write(Opcodes.CALL)
+    out.i8u(Opcodes.CALL)
     out.v32u(function.id)
   }
 
   override fun call(opcode: UByte, typeRef: TypeId) {
-    out.write(Opcodes.CALL_REF)
+    out.i8u(Opcodes.CALL_REF)
     out.v32u(typeRef.value)
   }
 
   override fun throwOp(tag: TagId) {
-    out.write(Opcodes.THROW)
+    out.i8u(Opcodes.THROW)
     out.v32u(tag.value)
   }
 
   override fun throwRef() {
-    out.write(Opcodes.THROW_REF)
+    out.i8u(Opcodes.THROW_REF)
   }
 
   override fun catchAll() {
-    out.write(Opcodes.CATCH_ALL)
+    out.i8u(Opcodes.CATCH_ALL)
   }
 
   override fun reinterpret(opcode: UByte) {
@@ -423,15 +424,15 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.I64_REINTERPRET_F64,
       Opcodes.F32_REINTERPRET_I32,
       Opcodes.F64_REINTERPRET_I64,
-        -> out.write(opcode)
+        -> out.i8u(opcode)
 
       else -> throw IllegalArgumentException()
     }
   }
 
   override fun structNew(type: TypeId) {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_STRUCT_NEW)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_STRUCT_NEW)
     out.v32u(type.value)
   }
 
@@ -442,8 +443,8 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.GC_STRUCT_GET_S,
       Opcodes.GC_STRUCT_GET_U,
         -> {
-        out.write(Opcodes.GC_PREFIX)
-        out.write(gcOpcode)
+        out.i8u(Opcodes.GC_PREFIX)
+        out.i8u(gcOpcode)
         out.v32u(type.value)
         out.v32u(field.id)
       }
@@ -453,8 +454,8 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
   }
 
   override fun newArrayDefault(type: TypeId) {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_ARRAY_NEW_DEFAULT)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_ARRAY_NEW_DEFAULT)
     out.v32u(type.value)
   }
 
@@ -465,49 +466,49 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.GC_ARRAY_GET_S,
       Opcodes.GC_ARRAY_GET_U,
         -> {
-        out.write(Opcodes.GC_PREFIX)
-        out.write(gcOpcode)
+        out.i8u(Opcodes.GC_PREFIX)
+        out.i8u(gcOpcode)
         out.v32u(type.value)
       }
     }
   }
 
   override fun arrayLen() {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_ARRAY_LEN)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_ARRAY_LEN)
   }
 
   override fun arrayFull(type: TypeId) {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_ARRAY_FILL)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_ARRAY_FILL)
     out.v32u(type.value)
   }
 
   override fun arrayCopy(from: TypeId, to: TypeId) {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_ARRAY_COPY)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_ARRAY_COPY)
     out.v32u(from.value)
     out.v32u(to.value)
   }
 
   override fun newArray(type: TypeId, data: DataId) {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_ARRAY_NEW_DATA)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_ARRAY_NEW_DATA)
     out.v32u(type.value)
     out.v32u(data.id)
   }
 
   override fun newArray(type: TypeId, size: UInt) {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_ARRAY_NEW_FIXED)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_ARRAY_NEW_FIXED)
     out.v32u(type.value)
     out.v32u(size)
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {
-    out.write(Opcodes.GC_PREFIX)
-    out.write(Opcodes.GC_BR_ON_CAST_FAIL)
-    out.write(flags)
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_BR_ON_CAST_FAIL)
+    out.i8u(flags)
     out.v32u(label.id)
     return brOnCastFailWriter
   }
@@ -519,8 +520,8 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.GC_REF_TEST,
       Opcodes.GC_REF_CAST_NULL,
         -> {
-        out.write(Opcodes.GC_PREFIX)
-        out.write(gcOpcode)
+        out.i8u(Opcodes.GC_PREFIX)
+        out.i8u(gcOpcode)
         return ValueWriter(out)
       }
 
@@ -529,32 +530,32 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
   }
 
   override fun refNull(): ValueVisitor.HeapVisitor {
-    out.write(Opcodes.REF_NULL)
+    out.i8u(Opcodes.REF_NULL)
     return ValueWriter(out)
   }
 
   override fun memorySize(size: UInt) {
-    out.write(Opcodes.MEMORY_SIZE)
+    out.i8u(Opcodes.MEMORY_SIZE)
     out.v32u(size)
   }
 
   override fun memoryGrow(size: UInt) {
-    out.write(Opcodes.MEMORY_GROW)
+    out.i8u(Opcodes.MEMORY_GROW)
     out.v32u(size)
   }
 
   override fun rethrow(v32u: UInt) {
-    out.write(Opcodes.RETHROW)
+    out.i8u(Opcodes.RETHROW)
     out.v32u(v32u)
   }
 
   override fun catch(v32u: UInt) {
-    out.write(Opcodes.CATCH)
+    out.i8u(Opcodes.CATCH)
     out.v32u(v32u)
   }
 
   override fun select(typeCount: Int): ValueVisitor {
-    out.write(Opcodes.SELECT_WITH_TYPE)
+    out.i8u(Opcodes.SELECT_WITH_TYPE)
     out.v32s(typeCount)
     return ValueWriter(out)
   }
@@ -570,8 +571,8 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.NUMERIC_I64S_CONVERT_SAT_F64,
       Opcodes.NUMERIC_I64U_CONVERT_SAT_F64,
         -> {
-        out.write(Opcodes.NUMERIC_PREFIX)
-        out.write(opcode)
+        out.i8u(Opcodes.NUMERIC_PREFIX)
+        out.i8u(opcode)
       }
 
       else -> throw IllegalArgumentException()
@@ -583,8 +584,8 @@ class ExpressionsWriter(private val out: StreamWriter) : ExpressionsVisitor {
       Opcodes.GC_ANY_CONVERT_EXTERN,
       Opcodes.GC_EXTERN_CONVERT_ANY,
         -> {
-        out.write(Opcodes.GC_PREFIX)
-        out.write(opcode)
+        out.i8u(Opcodes.GC_PREFIX)
+        out.i8u(opcode)
       }
 
       else -> throw IllegalArgumentException()

@@ -5,7 +5,7 @@ import pw.binom.io.DataTransferSize
 import pw.binom.io.Output
 import pw.binom.io.writeByteArray
 
-class StreamWriter(val out: Output) : Output {
+class StreamWriter(val out: Output) : WasmOutput {
 
   var cursor = 0
     private set
@@ -28,7 +28,15 @@ class StreamWriter(val out: Output) : Output {
     writeFully(buffer)
   }
 
-  fun v64u(value: ULong) {
+  override fun i8s(value: Byte) {
+    buffer.clear()
+    buffer[0] = value
+    writeFully(buffer)
+  }
+
+  override fun i8u(value: UByte) = i8s(value.toByte())
+
+  override fun v64u(value: ULong) {
     buffer.clear()
     Leb.writeUnsignedLeb128(value = value) { byte ->
       buffer.put(byte)
@@ -37,7 +45,7 @@ class StreamWriter(val out: Output) : Output {
     writeFully(buffer)
   }
 
-  fun v64s(value: Long) {
+  override fun v64s(value: Long) {
     buffer.clear()
     Leb.writeSignedLeb128(value = value) { byte ->
       buffer.put(byte)
@@ -46,7 +54,15 @@ class StreamWriter(val out: Output) : Output {
     writeFully(buffer)
   }
 
-  fun v32u(value: UInt) {
+  override fun i64s(value: Long) {
+    TODO("Not yet implemented")
+  }
+
+  override fun i32s(value: Int) {
+    TODO()
+  }
+
+  override fun v32u(value: UInt) {
     buffer.clear()
     Leb.writeUnsignedLeb128(value = value.toULong()) { byte ->
       buffer.put(byte)
@@ -55,7 +71,7 @@ class StreamWriter(val out: Output) : Output {
     writeFully(buffer)
   }
 
-  fun v32s(value: Int) {
+  override fun v32s(value: Int) {
     buffer.clear()
     Leb.writeSignedLeb128(value = value.toLong()) { byte ->
       buffer.put(byte)
@@ -73,7 +89,7 @@ class StreamWriter(val out: Output) : Output {
     writeFully(buffer)
   }
 
-  fun v33s(value: Long) {
+  override fun v33s(value: Long) {
     buffer.clear()
     Leb.writeSignedLeb128(value = value) { byte ->
       buffer.put(byte)
@@ -82,7 +98,7 @@ class StreamWriter(val out: Output) : Output {
     writeFully(buffer)
   }
 
-  fun string(value: String) {
+  override fun string(value: String) {
     val data = value.encodeToByteArray()
     v32u(data.size.toUInt())
     writeByteArray(data, buffer)

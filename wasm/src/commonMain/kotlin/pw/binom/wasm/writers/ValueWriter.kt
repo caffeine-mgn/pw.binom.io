@@ -3,10 +3,11 @@ package pw.binom.wasm.writers
 import pw.binom.wasm.StreamWriter
 import pw.binom.wasm.TypeId
 import pw.binom.wasm.Types
+import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.AbsHeapType
 import pw.binom.wasm.visitors.ValueVisitor
 
-class ValueWriter(private val out: StreamWriter) :
+class ValueWriter(private val out: WasmOutput) :
   ValueVisitor,
   ValueVisitor.RefVisitor,
   ValueVisitor.HeapVisitor,
@@ -28,21 +29,21 @@ class ValueWriter(private val out: StreamWriter) :
 
   override fun refType(type: AbsHeapType) {
     when (type) {
-      AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> out.write(Types.TYPE_REF_ABS_HEAP_FUNC_REF)
-      AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN -> out.write(Types.TYPE_REF_EXTERN_REF)
-      AbsHeapType.TYPE_REF_ABS_HEAP_NONE -> out.write(Types.TYPE_REF_ABS_HEAP_NONE)
-      AbsHeapType.TYPE_REF_ABS_HEAP_ANY -> out.write(Types.TYPE_REF_ABS_HEAP_ANY)
+      AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> out.i8u(Types.TYPE_REF_ABS_HEAP_FUNC_REF)
+      AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN -> out.i8u(Types.TYPE_REF_EXTERN_REF)
+      AbsHeapType.TYPE_REF_ABS_HEAP_NONE -> out.i8u(Types.TYPE_REF_ABS_HEAP_NONE)
+      AbsHeapType.TYPE_REF_ABS_HEAP_ANY -> out.i8u(Types.TYPE_REF_ABS_HEAP_ANY)
       else -> TODO()
     }
   }
 
   override fun ref(): ValueVisitor.HeapVisitor {
-    out.write(0x64u)
+    out.i8u(0x64u)
     return this
   }
 
   override fun refNull(): ValueVisitor.HeapVisitor {
-    out.write(0x64u)
+    out.i8u(0x64u)
     return this
   }
 
@@ -61,7 +62,7 @@ class ValueWriter(private val out: StreamWriter) :
       AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT -> Types.TYPE_REF_ABS_HEAP_STRUCT
       AbsHeapType.TYPE_REF_ABS_HEAP_ARRAY -> Types.TYPE_REF_ABS_HEAP_ARRAY
     }
-    out.write(byte)
+    out.i8u(byte)
   }
 
   override fun type(type: TypeId) {
@@ -71,25 +72,25 @@ class ValueWriter(private val out: StreamWriter) :
   // ValueVisitor.VectorVisitor
 
   override fun v128() {
-    out.write(Types.TYPE_VEC_V128)
+    out.i8u(Types.TYPE_VEC_V128)
   }
 
 
   // ValueVisitor.NumberVisitor
 
   override fun f32() {
-    out.write(Types.TYPE_NUM_I32)
+    out.i8u(Types.TYPE_NUM_I32)
   }
 
   override fun f64() {
-    out.write(Types.TYPE_NUM_F64)
+    out.i8u(Types.TYPE_NUM_F64)
   }
 
   override fun i32() {
-    out.write(Types.TYPE_NUM_I32)
+    out.i8u(Types.TYPE_NUM_I32)
   }
 
   override fun i64() {
-    out.write(Types.TYPE_NUM_I64)
+    out.i8u(Types.TYPE_NUM_I64)
   }
 }
