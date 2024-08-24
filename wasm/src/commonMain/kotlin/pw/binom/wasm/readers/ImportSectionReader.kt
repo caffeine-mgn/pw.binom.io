@@ -3,6 +3,7 @@ package pw.binom.wasm.readers
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.WasmInput
 import pw.binom.wasm.readRefType
+import pw.binom.wasm.readVec
 import pw.binom.wasm.visitors.ImportSectionVisitor
 
 internal object ImportSectionReader {
@@ -51,33 +52,35 @@ internal object ImportSectionReader {
 
   fun readImportSection(input: WasmInput, visitor: ImportSectionVisitor) {
     visitor.start()
-    val module = input.string()
-    val field = input.string()
-    val kind = input.sByte()
-    when (kind) {
-      0.toByte() -> visitor.function(
-        module = module,
-        field = field,
-        index = FunctionId(input.v32u())
-      )
+    input.readVec {
+      val module = input.string()
+      val field = input.string()
+      val kind = input.sByte()
+      when (kind) {
+        0.toByte() -> visitor.function(
+          module = module,
+          field = field,
+          index = FunctionId(input.v32u())
+        )
 
-      1.toByte() -> readTable(
-        input = input,
-        module = module,
-        field = field,
-        visitor = visitor,
-      )
+        1.toByte() -> readTable(
+          input = input,
+          module = module,
+          field = field,
+          visitor = visitor,
+        )
 
-      2.toByte() -> readMemory(
-        input = input,
-        visitor = visitor,
-        module = module,
-        field = field,
-      )
+        2.toByte() -> readMemory(
+          input = input,
+          visitor = visitor,
+          module = module,
+          field = field,
+        )
 
-      3.toByte() -> TODO("global")
-      4.toByte() -> TODO("tag")
-      else -> TODO("Unknown import kind  $kind (0x${kind.toUByte().toString(16)})")
+        3.toByte() -> TODO("global")
+        4.toByte() -> TODO("tag")
+        else -> TODO("Unknown import kind  $kind (0x${kind.toUByte().toString(16)})")
+      }
     }
     visitor.end()
 //    input.skip(length.toLong())

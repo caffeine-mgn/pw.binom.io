@@ -26,7 +26,7 @@ object WasmReader {
 
     while (true) {
       val sectionId = try {
-        input.readByte().toInt() and 0xff
+        input.sByte().toInt() and 0xff
 //          input.readVarUInt7().toInt()
       } catch (e: EOFException) {
         break
@@ -46,19 +46,15 @@ object WasmReader {
             )
           }
 
-          Sections.IMPORT_SECTION -> sectionInput.readVec {
-            ImportSectionReader.readImportSection(
-              input = sectionInput,
-              visitor = visitor.importSection(),
-            )
-          }
+          Sections.IMPORT_SECTION -> ImportSectionReader.readImportSection(
+            input = sectionInput,
+            visitor = visitor.importSection(),
+          )
 
-          Sections.FUNCTION_SECTION -> sectionInput.readVec {
-            FunctionSectionReader.read(
-              input = sectionInput,
-              visitor = visitor.functionSection()
-            )
-          }
+          Sections.FUNCTION_SECTION -> FunctionSectionReader.read(
+            input = sectionInput,
+            visitor = visitor.functionSection()
+          )
 
           Sections.TABLE_SECTION -> TableSectionReader.read(input = sectionInput, visitor = visitor.tableSection())
           Sections.MEMORY_SECTION -> MemorySectionReader.read(input = sectionInput, visitor = visitor.memorySection())

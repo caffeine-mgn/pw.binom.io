@@ -52,6 +52,13 @@ class InMemoryWasmOutput : ByteArrayOutput(), WasmOutput {
   override fun close() {
     stream.close()
   }
+
+  fun moveTo(out: WasmOutput) {
+    locked {
+      out.write(it)
+    }
+    clear()
+  }
 }
 
 fun WasmOutput.write(data: InMemoryWasmOutput) {

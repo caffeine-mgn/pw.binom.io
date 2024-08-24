@@ -46,14 +46,14 @@ object TypeSectionReader {
     input.readVec {
       val storageType = input.readStorageType()
       println("storageType=$storageType")
-      val mutable = consume_mutability(input)
+      val mutable = input.v1u()
       println("mutable=$mutable")
     }
   }
 
   private fun consume_array(input: WasmInput, visitor: TypeSectionVisitor) {
     input.readStorageType()
-    consume_mutability(input)
+    val mutable = input.v1u()
   }
 
   private fun consume_base_type_definition(kind: UByte?, input: WasmInput, visitor: TypeSectionVisitor) {
