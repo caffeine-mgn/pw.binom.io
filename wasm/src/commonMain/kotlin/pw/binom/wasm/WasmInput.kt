@@ -1,7 +1,6 @@
 package pw.binom.wasm
 
 import pw.binom.io.Input
-import pw.binom.wasm.visitors.AbsHeapType
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 import kotlin.contracts.ExperimentalContracts

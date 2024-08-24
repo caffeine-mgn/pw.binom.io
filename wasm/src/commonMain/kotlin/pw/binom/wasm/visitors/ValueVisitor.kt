@@ -1,19 +1,7 @@
 package pw.binom.wasm.visitors
 
+import pw.binom.wasm.AbsHeapType
 import pw.binom.wasm.TypeId
-
-enum class AbsHeapType {
-  TYPE_REF_ABS_HEAP_NO_FUNC,
-  TYPE_REF_ABS_HEAP_NO_EXTERN,
-  TYPE_REF_ABS_HEAP_NONE,
-  TYPE_REF_ABS_HEAP_FUNC_REF,
-  TYPE_REF_ABS_HEAP_EXTERN,
-  TYPE_REF_ABS_HEAP_ANY,
-  TYPE_REF_ABS_HEAP_EQ,
-  TYPE_REF_ABS_HEAP_I31,
-  TYPE_REF_ABS_HEAP_STRUCT,
-  TYPE_REF_ABS_HEAP_ARRAY,
-}
 
 interface ValueVisitor {
   companion object {

@@ -1,8 +1,5 @@
 package pw.binom.wasm
 
-import pw.binom.wasm.visitors.AbsHeapType
-import pw.binom.wasm.visitors.ValueVisitor
-
 //sealed interface Types {
 //  enum class Numers:Types {
 //    I32,

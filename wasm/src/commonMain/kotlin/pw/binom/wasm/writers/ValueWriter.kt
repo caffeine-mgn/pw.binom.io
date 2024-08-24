@@ -1,10 +1,6 @@
 package pw.binom.wasm.writers
 
-import pw.binom.wasm.StreamWriter
-import pw.binom.wasm.TypeId
-import pw.binom.wasm.Types
-import pw.binom.wasm.WasmOutput
-import pw.binom.wasm.visitors.AbsHeapType
+import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ValueVisitor
 
 class ValueWriter(private val out: WasmOutput) :
