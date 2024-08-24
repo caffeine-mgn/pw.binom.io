@@ -10,7 +10,7 @@ object ExpressionReader {
     var depth = 1
   }
 
-  fun readExpressions(input: StreamReader, visitor: ExpressionsVisitor) {
+  fun readExpressions(input: WasmInput, visitor: ExpressionsVisitor) {
     val context = Context()
     var lastOpcode = Opcodes.END
     while (true) {
@@ -18,7 +18,7 @@ object ExpressionReader {
         break
       }
       val opcode = try {
-        input.readUByte()
+        input.uByte()
       } catch (e: EOFException) {
         break
       }
@@ -35,14 +35,14 @@ object ExpressionReader {
     check(context.depth == 0)
   }
 
-  private fun smid(input: StreamReader, visitor: ExpressionsVisitor) {
-    val opcode = input.readUByte()
+  private fun smid(input: WasmInput, visitor: ExpressionsVisitor) {
+    val opcode = input.uByte()
     when (opcode) {
       else -> TODO("Unknown SMID code: 0x${opcode.toString(16)}")
     }
   }
 
-  private fun default(opcode: UByte, context: Context, input: StreamReader, visitor: ExpressionsVisitor) {
+  private fun default(opcode: UByte, context: Context, input: WasmInput, visitor: ExpressionsVisitor) {
     println("OPCODE      (0x${opcode.toString(16).padStart(2, '0')}) ${Codes.codes[opcode]}")
     when (opcode) {
       Opcodes.GET_LOCAL,
@@ -199,9 +199,9 @@ object ExpressionReader {
       Opcodes.F64_COPYSIGN,
         -> visitor.numeric(opcode)
 
-      Opcodes.F32_CONST -> visitor.const(Float.fromBits(input.readInt32()))
+      Opcodes.F32_CONST -> visitor.const(Float.fromBits(input.i32s()))
       Opcodes.I64_CONST -> visitor.const(input.v64s())
-      Opcodes.F64_CONST -> visitor.const(Double.fromBits(input.readInt64()))
+      Opcodes.F64_CONST -> visitor.const(Double.fromBits(input.i64s()))
       Opcodes.I32_CONST -> visitor.const(input.v32s())
 
       Opcodes.I32_EQZ,
@@ -319,8 +319,8 @@ object ExpressionReader {
 
   }
 
-  private fun numeric(input: StreamReader, visitor: ExpressionsVisitor) {
-    val opcode = input.readUByte()
+  private fun numeric(input: WasmInput, visitor: ExpressionsVisitor) {
+    val opcode = input.uByte()
     val opcodeStr = "0x" +
       Opcodes.NUMERIC_PREFIX.toString(16).padStart(2, '0') +
       opcode.toString(16).padStart(2, '0')
@@ -342,8 +342,8 @@ object ExpressionReader {
     }
   }
 
-  private fun gc(input: StreamReader, visitor: ExpressionsVisitor) {
-    val opcode = input.readUByte()
+  private fun gc(input: WasmInput, visitor: ExpressionsVisitor) {
+    val opcode = input.uByte()
     println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
     when (opcode) {
       Opcodes.GC_STRUCT_NEW -> visitor.structNew(type = TypeId(input.v32u()))
@@ -394,7 +394,7 @@ object ExpressionReader {
 
       Opcodes.GC_BR_ON_CAST_FAIL -> {
         val visitor = visitor.brOnCastFail(
-          flags = input.readUByte(),
+          flags = input.uByte(),
           label = LabelId(input.v32u())
         )
         visitor.start()

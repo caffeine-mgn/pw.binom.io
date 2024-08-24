@@ -2,7 +2,8 @@ package pw.binom.wasm.readers
 
 import pw.binom.io.use
 import pw.binom.wasm.MemoryId
-import pw.binom.wasm.StreamReader
+import pw.binom.wasm.WasmInput
+import pw.binom.wasm.readVec
 import pw.binom.wasm.visitors.DataSectionVisitor
 
 /**
@@ -13,11 +14,11 @@ object DataSectionReader {
   const val PASSIVE: UByte = 1u
   const val ACTIVE_MEM_X: UByte = 2u
 
-  fun read(input: StreamReader, visitor: DataSectionVisitor) {
+  fun read(input: WasmInput, visitor: DataSectionVisitor) {
     visitor.start()
     input.readVec {
       visitor.elementStart()
-      when (val type = input.readUByte()) {
+      when (val type = input.uByte()) {
         ACTIVE_MEM_0 -> {
           ExpressionReader.readExpressions(input = input, visitor = visitor.active())
           val size = input.v32u()

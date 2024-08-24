@@ -1,14 +1,14 @@
 package pw.binom.wasm.readers
 
 import pw.binom.wasm.FunctionId
-import pw.binom.wasm.StreamReader
+import pw.binom.wasm.WasmInput
 import pw.binom.wasm.readRefType
 import pw.binom.wasm.visitors.ImportSectionVisitor
 
 internal object ImportSectionReader {
 
   private fun readTable(
-    input: StreamReader,
+    input: WasmInput,
     module: String,
     field: String,
     visitor: ImportSectionVisitor,
@@ -30,7 +30,7 @@ internal object ImportSectionReader {
     tableVisitor.end()
   }
 
-  private fun readMemory(module: String, field: String, input: StreamReader, visitor: ImportSectionVisitor) {
+  private fun readMemory(module: String, field: String, input: WasmInput, visitor: ImportSectionVisitor) {
     val maximumExist = input.v1u()
     val initial = input.v32u()
     if (maximumExist) {
@@ -49,11 +49,11 @@ internal object ImportSectionReader {
     }
   }
 
-  fun readImportSection(input: StreamReader, visitor: ImportSectionVisitor) {
+  fun readImportSection(input: WasmInput, visitor: ImportSectionVisitor) {
     visitor.start()
-    val module = input.readString()
-    val field = input.readString()
-    val kind = input.readByte()
+    val module = input.string()
+    val field = input.string()
+    val kind = input.sByte()
     when (kind) {
       0.toByte() -> visitor.function(
         module = module,

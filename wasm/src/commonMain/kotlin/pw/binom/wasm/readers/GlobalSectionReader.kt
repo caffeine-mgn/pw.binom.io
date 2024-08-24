@@ -1,8 +1,9 @@
 package pw.binom.wasm.readers
 
 import pw.binom.wasm.visitors.ExpressionsVisitor
-import pw.binom.wasm.StreamReader
+import pw.binom.wasm.WasmInput
 import pw.binom.wasm.readValueType
+import pw.binom.wasm.readVec
 import pw.binom.wasm.visitors.GlobalSectionVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
@@ -10,7 +11,7 @@ import pw.binom.wasm.visitors.ValueVisitor
  * https://webassembly.github.io/gc/core/binary/modules.html#binary-globalsec
  */
 object GlobalSectionReader {
-  fun read(input: StreamReader, visitor: GlobalSectionVisitor) {
+  fun read(input: WasmInput, visitor: GlobalSectionVisitor) {
     visitor.start()
     input.readVec {
       input.readValueType(visitor = visitor.type())

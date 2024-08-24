@@ -1,8 +1,6 @@
 package pw.binom.wasm.readers
 
-import pw.binom.wasm.StreamReader
-import pw.binom.wasm.readStorageType
-import pw.binom.wasm.readValueType
+import pw.binom.wasm.*
 import pw.binom.wasm.visitors.TypeSectionVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
@@ -23,7 +21,7 @@ object TypeSectionReader {
   private const val kWasmSubtypeFinalCode: UByte = 0x4fu
   private const val kWasmRecursiveTypeGroupCode: UByte = 0x4eu
 
-  private fun consume_sig(input: StreamReader, visitor: TypeSectionVisitor) {
+  private fun consume_sig(input: WasmInput, visitor: TypeSectionVisitor) {
     input.readVec {
       // args
       input.readValueType(visitor = ValueVisitor.SKIP)
@@ -34,8 +32,8 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_mutability(input: StreamReader): Boolean {
-    val f = input.readUByte()
+  private fun consume_mutability(input: WasmInput): Boolean {
+    val f = input.uByte()
     return when (f) {
       0u.toUByte() -> false
       1u.toUByte() -> true
@@ -44,7 +42,7 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_struct(input: StreamReader, visitor: TypeSectionVisitor) {
+  private fun consume_struct(input: WasmInput, visitor: TypeSectionVisitor) {
     input.readVec {
       val storageType = input.readStorageType()
       println("storageType=$storageType")
@@ -53,18 +51,18 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_array(input: StreamReader, visitor: TypeSectionVisitor) {
+  private fun consume_array(input: WasmInput, visitor: TypeSectionVisitor) {
     input.readStorageType()
     consume_mutability(input)
   }
 
-  private fun consume_base_type_definition(kind: UByte?, input: StreamReader, visitor: TypeSectionVisitor) {
-    var kind = kind ?: input.readUByte()
+  private fun consume_base_type_definition(kind: UByte?, input: WasmInput, visitor: TypeSectionVisitor) {
+    var kind = kind ?: input.uByte()
     var shared = false
     if (kind == kSharedFlagCode) {
       println("is shared")
       shared = true
-      kind = input.readUByte()
+      kind = input.uByte()
     } else {
       println("is not shared")
     }
@@ -84,8 +82,8 @@ object TypeSectionReader {
     }
   }
 
-  private fun consume_subtype_definition(kind: UByte?, input: StreamReader, visitor: TypeSectionVisitor) {
-    val kind = kind ?: input.readUByte()
+  private fun consume_subtype_definition(kind: UByte?, input: WasmInput, visitor: TypeSectionVisitor) {
+    val kind = kind ?: input.uByte()
     if (kind == kWasmSubtypeCode || kind == kWasmSubtypeFinalCode) {
       kind == kWasmSubtypeFinalCode
       // is_wasm_gc = true
@@ -104,9 +102,8 @@ object TypeSectionReader {
     }
   }
 
-  private fun DecodeTypeSection(input: StreamReader, visitor: TypeSectionVisitor) {
-    val groupKind = input.readUByte()
-    println("DecodeTypeSection kind=0x${groupKind.toString(16)} cursor0x${input.globalCursor.toString(16)}")
+  private fun DecodeTypeSection(input: WasmInput, visitor: TypeSectionVisitor) {
+    val groupKind = input.uByte()
     if (groupKind == kWasmRecursiveTypeGroupCode) {
       // is_wasm_gc = true
       input.readVec {
@@ -117,7 +114,7 @@ object TypeSectionReader {
     }
   }
 
-  fun read(input: StreamReader, visitor: TypeSectionVisitor) {
+  fun read(input: WasmInput, visitor: TypeSectionVisitor) {
     DecodeTypeSection(input = input, visitor = visitor)
 //    check(byte == kWasmFunctionTypeCode) {
 //      "Invalid marker 0x${byte.toString(16)}, position=0x${

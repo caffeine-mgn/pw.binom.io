@@ -15,7 +15,7 @@ import kotlin.contracts.contract
 class StreamReader(
   private val input: Input,
   limit: UInt = UInt.MAX_VALUE,
-) : Input {
+) : WasmInput {
   var globalCursor: Int = 0
     private set
   var cursor = 0
@@ -26,7 +26,7 @@ class StreamReader(
 
   fun readByteArray(size: Int) = readByteArray(size, buffer)
 
-  fun withLimit(limit: UInt): StreamReader {
+  override fun withLimit(limit: UInt): StreamReader {
     require(remaining == UInt.MAX_VALUE || limit <= remaining)
     val reader = StreamReader(input = this, limit = limit)
     reader.globalCursor = globalCursor
@@ -82,16 +82,20 @@ class StreamReader(
       (readByte().toLong() and 0xFFL shl 48) +
       (readByte().toLong() and 0xFFL shl 56)
 
+  override fun i32s(): Int = readInt32()
+
+  override fun i64s() = readInt64()
+
   fun readInt2(): Long {
     buffer.reset(0, 4)
     readFully(buffer)
     return Int.fromBytes(buffer[3], buffer[2], buffer[1], buffer[0]).toUnsignedLong()
   }
 
-  fun v33u() =
+  override fun v33u() =
     Leb.readUnsigned(maxBits = 32) { readByte() }
 
-  fun v33s(firstByte: Byte = readByte()): Long {
+  override fun v33s(firstByte: Byte): Long {
     var first = false
     return Leb.readSigned(maxBits = 32) {
       if (!first) {
@@ -103,19 +107,19 @@ class StreamReader(
     }
   }
 
-  fun v32u() =
+  override fun v32u() =
     Leb.readUnsigned(maxBits = 32) { readByte() }.toUInt()
 
-  fun v32s() =
+  override fun v32s() =
     Leb.readSigned(maxBits = 32) { readByte() }.toInt()
 
-  fun v64u() =
+  override fun v64u() =
     Leb.readUnsigned(maxBits = 64) { readByte() }
 
-  fun v64s() =
+  override fun v64s() =
     Leb.readSigned(maxBits = 64) { readByte() }
 
-  fun v1u(): Boolean {
+  override fun v1u(): Boolean {
     val value = v32s()
     if (value != 1 && value != 0) {
       TODO()
@@ -123,27 +127,12 @@ class StreamReader(
     return value == 1
   }
 
+  override fun string(): String = readString()
+
   fun readString(): String {
     val len = v32u().toInt()
     val bytes = readByteArray(len, buffer)
     return bytes.decodeToString()
-  }
-
-  fun readBlockType(visitor: ExpressionsVisitor.BlockStartVisitor) {
-    val firstByte1 = v33u()
-    val firstByte = firstByte1.toUByte()
-    if (firstByte == 0x40u.toUByte()) {
-      visitor.withoutType()
-    } else {
-      if (isValueType(firstByte)) {
-        readValueType(byte = firstByte, visitor = visitor.valueType())
-      } else {
-        TODO()
-        val index = v32s()
-        println("block type index: $index")
-//        readUnsignedLeb128(4)
-      }
-    }
   }
 
   @OptIn(ExperimentalContracts::class)
@@ -192,7 +181,10 @@ class StreamReader(
   fun readByte() = readByte(buffer)
   fun readUByte() = readByte().toUByte()
 
-  fun skipOther() {
+  override fun sByte(): Byte = readByte(buffer)
+  override fun uByte() = sByte().toUByte()
+
+  override fun skipOther() {
     if (remaining == UInt.MAX_VALUE || remaining == 0u) {
       return
     }

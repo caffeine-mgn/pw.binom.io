@@ -1,11 +1,12 @@
 package pw.binom.wasm.readers
 
-import pw.binom.wasm.StreamReader
+import pw.binom.wasm.WasmInput
+import pw.binom.wasm.readVec
 
 object TagSectionReader {
-  fun read(input: StreamReader) {
+  fun read(input: WasmInput) {
     input.readVec {
-      check(input.readUByte() == 0u.toUByte())
+      check(input.uByte() == 0u.toUByte())
       input.v32u()
     }
   }

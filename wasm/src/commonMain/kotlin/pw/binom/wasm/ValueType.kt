@@ -52,73 +52,10 @@ sealed interface StorageType {
  * https://webassembly.github.io/gc/core/binary/types.html#reference-types
  */
 
-fun StreamReader.readStorageType() =
-  when (val value = readUByte()) {
-    Types.TYPE_NUM_I32 -> ValueType.Num.I32
-    Types.TYPE_NUM_I64 -> ValueType.Num.I64
-    Types.TYPE_NUM_F32 -> ValueType.Num.F32
-    Types.TYPE_NUM_F64 -> ValueType.Num.F64
-    Types.TYPE_VEC_V128 -> ValueType.Vector.V128
-    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> ValueType.Ref.FUNC_REF
-    Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
-    Types.TYPE_REF_NULL -> {
-      readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY)
-      ValueType.Ref.NULL
-    }
-
-    Types.TYPE_REF -> {
-      readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY)
-      ValueType.Ref.VALUE
-    }
-
-    Types.TYPE_PAK_I8 -> StorageType.Packed.I8
-    Types.TYPE_PAK_I16 -> StorageType.Packed.I16
-    Types.TYPE_PAK_F16 -> StorageType.Packed.F16
-    Types.TYPE_REF_ABS_HEAP_STRUCT -> ValueType.Ref.STRUCT
-    else -> TODO("Unknown type 0x${value.toString(16)}")
-  }
-
 //fun StreamReader.readAbsHeapType(byte: UByte = readUByte()): UByte {
 //  check(Types.isAbsHeapType(byte))
 //  return byte
 //}
-
-fun StreamReader.readAbsHeapType(byte: UByte = readUByte()) = when (byte) {
-  Types.TYPE_REF_ABS_HEAP_NO_FUNC -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_NO_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN
-  Types.TYPE_REF_ABS_HEAP_NONE -> AbsHeapType.TYPE_REF_ABS_HEAP_NONE
-  Types.TYPE_REF_ABS_HEAP_FUNC_REF -> AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF
-  Types.TYPE_REF_ABS_HEAP_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN
-  Types.TYPE_REF_ABS_HEAP_ANY -> AbsHeapType.TYPE_REF_ABS_HEAP_ANY
-  Types.TYPE_REF_ABS_HEAP_EQ -> AbsHeapType.TYPE_REF_ABS_HEAP_EQ
-  Types.TYPE_REF_ABS_HEAP_I31 -> AbsHeapType.TYPE_REF_ABS_HEAP_I31
-  Types.TYPE_REF_ABS_HEAP_STRUCT -> AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT
-  Types.TYPE_REF_ABS_HEAP_ARRAY -> AbsHeapType.TYPE_REF_ABS_HEAP_ARRAY
-  else -> TODO()
-}
-
-fun StreamReader.readHeapType(
-  byte: UByte = readUByte(),
-  visitor: ValueVisitor.HeapVisitor,
-) {
-  if (Types.isAbsHeapType(byte)) {
-    visitor.type(readAbsHeapType(byte))
-  } else {
-    visitor.type(TypeId(v33s(byte.toByte()).toUInt()))
-  }
-}
-
-fun StreamReader.readRefType(
-  byte: UByte = readUByte(),
-  visitor: ValueVisitor.RefVisitor,
-) {
-  val firstByte = byte
-  when (firstByte) {
-    0x64u.toUByte() -> readHeapType(byte, visitor.ref())
-    0x63u.toUByte() -> readHeapType(byte, visitor.refNull())
-    else -> visitor.refNull(readAbsHeapType(byte))
-  }
-}
 
 /**
  * https://webassembly.github.io/gc/core/binary/types.html#binary-heaptype
@@ -135,49 +72,6 @@ fun StreamReader.readRefType(
 //    type(TypeId(v33s(firstByte.toByte()).toUInt()))
 //  }
 //}
-
-fun StreamReader.readNumType(byte: UByte = readUByte(), visitor: ValueVisitor.NumberVisitor) {
-  when (byte) {
-    Types.TYPE_NUM_I32 -> visitor.i32()
-    Types.TYPE_NUM_I64 -> visitor.i64()
-    Types.TYPE_NUM_F32 -> visitor.f32()
-    Types.TYPE_NUM_F64 -> visitor.f64()
-    else -> TODO()
-  }
-}
-
-fun StreamReader.readVecType(byte: UByte = readUByte(), visitor: ValueVisitor.VectorVisitor) {
-  when (byte) {
-    Types.TYPE_VEC_V128 -> visitor.v128()
-    else -> TODO()
-  }
-}
-
-/**
- * valtype
- *
- * https://www.w3.org/TR/wasm-core-2/#binary-valtype
- */
-fun StreamReader.readValueType(byte: UByte = readUByte(), visitor: ValueVisitor) =
-  when (val value = byte) {
-    Types.TYPE_NUM_I32,
-    Types.TYPE_NUM_I64,
-    Types.TYPE_NUM_F32,
-    Types.TYPE_NUM_F64,
-      -> readNumType(byte = byte, visitor = visitor.numType())
-
-    Types.TYPE_VEC_V128 -> readVecType(byte = byte, visitor = visitor.vecType())
-
-    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF)
-    Types.TYPE_REF_EXTERN_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN)
-    Types.TYPE_REF_ABS_HEAP_NONE -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_NONE)
-    Types.TYPE_REF_ABS_HEAP_ANY -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_ANY)
-
-    Types.TYPE_REF_NULL -> readHeapType(visitor = visitor.refType().refNull())
-    Types.TYPE_REF -> readHeapType(visitor = visitor.refType().ref())
-
-    else -> TODO("Unknown type 0x${value.toString(16)}")
-  }
 
 fun isValueType(byte: UByte) =
   when (byte) {

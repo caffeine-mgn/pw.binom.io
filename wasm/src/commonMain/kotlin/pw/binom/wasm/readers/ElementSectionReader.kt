@@ -1,7 +1,8 @@
 package pw.binom.wasm.readers
 
 import pw.binom.wasm.visitors.ExpressionsVisitor
-import pw.binom.wasm.StreamReader
+import pw.binom.wasm.WasmInput
+import pw.binom.wasm.readVec
 
 object ElementSectionReader {
   private const val TYPE0: UByte = 0u
@@ -12,10 +13,10 @@ object ElementSectionReader {
   private const val TYPE5: UByte = 5u
   private const val TYPE6: UByte = 6u
   private const val TYPE7: UByte = 7u
-  fun read(input: StreamReader) {
+  fun read(input: WasmInput) {
     input.readVec {
       println("SECTION!!!")
-      when (val type = input.readUByte()) {
+      when (val type = input.uByte()) {
         TYPE0 -> {
           ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.SKIP)
           input.readVec {
