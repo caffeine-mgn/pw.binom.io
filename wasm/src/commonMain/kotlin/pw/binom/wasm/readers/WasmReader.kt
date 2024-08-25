@@ -12,21 +12,30 @@ import pw.binom.wasm.visitors.WasmVisitor
  */
 object WasmReader {
 
+  const val MAGIC_1: UByte = 0x0u
+  const val MAGIC_2: UByte = 0x61u
+  const val MAGIC_3: UByte = 0x73u
+  const val MAGIC_4: UByte = 0x6du
+
+  val MAGIC = ubyteArrayOf(0x00u, 0x61u, 0x73u, 0x6du)
+  val VERSION = ubyteArrayOf(0x01u, 0x00u, 0x00u, 0x00u)
+
+  @OptIn(ExperimentalStdlibApi::class)
   fun read(input: StreamReader, visitor: WasmVisitor) {
     visitor.start()
 //      val ver = input.readByteArray(4)
 //      ver.forEach {
 //        println("MAGIC BYTE 0x${it.toUByte().toString(16)}")
 //      }
-
-    check(input.readInt2() == 0x6d736100L)
-    val version = input.readInt2()
-    visitor.version(version.toInt())
-    check(version == 1L)
+    UByteArray(4) { input.i8u() }.contentEquals(MAGIC)
+    UByteArray(4) { input.i8u() }.contentEquals(VERSION)
+//    val version = input.i32s()
+//    visitor.version(version.toInt())
+//    check(version == 1)
 
     while (true) {
       val sectionId = try {
-        input.sByte().toInt() and 0xff
+        input.i8s().toInt() and 0xff
 //          input.readVarUInt7().toInt()
       } catch (e: EOFException) {
         break

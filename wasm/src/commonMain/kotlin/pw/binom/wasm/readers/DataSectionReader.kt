@@ -18,7 +18,7 @@ object DataSectionReader {
     visitor.start()
     input.readVec {
       visitor.elementStart()
-      when (val type = input.uByte()) {
+      when (val type = input.i8u()) {
         ACTIVE_MEM_0 -> {
           ExpressionReader.readExpressions(input = input, visitor = visitor.active())
           val size = input.v32u()

@@ -289,19 +289,19 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun const(value: Float) {
-    super.const(value)
+    out.i32s(value.toBits())
   }
 
   override fun const(value: Double) {
-    super.const(value)
+    out.i64s(value.toBits())
   }
 
   override fun const(value: Int) {
-    super.const(value)
+    out.i32s(value)
   }
 
   override fun const(value: Long) {
-    super.const(value)
+    out.i64s(value)
   }
 
   override fun compare(opcode: UByte) {

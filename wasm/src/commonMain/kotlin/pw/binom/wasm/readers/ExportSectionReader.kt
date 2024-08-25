@@ -13,7 +13,7 @@ object ExportSectionReader {
     visitor.start()
     input.readVec {
       val name = input.string()
-      when (val type = input.uByte()) {
+      when (val type = input.i8u()) {
         FUNC -> visitor.func(name, input.v32u())
         TABLE -> visitor.table(name, input.v32u())
         MEM -> visitor.memory(name, input.v32u())

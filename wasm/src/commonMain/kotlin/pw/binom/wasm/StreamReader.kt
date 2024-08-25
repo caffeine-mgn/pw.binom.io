@@ -6,8 +6,9 @@ import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.readByteArray
 import pw.binom.readByte
+import pw.binom.reverse
+import pw.binom.toByteArray
 import pw.binom.wasm.readers.toUnsignedLong
-import pw.binom.wasm.visitors.ExpressionsVisitor
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -181,8 +182,8 @@ class StreamReader(
   fun readByte() = readByte(buffer)
   fun readUByte() = readByte().toUByte()
 
-  override fun sByte(): Byte = readByte(buffer)
-  override fun uByte() = sByte().toUByte()
+  override fun i8s(): Byte = readByte(buffer)
+  override fun i8u() = i8s().toUByte()
 
   override fun skipOther() {
     if (remaining == UInt.MAX_VALUE || remaining == 0u) {

@@ -17,12 +17,12 @@ interface WasmInput : Input {
   fun v33u(): ULong
   fun i32s(): Int
   fun i64s(): Long
-  fun v33s(firstByte: Byte = sByte()): Long
+  fun v33s(firstByte: Byte = i8s()): Long
   fun v1u(): Boolean
   fun string(): String
   fun skipOther()
-  fun sByte(): Byte
-  fun uByte(): UByte
+  fun i8s(): Byte
+  fun i8u(): UByte
 }
 
 inline fun WasmInput.readVec(func: () -> Unit) {
@@ -50,7 +50,7 @@ inline fun WasmInput.readLimit(min: (UInt) -> Unit, range: (UInt, UInt) -> Unit)
 }
 
 fun WasmInput.readRefType(
-  byte: UByte = uByte(),
+  byte: UByte = i8u(),
   visitor: ValueVisitor.RefVisitor,
 ) {
   val firstByte = byte
@@ -62,7 +62,7 @@ fun WasmInput.readRefType(
 }
 
 fun WasmInput.readHeapType(
-  byte: UByte = uByte(),
+  byte: UByte = i8u(),
   visitor: ValueVisitor.HeapVisitor,
 ) {
   if (Types.isAbsHeapType(byte)) {
@@ -72,7 +72,7 @@ fun WasmInput.readHeapType(
   }
 }
 
-fun WasmInput.readAbsHeapType(byte: UByte = uByte()) = when (byte) {
+fun WasmInput.readAbsHeapType(byte: UByte = i8u()) = when (byte) {
   Types.TYPE_REF_ABS_HEAP_NO_FUNC -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
   Types.TYPE_REF_ABS_HEAP_NO_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN
   Types.TYPE_REF_ABS_HEAP_NONE -> AbsHeapType.TYPE_REF_ABS_HEAP_NONE
@@ -86,7 +86,7 @@ fun WasmInput.readAbsHeapType(byte: UByte = uByte()) = when (byte) {
   else -> TODO()
 }
 
-fun WasmInput.readNumType(byte: UByte = uByte(), visitor: ValueVisitor.NumberVisitor) {
+fun WasmInput.readNumType(byte: UByte = i8u(), visitor: ValueVisitor.NumberVisitor) {
   when (byte) {
     Types.TYPE_NUM_I32 -> visitor.i32()
     Types.TYPE_NUM_I64 -> visitor.i64()
@@ -96,7 +96,7 @@ fun WasmInput.readNumType(byte: UByte = uByte(), visitor: ValueVisitor.NumberVis
   }
 }
 
-fun WasmInput.readVecType(byte: UByte = uByte(), visitor: ValueVisitor.VectorVisitor) {
+fun WasmInput.readVecType(byte: UByte = i8u(), visitor: ValueVisitor.VectorVisitor) {
   when (byte) {
     Types.TYPE_VEC_V128 -> visitor.v128()
     else -> TODO()
@@ -108,7 +108,7 @@ fun WasmInput.readVecType(byte: UByte = uByte(), visitor: ValueVisitor.VectorVis
  *
  * https://www.w3.org/TR/wasm-core-2/#binary-valtype
  */
-fun WasmInput.readValueType(byte: UByte = uByte(), visitor: ValueVisitor) =
+fun WasmInput.readValueType(byte: UByte = i8u(), visitor: ValueVisitor) =
   when (val value = byte) {
     Types.TYPE_NUM_I32,
     Types.TYPE_NUM_I64,
@@ -129,7 +129,7 @@ fun WasmInput.readValueType(byte: UByte = uByte(), visitor: ValueVisitor) =
     else -> TODO("Unknown type 0x${value.toString(16)}")
   }
 
-fun WasmInput.readPackType(byte: UByte = uByte(), visitor: StorageVisitor.PackVisitor) {
+fun WasmInput.readPackType(byte: UByte = i8u(), visitor: StorageVisitor.PackVisitor) {
   when (byte) {
     Types.TYPE_PAK_I8 -> visitor.i8()
     Types.TYPE_PAK_I16 -> visitor.i16()
@@ -147,14 +147,14 @@ fun isPackType(byte: UByte) = when (byte) {
   else -> false
 }
 
-fun WasmInput.readStorageType(byte: UByte = uByte(), visitor: StorageVisitor) =
+fun WasmInput.readStorageType(byte: UByte = i8u(), visitor: StorageVisitor) =
   when {
     isPackType(byte) -> readPackType(byte = byte, visitor = visitor.pack())
     else -> readValueType(byte = byte, visitor = visitor.valType())
   }
 
 fun WasmInput.readStorageType() =
-  when (val value = uByte()) {
+  when (val value = i8u()) {
     Types.TYPE_NUM_I32 -> ValueType.Num.I32
     Types.TYPE_NUM_I64 -> ValueType.Num.I64
     Types.TYPE_NUM_F32 -> ValueType.Num.F32

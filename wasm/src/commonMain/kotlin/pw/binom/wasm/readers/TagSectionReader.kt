@@ -6,7 +6,7 @@ import pw.binom.wasm.readVec
 object TagSectionReader {
   fun read(input: WasmInput) {
     input.readVec {
-      check(input.uByte() == 0u.toUByte())
+      check(input.i8u() == 0u.toUByte())
       input.v32u()
     }
   }

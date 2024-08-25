@@ -16,7 +16,7 @@ object ElementSectionReader {
   fun read(input: WasmInput) {
     input.readVec {
       println("SECTION!!!")
-      when (val type = input.uByte()) {
+      when (val type = input.i8u()) {
         TYPE0 -> {
           ExpressionReader.readExpressions(input = input, visitor = ExpressionsVisitor.Companion.SKIP)
           input.readVec {

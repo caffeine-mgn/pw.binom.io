@@ -55,7 +55,7 @@ internal object ImportSectionReader {
     input.readVec {
       val module = input.string()
       val field = input.string()
-      val kind = input.sByte()
+      val kind = input.i8s()
       when (kind) {
         0.toByte() -> visitor.function(
           module = module,

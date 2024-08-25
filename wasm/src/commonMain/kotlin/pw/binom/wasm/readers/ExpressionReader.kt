@@ -1,9 +1,9 @@
 package pw.binom.wasm.readers
 
 import pw.binom.io.EOFException
+import pw.binom.reverse
 import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ExpressionsVisitor
-import pw.binom.wasm.visitors.ValueVisitor
 
 object ExpressionReader {
   private class Context {
@@ -18,7 +18,7 @@ object ExpressionReader {
         break
       }
       val opcode = try {
-        input.uByte()
+        input.i8u()
       } catch (e: EOFException) {
         break
       }
@@ -36,14 +36,14 @@ object ExpressionReader {
   }
 
   private fun smid(input: WasmInput, visitor: ExpressionsVisitor) {
-    val opcode = input.uByte()
+    val opcode = input.i8u()
     when (opcode) {
       else -> TODO("Unknown SMID code: 0x${opcode.toString(16)}")
     }
   }
 
   private fun default(opcode: UByte, context: Context, input: WasmInput, visitor: ExpressionsVisitor) {
-    println("OPCODE      (0x${opcode.toString(16).padStart(2, '0')}) ${Codes.codes[opcode]}")
+//    println("OPCODE      (0x${opcode.toString(16).padStart(2, '0')}) ${Codes.codes[opcode]}")
     when (opcode) {
       Opcodes.GET_LOCAL,
       Opcodes.SET_LOCAL,
@@ -199,10 +199,29 @@ object ExpressionReader {
       Opcodes.F64_COPYSIGN,
         -> visitor.numeric(opcode)
 
-      Opcodes.F32_CONST -> visitor.const(Float.fromBits(input.i32s()))
-      Opcodes.I64_CONST -> visitor.const(input.v64s())
-      Opcodes.F64_CONST -> visitor.const(Double.fromBits(input.i64s()))
-      Opcodes.I32_CONST -> visitor.const(input.v32s())
+      Opcodes.F32_CONST -> {
+        val value = Float.fromBits(input.i32s())
+        println("CONST f32 $value")
+        visitor.const(value)
+      }
+
+      Opcodes.I64_CONST -> {
+        val value = input.v64s()
+        println("CONST i64 $value")
+        visitor.const(value)
+      }
+
+      Opcodes.F64_CONST -> {
+        val value = Double.fromBits(input.i64s())
+        println("CONST f64 $value")
+        visitor.const(value)
+      }
+
+      Opcodes.I32_CONST -> {
+        val value = input.v32s()
+        println("CONST i32 $value")
+        visitor.const(value)
+      }
 
       Opcodes.I32_EQZ,
       Opcodes.I32_EQ,
@@ -320,11 +339,11 @@ object ExpressionReader {
   }
 
   private fun numeric(input: WasmInput, visitor: ExpressionsVisitor) {
-    val opcode = input.uByte()
+    val opcode = input.i8u()
     val opcodeStr = "0x" +
       Opcodes.NUMERIC_PREFIX.toString(16).padStart(2, '0') +
       opcode.toString(16).padStart(2, '0')
-    println("OPCODE NUMERIC 0xFC $opcode ($opcodeStr) ${Codes.numericCodes[opcode]}")
+//    println("OPCODE NUMERIC 0xFC $opcode ($opcodeStr) ${Codes.numericCodes[opcode]}")
     when (opcode) {
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F32,
       Opcodes.NUMERIC_I32U_CONVERT_SAT_F32,
@@ -343,8 +362,8 @@ object ExpressionReader {
   }
 
   private fun gc(input: WasmInput, visitor: ExpressionsVisitor) {
-    val opcode = input.uByte()
-    println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
+    val opcode = input.i8u()
+//    println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
     when (opcode) {
       Opcodes.GC_STRUCT_NEW -> visitor.structNew(type = TypeId(input.v32u()))
 
@@ -394,7 +413,7 @@ object ExpressionReader {
 
       Opcodes.GC_BR_ON_CAST_FAIL -> {
         val visitor = visitor.brOnCastFail(
-          flags = input.uByte(),
+          flags = input.i8u(),
           label = LabelId(input.v32u())
         )
         visitor.start()
@@ -403,9 +422,9 @@ object ExpressionReader {
         visitor.end()
       }
 
-        Opcodes.GC_ANY_CONVERT_EXTERN,
-        Opcodes.GC_EXTERN_CONVERT_ANY,
-            -> visitor.gcConvert(opcode)
+      Opcodes.GC_ANY_CONVERT_EXTERN,
+      Opcodes.GC_EXTERN_CONVERT_ANY,
+        -> visitor.gcConvert(opcode)
 
 
       else -> TODO(

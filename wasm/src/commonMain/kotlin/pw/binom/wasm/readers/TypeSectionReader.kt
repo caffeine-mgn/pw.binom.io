@@ -55,14 +55,14 @@ object TypeSectionReader {
     input: WasmInput,
     visitor: TypeSectionVisitor.CompositeTypeVisitor,
   ) {
-    var kind = kind ?: input.uByte()
+    var kind = kind ?: input.i8u()
     var shared = false
     if (kind == kSharedFlagCode) {
       println("is shared")
       shared = true
-      kind = input.uByte()
+      kind = input.i8u()
     } else {
-      println("is not shared")
+//      println("is not shared")
     }
     when (kind) {
       kWasmArrayTypeCode -> {
@@ -82,7 +82,7 @@ object TypeSectionReader {
   }
 
   private fun readSubType(byte: UByte?, input: WasmInput, visitor: TypeSectionVisitor.SubTypeVisitor) {
-    val kind = byte ?: input.uByte()
+    val kind = byte ?: input.i8u()
     if (kind == kWasmSubtypeCode || kind == kWasmSubtypeFinalCode) {
       val isFinal = kind == kWasmSubtypeFinalCode
       // is_wasm_gc = true
@@ -101,7 +101,7 @@ object TypeSectionReader {
   }
 
   private fun DecodeTypeSection(input: WasmInput, visitor: TypeSectionVisitor.RecTypeVisitor) {
-    val groupKind = input.uByte()
+    val groupKind = input.i8u()
     if (groupKind == kWasmRecursiveTypeGroupCode) {
       // is_wasm_gc = true
       val v = visitor.recursive()

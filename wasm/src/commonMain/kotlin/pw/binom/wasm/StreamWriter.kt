@@ -1,6 +1,8 @@
 package pw.binom.wasm
 
 import pw.binom.io.*
+import pw.binom.writeInt
+import pw.binom.writeLong
 
 class StreamWriter(val out: Output) : WasmOutput {
 
@@ -52,11 +54,11 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun i64s(value: Long) {
-    TODO("Not yet implemented")
+    writeLong(buffer, value)
   }
 
   override fun i32s(value: Int) {
-    TODO()
+    writeInt(buffer, value)
   }
 
   override fun v32u(value: UInt) {
