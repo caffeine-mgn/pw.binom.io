@@ -1,10 +1,10 @@
 package pw.binom.wasm.readers
 
 import pw.binom.io.use
-import pw.binom.wasm.visitors.CodeSectionVisitor
 import pw.binom.wasm.WasmInput
 import pw.binom.wasm.readValueType
 import pw.binom.wasm.readVec
+import pw.binom.wasm.visitors.CodeSectionVisitor
 
 /**
  * https://webassembly.github.io/exception-handling/core/binary/modules.html#binary-codesec
@@ -15,6 +15,14 @@ import pw.binom.wasm.readVec
  */
 object CodeSectionReader {
   fun read(input: WasmInput, visitor: CodeSectionVisitor) {
+    visitor.start()
+    input.readVec {
+      read(input = input, visitor = visitor.code())
+    }
+    visitor.end()
+  }
+
+  private fun read(input: WasmInput, visitor: CodeSectionVisitor.CodeVisitor) {
     val sizeInBytes = input.v32u()
     visitor.start()
     if (sizeInBytes == 0u) {
@@ -30,6 +38,4 @@ object CodeSectionReader {
     }
     visitor.end()
   }
-
-
 }

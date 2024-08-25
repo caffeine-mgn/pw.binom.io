@@ -35,7 +35,6 @@ class MyWasmVisitor : WasmVisitor {
 
   override fun importSection(): ImportSectionVisitor = MyImportSectionVisitor()
   override fun functionSection(): FunctionSectionVisitor = MyFunctionSectionVisitor()
-  override fun codeVisitor(): CodeSectionVisitor = MyCodeSectionVisitor()
   override fun typeSection(): TypeSectionVisitor = MyTypeSectionVisitor()
   override fun customSection(): CustomSectionVisitor = MyCustomSectionVisitor()
   override fun startSection(function: FunctionId) {
@@ -96,9 +95,4 @@ class MyImportSectionVisitor : ImportSectionVisitor {
   override fun memory(module: String, field: String, initial: UInt) {
     println("Import $module->$field memory with range $initial->unlimited")
   }
-}
-
-class MyCodeSectionVisitor() : CodeSectionVisitor {
-  private var c = 0
-
 }

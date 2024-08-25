@@ -6,9 +6,6 @@ import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.readByteArray
 import pw.binom.readByte
-import pw.binom.reverse
-import pw.binom.toByteArray
-import pw.binom.wasm.readers.toUnsignedLong
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -86,12 +83,6 @@ class StreamReader(
   override fun i32s(): Int = readInt32()
 
   override fun i64s() = readInt64()
-
-  fun readInt2(): Long {
-    buffer.reset(0, 4)
-    readFully(buffer)
-    return Int.fromBytes(buffer[3], buffer[2], buffer[1], buffer[0]).toUnsignedLong()
-  }
 
   override fun v33u() =
     Leb.readUnsigned(maxBits = 32) { readByte() }
