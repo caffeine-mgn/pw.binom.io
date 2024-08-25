@@ -2,6 +2,7 @@ package pw.binom.wasm
 
 import pw.binom.io.Input
 import pw.binom.wasm.visitors.ExpressionsVisitor
+import pw.binom.wasm.visitors.StorageVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -126,6 +127,30 @@ fun WasmInput.readValueType(byte: UByte = uByte(), visitor: ValueVisitor) =
     Types.TYPE_REF -> readHeapType(visitor = visitor.refType().ref())
 
     else -> TODO("Unknown type 0x${value.toString(16)}")
+  }
+
+fun WasmInput.readPackType(byte: UByte = uByte(), visitor: StorageVisitor.PackVisitor) {
+  when (byte) {
+    Types.TYPE_PAK_I8 -> visitor.i8()
+    Types.TYPE_PAK_I16 -> visitor.i16()
+    Types.TYPE_PAK_F16 -> visitor.f16()
+    else -> TODO()
+  }
+}
+
+fun isPackType(byte: UByte) = when (byte) {
+  Types.TYPE_PAK_I8,
+  Types.TYPE_PAK_I16,
+  Types.TYPE_PAK_F16,
+    -> true
+
+  else -> false
+}
+
+fun WasmInput.readStorageType(byte: UByte = uByte(), visitor: StorageVisitor) =
+  when {
+    isPackType(byte) -> readPackType(byte = byte, visitor = visitor.pack())
+    else -> readValueType(byte = byte, visitor = visitor.valType())
   }
 
 fun WasmInput.readStorageType() =

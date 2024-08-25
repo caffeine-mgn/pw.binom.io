@@ -2,7 +2,6 @@ package pw.binom.wasm.readers
 
 import pw.binom.wasm.*
 import pw.binom.wasm.visitors.TypeSectionVisitor
-import pw.binom.wasm.visitors.ValueVisitor
 
 /**
  * https://webassembly.github.io/exception-handling/core/binary/modules.html#type-section
@@ -13,50 +12,49 @@ import pw.binom.wasm.visitors.ValueVisitor
 object TypeSectionReader {
   //  private const val kWasmFunctionTypeCode: UByte = 0x60u
 //  private const val kWasmRecursiveTypeGroupCode: UByte = 0x60u
-  private const val kSharedFlagCode: UByte = 0x65u
-  private const val kWasmFunctionTypeCode: UByte = 0x60u
-  private const val kWasmStructTypeCode: UByte = 0x5fu
-  private const val kWasmArrayTypeCode: UByte = 0x5eu
-  private const val kWasmSubtypeCode: UByte = 0x50u
-  private const val kWasmSubtypeFinalCode: UByte = 0x4fu
-  private const val kWasmRecursiveTypeGroupCode: UByte = 0x4eu
+  const val kSharedFlagCode: UByte = 0x65u
+  const val kWasmFunctionTypeCode: UByte = 0x60u
+  const val kWasmStructTypeCode: UByte = 0x5fu
+  const val kWasmArrayTypeCode: UByte = 0x5eu
+  const val kWasmSubtypeCode: UByte = 0x50u
+  const val kWasmSubtypeFinalCode: UByte = 0x4fu
+  const val kWasmRecursiveTypeGroupCode: UByte = 0x4eu
 
-  private fun consume_sig(input: WasmInput, visitor: TypeSectionVisitor) {
+  private fun readFuncType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.FuncTypeVisitor) {
+    visitor.start(shared = shared)
     input.readVec {
       // args
-      input.readValueType(visitor = ValueVisitor.SKIP)
+      input.readValueType(visitor = visitor.arg())
     }
     input.readVec {
       // results
-      input.readValueType(visitor = ValueVisitor.SKIP)
+      input.readValueType(visitor = visitor.result())
     }
+    visitor.end()
   }
 
-  private fun consume_mutability(input: WasmInput): Boolean {
-    val f = input.uByte()
-    return when (f) {
-      0u.toUByte() -> false
-      1u.toUByte() -> true
-//      else->true
-      else -> TODO("f=0x${f.toString(16)}")
-    }
-  }
-
-  private fun consume_struct(input: WasmInput, visitor: TypeSectionVisitor) {
+  private fun readStructType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.StructTypeVisitor) {
+    visitor.start(shared = shared)
     input.readVec {
-      val storageType = input.readStorageType()
-      println("storageType=$storageType")
+      input.readStorageType(visitor = visitor.fieldStart())
       val mutable = input.v1u()
-      println("mutable=$mutable")
+      visitor.fieldEnd(mutable)
     }
+    visitor.end()
   }
 
-  private fun consume_array(input: WasmInput, visitor: TypeSectionVisitor) {
-    input.readStorageType()
-    val mutable = input.v1u()
+  private fun readArrayType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.ArrayVisitor) {
+    visitor.start(shared = shared)
+    input.readStorageType(visitor = visitor.type())
+    visitor.mutable(value = input.v1u())
+    visitor.end()
   }
 
-  private fun consume_base_type_definition(kind: UByte?, input: WasmInput, visitor: TypeSectionVisitor) {
+  private fun readCompType(
+    kind: UByte?,
+    input: WasmInput,
+    visitor: TypeSectionVisitor.CompositeTypeVisitor,
+  ) {
     var kind = kind ?: input.uByte()
     var shared = false
     if (kind == kSharedFlagCode) {
@@ -67,59 +65,62 @@ object TypeSectionReader {
       println("is not shared")
     }
     when (kind) {
-      kWasmFunctionTypeCode -> consume_sig(input = input, visitor = visitor)
-      kWasmStructTypeCode -> {
-        // is_wasm_gc=true
-        consume_struct(input = input, visitor = visitor)
-      }
-
       kWasmArrayTypeCode -> {
         // is_wasm_gc = true
-        consume_array(input = input, visitor = visitor)
+        readArrayType(input = input, shared = shared, visitor = visitor.array())
       }
+
+      kWasmStructTypeCode -> {
+        // is_wasm_gc=true
+        readStructType(input = input, shared = shared, visitor = visitor.struct())
+      }
+
+      kWasmFunctionTypeCode -> readFuncType(input = input, shared = shared, visitor = visitor.function())
 
       else -> TODO("Unknown kind 0x${kind.toString(16)}")
     }
   }
 
-  private fun consume_subtype_definition(kind: UByte?, input: WasmInput, visitor: TypeSectionVisitor) {
-    val kind = kind ?: input.uByte()
+  private fun readSubType(byte: UByte?, input: WasmInput, visitor: TypeSectionVisitor.SubTypeVisitor) {
+    val kind = byte ?: input.uByte()
     if (kind == kWasmSubtypeCode || kind == kWasmSubtypeFinalCode) {
-      kind == kWasmSubtypeFinalCode
+      val isFinal = kind == kWasmSubtypeFinalCode
       // is_wasm_gc = true
-      val supertype_count = input.v32u()
-      var supertype = UInt.MAX_VALUE
-      if (supertype_count == 1u) {
-        supertype = input.v32u()
-        println("supertype=$supertype")
+      val v = if (isFinal) {
+        visitor.withParentFinal()
       } else {
-        println("supertype not defined, supertype_count: $supertype_count")
+        visitor.withParent()
       }
-      // pass to visitor `consume_base_type_definition` and `is_final`
-      consume_base_type_definition(kind = null, input = input, visitor = visitor)
+      input.readVec {
+        v.parent(TypeId(input.v32u())) // super-types
+      }
+      readCompType(kind = null, input = input, visitor = v.type())
     } else {
-      consume_base_type_definition(kind = kind, input = input, visitor = visitor)
+      readCompType(kind = kind, input = input, visitor = visitor.single())
     }
   }
 
-  private fun DecodeTypeSection(input: WasmInput, visitor: TypeSectionVisitor) {
+  private fun DecodeTypeSection(input: WasmInput, visitor: TypeSectionVisitor.RecTypeVisitor) {
     val groupKind = input.uByte()
     if (groupKind == kWasmRecursiveTypeGroupCode) {
       // is_wasm_gc = true
+      val v = visitor.recursive()
+      v.start()
       input.readVec {
-        consume_subtype_definition(input = input, visitor = visitor, kind = null)
+        readSubType(input = input, visitor = v.type(), byte = null)
       }
+      v.end()
     } else {
-      consume_subtype_definition(input = input, visitor = visitor, kind = groupKind)
+      readSubType(input = input, visitor = visitor.single(), byte = groupKind)
     }
   }
 
   fun read(input: WasmInput, visitor: TypeSectionVisitor) {
-    DecodeTypeSection(input = input, visitor = visitor)
-//    check(byte == kWasmFunctionTypeCode) {
-//      "Invalid marker 0x${byte.toString(16)}, position=0x${
-//        (input.globalCursor - 1).toUInt().toString(16)
-//      } (${input.globalCursor - 1})"
-//    }
+    visitor.start()
+    val r = visitor.recType()
+    input.readVec {
+      DecodeTypeSection(input = input, visitor = r)
+    }
+    visitor.end()
   }
 }

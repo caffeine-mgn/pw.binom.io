@@ -39,12 +39,10 @@ object WasmReader {
       input.withLimit(sectionLen).use { sectionInput ->
         when (section) {
           Sections.CUSTOM_SECTION -> CustomSectionReader.read(input = sectionInput, visitor = visitor.customSection())
-          Sections.TYPE_SECTION -> sectionInput.readVec {
-            TypeSectionReader.read(
-              input = sectionInput,
-              visitor = visitor.typeSection()
-            )
-          }
+          Sections.TYPE_SECTION -> TypeSectionReader.read(
+            input = sectionInput,
+            visitor = visitor.typeSection()
+          )
 
           Sections.IMPORT_SECTION -> ImportSectionReader.readImportSection(
             input = sectionInput,

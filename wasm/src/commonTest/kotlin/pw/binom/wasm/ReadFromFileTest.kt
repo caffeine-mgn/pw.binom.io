@@ -74,13 +74,6 @@ class MyTypeSectionVisitor : TypeSectionVisitor {
     index++
   }
 
-  override fun argument(type: ValueType) {
-    args += type
-  }
-
-  override fun result(type: ValueType) {
-    results += type
-  }
 
   override fun end() {
     args.clear()
