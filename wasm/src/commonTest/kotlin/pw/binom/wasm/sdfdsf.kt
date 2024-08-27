@@ -1,24 +1,22 @@
 package pw.binom.wasm
-/*
 
-import pw.binom.wasm.visitors.ExpressionsVisitor
+import pw.binom.fromBytes
+import pw.binom.io.ByteArrayInput
+import pw.binom.io.ByteArrayOutput
+import kotlin.test.Test
 
-class sdfdsf : ExpressionsVisitor {
-  override fun refNull(type: Types) {
-    type.write(...)
-    when (type) {
-      is Types.Numers -> writeType(type)
-      is Types.Ref -> writeType(type)
+
+class AAAAA {
+  @OptIn(ExperimentalStdlibApi::class)
+  @Test
+  fun ttt() {
+    val e = InMemoryWasmOutput()
+    e.v32u(14u)
+    val ee = e.locked {
+      val bytes = it.toByteArray()
+      println("hex=${bytes.toHexString()}")
+      StreamReader(ByteArrayInput(bytes)).v32u()
     }
-    TODO("Not yet implemented")
+    println("ee=$ee")
   }
-
 }
-
-
-interface TypeVisitor {
-  fun i32() {}
-  fun i64() {}
-  fun refNull(type: TypeId)
-}
-*/

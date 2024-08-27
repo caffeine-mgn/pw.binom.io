@@ -33,32 +33,20 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
       when (state) {
         STARTED -> out.v32u(0u) // size of block is 0
         LOCAL_START -> {
-          val localCountData = ByteArrayOutput()
-          val localCountStream = StreamWriter(codeStream)
+          val localCountStream = InMemoryWasmOutput()
           localCountStream.v32u(localCount.toUInt())
-          localCountData.locked { localCountBuffer ->
-            localStream.locked { localDataBuffer ->
-              out.v32u((localCountBuffer.remaining + localDataBuffer.remaining).toUInt()) // size of block
-              out.write(localCountBuffer) // count of locals
-              out.write(localDataBuffer) // locals
-            }
-          }
+          out.v32u((localCountStream.size + localStream.size).toUInt()) // size of block
+          localCountStream.moveTo(out)
+          localStream.moveTo(out)
         }
 
         CODE_START -> {
-          val localCountData = ByteArrayOutput()
-          val localCountStream = StreamWriter(codeStream)
+          val localCountStream = InMemoryWasmOutput()
           localCountStream.v32u(localCount.toUInt())
-          localCountData.locked { localCountBuffer ->
-            localStream.locked { localDataBuffer ->
-              codeStream.locked { codeDataBuffer ->
-                out.v32u((localCountBuffer.remaining + localDataBuffer.remaining + codeDataBuffer.remaining).toUInt()) // size of block
-                out.write(localCountBuffer) // count of locals
-                out.write(localDataBuffer) // locals
-                out.write(codeDataBuffer) // code
-              }
-            }
-          }
+          out.v32u((localCountStream.size + localStream.size + codeStream.size).toUInt()) // size of block
+          localCountStream.moveTo(out)
+          localStream.moveTo(out)
+          codeStream.moveTo(out)
         }
 
         else -> throw IllegalStateException()

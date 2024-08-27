@@ -1,9 +1,14 @@
 package pw.binom.wasm
 
 import pw.binom.io.ByteArrayOutput
+import pw.binom.io.ByteBuffer
+import pw.binom.io.Input
 
 class InMemoryWasmOutput : ByteArrayOutput(), WasmOutput {
   private val stream = StreamWriter(this)
+  val callback
+    get() = stream.callback
+
   override fun i8u(value: UByte) {
     stream.i8u(value)
   }
@@ -49,20 +54,26 @@ class InMemoryWasmOutput : ByteArrayOutput(), WasmOutput {
   }
 
   override fun vec(): VectorWriter = stream.vec()
+  override fun bytes(data: ByteArray) = stream.bytes(data)
+
+  override fun bytes(data: ByteBuffer) = stream.bytes(data)
+
+  override fun bytes(data: Input) = stream.bytes(data)
+
   override fun close() {
     stream.close()
   }
 
   fun moveTo(out: WasmOutput) {
+    when (out) {
+      is StreamWriter -> out.callback.addAll(stream.callback)
+      is InMemoryWasmOutput -> out.callback.addAll(stream.callback)
+      else -> TODO()
+    }
     locked {
       out.write(it)
     }
+    stream.callback.clear()
     clear()
-  }
-}
-
-fun WasmOutput.write(data: InMemoryWasmOutput) {
-  data.locked {
-    write(it)
   }
 }

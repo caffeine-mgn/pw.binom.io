@@ -1,14 +1,15 @@
 package pw.binom.wasm
 
-import pw.binom.fromBytes
+import pw.binom.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
 import pw.binom.io.readByteArray
-import pw.binom.readByte
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+
+fun Input.asWasm() = StreamReader(this)
 
 class StreamReader(
   private val input: Input,
@@ -60,29 +61,9 @@ class StreamReader(
     }
   }
 
-  fun readInt32() =
-    (
-      (readByte().toInt() and 0xff) or
-        ((readByte().toInt() and 0xff) shl 8) or
-        ((readByte().toInt() and 0xff) shl 16) or
-        ((readByte().toInt() and 0xff) shl 24)
-      )
+  override fun i32s(): Int = readInt(buffer).reverse()
 
-  fun readUInt32() = readInt32().toUInt()
-
-  fun readInt64() =
-    (readByte().toLong() and 0xFFL shl 0) +
-      (readByte().toLong() and 0xFFL shl 8) +
-      (readByte().toLong() and 0xFFL shl 16) +
-      (readByte().toLong() and 0xFFL shl 24) +
-      (readByte().toLong() and 0xFFL shl 32) +
-      (readByte().toLong() and 0xFFL shl 40) +
-      (readByte().toLong() and 0xFFL shl 48) +
-      (readByte().toLong() and 0xFFL shl 56)
-
-  override fun i32s(): Int = readInt32()
-
-  override fun i64s() = readInt64()
+  override fun i64s() = readLong(buffer).reverse()
 
   override fun v33u() =
     Leb.readUnsigned(maxBits = 32) { readByte() }
@@ -153,11 +134,11 @@ class StreamReader(
     return result
   }
 
-  inline fun readVec(func: () -> Unit) {
+  inline fun readVec(func: (UInt) -> Unit) {
     var count = v32u()
     while (count > 0u) {
+      func(count)
       count--
-      func()
     }
   }
 

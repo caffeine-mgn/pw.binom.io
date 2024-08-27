@@ -90,6 +90,9 @@ fun Double.toByteArray(): ByteArray {
   return output
 }
 
+/**
+ * put int to [destination] using big-endian format
+ */
 fun Int.toByteBuffer(destination: ByteBuffer) {
   destination.put((this ushr (8 * (3 - 0))).toByte())
   destination.put((this ushr (8 * (3 - 1))).toByte())
@@ -216,6 +219,9 @@ fun Long.Companion.fromBytes(source: ByteBuffer): Long {
   return fromBytes(b0, b1, b2, b3, b4, b5, b6, b7)
 }
 
+/**
+ * makes int from bytes using big-endian format
+ */
 @JvmName("Int_fromBytes1")
 fun Int.Companion.fromBytes(byte0: Byte, byte1: Byte, byte2: Byte, byte3: Byte): Int =
   ((byte0.toInt() and 0xFF) shl 24) +

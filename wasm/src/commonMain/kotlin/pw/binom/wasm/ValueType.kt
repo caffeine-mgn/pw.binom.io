@@ -80,6 +80,7 @@ fun isValueType(byte: UByte) =
     Types.TYPE_REF_ABS_HEAP_FUNC_REF,
     Types.TYPE_REF_EXTERN_REF,
     Types.TYPE_REF_NULL,
+    Types.TYPE_REF,
     Types.TYPE_REF_ABS_HEAP_NONE,
     Types.TYPE_REF_ABS_HEAP_ANY,
       -> true

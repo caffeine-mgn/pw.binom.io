@@ -47,9 +47,9 @@ class DataSectionWriter(private val out: WasmOutput) : DataSectionVisitor {
     state++
     ByteArrayOutput().use { b ->
       input.copyTo(b)
+      stream.v32u(b.size.toUInt())
       b.locked { buffer ->
-        stream.v32u(buffer.remaining.toUInt())
-        stream.write(buffer)
+        stream.bytes(buffer)
       }
     }
   }
@@ -71,7 +71,6 @@ class DataSectionWriter(private val out: WasmOutput) : DataSectionVisitor {
 
   override fun end() {
     out.v32u(count.toUInt())
-    out.write(stream)
-    stream.clear()
+    stream.moveTo(out)
   }
 }

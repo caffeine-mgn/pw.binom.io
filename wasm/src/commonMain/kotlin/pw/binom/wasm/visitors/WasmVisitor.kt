@@ -15,6 +15,7 @@ interface WasmVisitor {
   fun tableSection(): TableSectionVisitor = TableSectionVisitor.SKIP
   fun memorySection(): MemorySectionVisitor = MemorySectionVisitor.SKIP
   fun globalSection(): GlobalSectionVisitor = GlobalSectionVisitor.SKIP
+  fun tagSection(): TagSectionVisitor = TagSectionVisitor.SKIP
   fun exportSection(): ExportSectionVisitor = ExportSectionVisitor.SKIP
   fun dataCountSection(): DataCountSectionVisitor = DataCountSectionVisitor.SKIP
   fun dataSection(): DataSectionVisitor = DataSectionVisitor.SKIP

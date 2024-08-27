@@ -21,6 +21,8 @@ object TypeSectionReader {
   const val kWasmRecursiveTypeGroupCode: UByte = 0x4eu
 
   private fun readFuncType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.FuncTypeVisitor) {
+    input as StreamReader
+    println("READING FUNC 0x${input.globalCursor.toString(16)}")
     visitor.start(shared = shared)
     input.readVec {
       // args
@@ -34,16 +36,24 @@ object TypeSectionReader {
   }
 
   private fun readStructType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.StructTypeVisitor) {
+    input as StreamReader
+    println("READING STRUCT 0x${input.globalCursor.toString(16)}")
     visitor.start(shared = shared)
     input.readVec {
+      val cursor = input.globalCursor
+      println("before reading storage 0x${input.globalCursor.toString(16)}")
       input.readStorageType(visitor = visitor.fieldStart())
+      println("before reading mutable 0x${input.globalCursor.toString(16)}. storage type len: ${input.globalCursor - cursor}")
       val mutable = input.v1u()
+      println("after reading mutable 0x${input.globalCursor.toString(16)}, value: $mutable")
       visitor.fieldEnd(mutable)
     }
     visitor.end()
   }
 
   private fun readArrayType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.ArrayVisitor) {
+    input as StreamReader
+    println("READING ARRAY 0x${input.globalCursor.toString(16)}")
     visitor.start(shared = shared)
     input.readStorageType(visitor = visitor.type())
     visitor.mutable(value = input.v1u())
@@ -91,16 +101,18 @@ object TypeSectionReader {
       } else {
         visitor.withParent()
       }
+      v.start()
       input.readVec {
         v.parent(TypeId(input.v32u())) // super-types
       }
       readCompType(kind = null, input = input, visitor = v.type())
+      v.end()
     } else {
       readCompType(kind = kind, input = input, visitor = visitor.single())
     }
   }
 
-  private fun DecodeTypeSection(input: WasmInput, visitor: TypeSectionVisitor.RecTypeVisitor) {
+  fun DecodeTypeSection(input: WasmInput, visitor: TypeSectionVisitor.RecTypeVisitor) {
     val groupKind = input.i8u()
     if (groupKind == kWasmRecursiveTypeGroupCode) {
       // is_wasm_gc = true
@@ -117,9 +129,11 @@ object TypeSectionReader {
 
   fun read(input: WasmInput, visitor: TypeSectionVisitor) {
     visitor.start()
-    val r = visitor.recType()
+    input as StreamReader
+    println("BEFORE CURSOR = ${input.globalCursor}")
     input.readVec {
-      DecodeTypeSection(input = input, visitor = r)
+      println("CURSOR = ${input.globalCursor}")
+      DecodeTypeSection(input = input, visitor = visitor.recType())
     }
     visitor.end()
   }

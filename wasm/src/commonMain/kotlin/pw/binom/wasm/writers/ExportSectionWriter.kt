@@ -6,7 +6,6 @@ import pw.binom.wasm.StreamWriter
 import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.readers.ExportSectionReader
 import pw.binom.wasm.visitors.ExportSectionVisitor
-import pw.binom.wasm.write
 
 class ExportSectionWriter(private val out: WasmOutput) : ExportSectionVisitor {
   private var state = 0
@@ -21,8 +20,7 @@ class ExportSectionWriter(private val out: WasmOutput) : ExportSectionVisitor {
   override fun end() {
     check(state == 1)
     out.v32u(count.toUInt())
-    out.write(stream)
-    stream.clear()
+    stream.moveTo(out)
     state = 0
   }
 

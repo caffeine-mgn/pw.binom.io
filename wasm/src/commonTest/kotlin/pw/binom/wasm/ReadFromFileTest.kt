@@ -1,98 +1,115 @@
 package pw.binom.wasm
 
-import pw.binom.io.Input
+import pw.binom.Console
+import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.openRead
-import pw.binom.io.use
+import pw.binom.io.file.readBinary
+import pw.binom.wasm.readers.TypeSectionReader
 import pw.binom.wasm.readers.WasmReader
 import pw.binom.wasm.visitors.*
+import pw.binom.wasm.writers.TypeSectionWriter
+import pw.binom.wasm.writers.WasmWriter
+import pw.binom.wrap
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
+
+class ReadDetecter(val input: Input, val func: (Byte, Int) -> Unit) : Input {
+  private var cursor = 0
+  override fun read(dest: ByteBuffer): DataTransferSize {
+    dest.forEach {
+      func(it, cursor)
+      cursor++
+    }
+    return input.read(dest)
+  }
+
+  override fun close() {
+    input.close()
+  }
+
+}
 
 class ReadFromFileTest {
   @Test
   fun aaa() {
 //    val path = "/home/subochev/tmp/wasm-test/c/dot.o"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/developmentExecutable/kotlin/www-wasm-wasi.wasm"
-//    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/kotlin/www-wasm-wasi.wasm"
     val path =
-      "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/developmentExecutable/kotlin/www-wasm-js.wasm"
+      "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/kotlin/www-wasm-wasi.wasm"
+//    val path =
+//      "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/developmentExecutable/kotlin/www-wasm-js.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/productionExecutable/kotlin/www-wasm-js.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/productionExecutable/optimized/www-wasm-js.wasm"
-    File(path)
-      .openRead()
-      .use { buf ->
-        WasmReader.read(StreamReader(buf), MyWasmVisitor())
+
+    val mm = InMemoryWasmOutput()
+    val data = File(path).readBinary()
+    println("------DATA------")
+    for (i in 0xefe - 5..0xefe + 5) {
+      println("0x${i.toString(16)} -> 0x${data[i].toUByte().toString(16).padStart(2, '0')}")
+    }
+    println("------DATA------")
+/*    val typeSection = data.copyOfRange(fromIndex = 11, toIndex = 11 + 3188)
+    println("---->${typeSection.size}")
+
+    val bbbbb = typeSection.copyOfRange(fromIndex = 1, toIndex = typeSection.size)
+
+
+
+    val b = DiffOutput(typeSection).asWasm
+    val r = ByteArrayInput(typeSection).asWasm()
+    try {
+      TypeSectionReader.read(
+        input = r,
+        visitor = TypeSectionWriter(mm),
+      )
+    } catch (e: Throwable) {
+      Console.err.append(b.callback[0x4a])
+      Console.err.append(b.callback[0x4b])
+      Console.err.append(b.callback[0x4c])
+      throw e
+    }*/
+
+
+
+    /*try {
+      repeat(14) { index ->
+
+        println("----------------$index-----------------")
+        TypeSectionReader.DecodeTypeSection(
+          input = r,
+          visitor = TypeSectionWriter.RecTypeWriter(b),
+        )
+        println("----------------$index-----------------")
       }
-  }
-}
+    } catch (e: Throwable) {
+      println("--->${b.callback[0x4b]}")
+//      b.callback.forEachIndexed { index, s ->
+//        println("0x${index.toString(16)} -> ${s.lines().joinToString("  -->  ")}")
+//      }
+      throw e
+    }*/
+//    val bb = StreamReader(ByteArrayInput(typeSection))
+//    TypeSectionReader.read(
+//      input = bb,
+//      visitor = TypeSectionWriter(StreamWriter(DiffOutput(typeSection)))
+//    )
 
-class MyWasmVisitor : WasmVisitor {
-  override fun start() {
-  }
+    val r = StreamWriter(DiffOutput(data))
+    try {
+      WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(r))
+    } catch (e:Throwable) {
+      println(r.callback[0xefe-1])
+      throw e
+    }
 
-  override fun end() {
-  }
-
-  override fun importSection(): ImportSectionVisitor = MyImportSectionVisitor()
-  override fun functionSection(): FunctionSectionVisitor = MyFunctionSectionVisitor()
-  override fun typeSection(): TypeSectionVisitor = MyTypeSectionVisitor()
-  override fun customSection(): CustomSectionVisitor = MyCustomSectionVisitor()
-  override fun startSection(function: FunctionId) {
-  }
-}
-
-class MyCustomSectionVisitor : CustomSectionVisitor {
-  override fun start(name: String) {
-    println("Custom section name: $name")
-  }
-
-  override fun data(input: Input) {
-    input.skipAll()
-  }
-
-  override fun end() {
-  }
-}
-
-class MyFunctionSectionVisitor : FunctionSectionVisitor {
-  override fun start() {
-  }
-
-  override fun end() {
-  }
-
-}
-
-class MyTypeSectionVisitor : TypeSectionVisitor {
-  private val args = ArrayList<ValueType>()
-  private val results = ArrayList<ValueType>()
-  private var index = -1
-  override fun start() {
-    args.clear()
-    results.clear()
-    index++
-  }
+    //    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(mm))
 
 
-  override fun end() {
-    args.clear()
-    results.clear()
-  }
-
-}
-
-class MyImportSectionVisitor : ImportSectionVisitor {
-  override fun start() {
-  }
-
-  override fun end() {
-  }
-
-  override fun memory(module: String, field: String, initial: UInt, maximum: UInt) {
-    println("Import $module->$field memory with range $initial->$maximum")
-  }
-
-  override fun memory(module: String, field: String, initial: UInt) {
-    println("Import $module->$field memory with range $initial->unlimited")
+    mm.locked {
+      println("Out data: ${it.remaining}")
+    }
+    println("Original data: ${data.size}")
   }
 }

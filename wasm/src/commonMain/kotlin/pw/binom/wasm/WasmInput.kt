@@ -25,11 +25,11 @@ interface WasmInput : Input {
   fun i8u(): UByte
 }
 
-inline fun WasmInput.readVec(func: () -> Unit) {
+inline fun WasmInput.readVec(func: (UInt) -> Unit) {
   var count = v32u()
   while (count > 0u) {
+    func(count)
     count--
-    func()
   }
 }
 
@@ -55,8 +55,8 @@ fun WasmInput.readRefType(
 ) {
   val firstByte = byte
   when (firstByte) {
-    0x64u.toUByte() -> readHeapType(byte, visitor.ref())
-    0x63u.toUByte() -> readHeapType(byte, visitor.refNull())
+    Types.TYPE_REF -> readHeapType(byte, visitor.ref())
+    Types.TYPE_REF_NULL -> readHeapType(byte, visitor.refNull())
     else -> visitor.refNull(readAbsHeapType(byte))
   }
 }
@@ -147,10 +147,14 @@ fun isPackType(byte: UByte) = when (byte) {
   else -> false
 }
 
+/**
+ * https://webassembly.github.io/gc/core/binary/types.html#binary-storagetype
+ */
 fun WasmInput.readStorageType(byte: UByte = i8u(), visitor: StorageVisitor) =
   when {
     isPackType(byte) -> readPackType(byte = byte, visitor = visitor.pack())
-    else -> readValueType(byte = byte, visitor = visitor.valType())
+    isValueType(byte) -> readValueType(byte = byte, visitor = visitor.valType())
+    else -> TODO("Unknown byte 0x${byte.toString(16).padStart(2, '0')}")
   }
 
 fun WasmInput.readStorageType() =

@@ -1,9 +1,6 @@
 package pw.binom.wasm
 
-import pw.binom.io.ByteArrayOutput
-import pw.binom.io.Closeable
-import pw.binom.io.Output
-import pw.binom.io.use
+import pw.binom.io.*
 
 interface WasmOutput : Output {
   fun i8u(value: UByte)
@@ -18,6 +15,9 @@ interface WasmOutput : Output {
   fun v33s(value: Long)
   fun v1u(b: Boolean)
   fun vec(): VectorWriter
+  fun bytes(data: ByteArray)
+  fun bytes(data: ByteBuffer)
+  fun bytes(data: Input)
 }
 
 interface VectorWriter : Closeable {

@@ -29,34 +29,9 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
       out.i8u(TypeSectionReader.kWasmFunctionTypeCode)
     }
 
-    override fun end() {
-      check(status == START || status == ARG || status == RESULT)
-      when (status) {
-        START -> {
-          out.v32u(0u)
-          out.v32u(0u)
-        }
-
-        ARG -> {
-          stream.v32u(count.toUInt())
-          stream.moveTo(out)
-          stream.v32u(0u)
-        }
-
-        RESULT -> {
-          stream.v32u(count.toUInt())
-          stream.moveTo(out)
-        }
-      }
-      count = 0
-      status = NONE
-    }
-
     override fun arg(): ValueVisitor {
       check(status == START || status == ARG)
-      if (status == START) {
-        status = ARG
-      }
+      status = ARG
       count++
       return ValueWriter(stream)
     }
@@ -71,7 +46,7 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
 
         ARG -> {
           status = RESULT
-          stream.v32u(count.toUInt())
+          out.v32u(count.toUInt())
           stream.moveTo(out)
           count = 0
         }
@@ -79,31 +54,68 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
       count++
       return ValueWriter(stream)
     }
+
+    override fun end() {
+      check(status == START || status == ARG || status == RESULT)
+      when (status) {
+        START -> {
+          out.v32u(0u)
+          out.v32u(0u)
+        }
+
+        ARG -> {
+          out.v32u(count.toUInt())
+          stream.moveTo(out)
+          out.v32u(0u)
+        }
+
+        RESULT -> {
+          out.v32u(count.toUInt())
+          stream.moveTo(out)
+        }
+      }
+      count = 0
+      status = NONE
+    }
   }
 
   class StructTypeWriter(private val out: WasmOutput) : TypeSectionVisitor.StructTypeVisitor {
     private val stream = InMemoryWasmOutput()
     private var count = 0
+    private var status = 0
 
     override fun start(shared: Boolean) {
+      check(status == 0)
+      status++
       if (shared) {
         out.i8u(TypeSectionReader.kSharedFlagCode)
       }
       out.i8u(TypeSectionReader.kWasmStructTypeCode)
     }
 
+    private var cursor = 0
     override fun fieldStart(): StorageVisitor {
+      check(status == 1)
+      status++
       count++
+      cursor = stream.size
       return StorageWriter(stream)
     }
 
     override fun fieldEnd(mutable: Boolean) {
+      check(status == 2)
+      status--
+      println("before write mutable. size of type: ${stream.size - cursor}")
+      cursor = stream.size
       stream.v1u(mutable)
+      println("v1u size: ${stream.size - cursor}")
     }
 
     override fun end() {
+      check(status == 1)
       out.v32u(count.toUInt())
       stream.moveTo(out)
+      status = 0
     }
   }
 
@@ -145,22 +157,30 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
   }
 
   class SubTypeWithParentWriter(private val out: WasmOutput) : TypeSectionVisitor.SubTypeWithParentVisitor {
+    companion object {
+      private const val NONE = 0
+      private const val STARTED = 1
+      private const val PARENT = 2
+      private const val TYPE = 3
+    }
+
     private val types = ArrayList<Int>()
     private var state = 0
     override fun start() {
-      check(state == 0)
-      state++
+      check(state == NONE)
+      state = STARTED
       super.start()
     }
 
     override fun parent(type: TypeId) {
-      check(state == 1)
+      check(state == STARTED || state == PARENT)
+      state = PARENT
       types += type.value.toInt()
     }
 
     override fun type(): TypeSectionVisitor.CompositeTypeVisitor {
-      check(state == 1)
-      state++
+      check(state == STARTED || state == PARENT) { "Invalid state: $state" }
+      state = TYPE
       out.v32u(types.size.toUInt())
       types.forEach {
         out.v32u(it.toUInt())
@@ -170,8 +190,8 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
     }
 
     override fun end() {
-      check(state == 2)
-      state = 0
+      check(state == TYPE)
+      state = NONE
     }
   }
 
@@ -186,9 +206,7 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
       return SubTypeWithParentWriter(out)
     }
 
-    override fun single(): TypeSectionVisitor.CompositeTypeVisitor {
-      return CompositeTypeWriter(out)
-    }
+    override fun single(): TypeSectionVisitor.CompositeTypeVisitor = CompositeTypeWriter(out)
   }
 
   class RecursiveWriter(private val out: WasmOutput) : TypeSectionVisitor.RecursiveVisitor {
@@ -198,14 +216,14 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
     override fun start() {
       check(state == 0)
       state++
-      super.start()
+      out.i8u(TypeSectionReader.kWasmRecursiveTypeGroupCode)
     }
 
     override fun type(): TypeSectionVisitor.SubTypeVisitor {
       check(state == 0 || state == 1)
       state = 1
       count++
-      return SubTypeWriter(out)
+      return SubTypeWriter(stream)
     }
 
     override fun end() {
@@ -218,14 +236,29 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
   }
 
   class RecTypeWriter(private val out: WasmOutput) : TypeSectionVisitor.RecTypeVisitor {
-    override fun recursive(): TypeSectionVisitor.RecursiveVisitor {
-      out.i8u(TypeSectionReader.kWasmRecursiveTypeGroupCode)
-      return RecursiveWriter(out)
-    }
+    override fun recursive(): TypeSectionVisitor.RecursiveVisitor = RecursiveWriter(out)
 
-    override fun single(): TypeSectionVisitor.SubTypeVisitor {
-      return SubTypeWriter(out)
-    }
+    override fun single(): TypeSectionVisitor.SubTypeVisitor = SubTypeWriter(out)
   }
 
+  private var count = 0
+  private var buffer = InMemoryWasmOutput()
+  private var status = 0
+  override fun start() {
+    check(status == 0)
+    status++
+  }
+
+  override fun recType(): TypeSectionVisitor.RecTypeVisitor {
+    check(status == 1)
+    count++
+    return RecTypeWriter(buffer)
+  }
+
+  override fun end() {
+    check(status == 1)
+    out.v32u(count.toUInt())
+    buffer.moveTo(out)
+    status = 0
+  }
 }

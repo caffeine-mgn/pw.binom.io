@@ -29,7 +29,6 @@ class MemorySectionWriter(private val out: WasmOutput) : MemorySectionVisitor {
     check(state == 1)
     state = 0
     out.v32u(count.toUInt())
-    out.write(stream)
-    stream.clear()
+    stream.moveTo(out)
   }
 }

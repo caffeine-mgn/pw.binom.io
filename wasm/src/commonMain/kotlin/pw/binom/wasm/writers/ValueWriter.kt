@@ -34,12 +34,12 @@ class ValueWriter(private val out: WasmOutput) :
   }
 
   override fun ref(): ValueVisitor.HeapVisitor {
-    out.i8u(0x64u)
+    out.i8u(Types.TYPE_REF)
     return this
   }
 
   override fun refNull(): ValueVisitor.HeapVisitor {
-    out.i8u(0x64u)
+    out.i8u(Types.TYPE_REF_NULL)
     return this
   }
 
@@ -62,7 +62,7 @@ class ValueWriter(private val out: WasmOutput) :
   }
 
   override fun type(type: TypeId) {
-    out.v33s(type.value.toLong())
+    out.v32s(type.value.toInt())
   }
 
   // ValueVisitor.VectorVisitor

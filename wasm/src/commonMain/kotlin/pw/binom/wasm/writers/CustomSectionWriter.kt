@@ -23,6 +23,6 @@ class CustomSectionWriter(private val out: WasmOutput) : CustomSectionVisitor {
   override fun data(input: Input) {
     check(state == 1)
     state++
-    input.copyTo(out)
+    out.bytes(input)
   }
 }
