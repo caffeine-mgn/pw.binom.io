@@ -2,7 +2,6 @@ package pw.binom.wasm.writers
 
 import pw.binom.io.ByteArrayOutput
 import pw.binom.wasm.InMemoryWasmOutput
-import pw.binom.wasm.StreamWriter
 import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.GlobalSectionVisitor
@@ -26,6 +25,7 @@ class GlobalSectionWriter(private val out: WasmOutput) : GlobalSectionVisitor {
 
   override fun end() {
     check(state == STARTED)
+    println("GLOBAL SECTION count=$count")
     out.v32u(count.toUInt())
     stream.moveTo(out)
     count = 0
@@ -33,7 +33,6 @@ class GlobalSectionWriter(private val out: WasmOutput) : GlobalSectionVisitor {
   }
 
   override fun type(): ValueVisitor {
-    println("...type...")
     check(state == STARTED)
     count++
     state = TYPE_STARTED
@@ -43,7 +42,7 @@ class GlobalSectionWriter(private val out: WasmOutput) : GlobalSectionVisitor {
   override fun code(mutable: Boolean): ExpressionsVisitor {
     check(state == TYPE_STARTED)
     state = STARTED
-    println("...code...")
+    stream.v1u(mutable)
     return ExpressionsWriter(stream)
   }
 }

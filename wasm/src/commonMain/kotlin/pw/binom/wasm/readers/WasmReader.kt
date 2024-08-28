@@ -32,12 +32,12 @@ object WasmReader {
 //      if (sectionId > Sections.maxIndex) throw RuntimeException("IoErr.InvalidSectionId($sectionId), cursor: ${input.cursor}")
       val section = Sections.byIndex(sectionId)
       val sectionLen = input.v32u()
-      input as StreamReader
-      println(
-        "---------READING $section 0x${
-          input.cursor.toUInt().toString(16)
-        } (${input.cursor}) with len $sectionLen---------"
-      )
+//      input as StreamReader
+//      println(
+//        "---------READING $section 0x${
+//          input.cursor.toUInt().toString(16)
+//        } (${input.cursor}) with len $sectionLen---------"
+//      )
       input.withLimit(sectionLen).use { sectionInput ->
         when (section) {
           Sections.CUSTOM_SECTION -> {
@@ -65,7 +65,7 @@ object WasmReader {
           Sections.EXPORT_SECTION -> ExportSectionReader.read(input = sectionInput, visitor = visitor.exportSection())
 
           Sections.START_SECTION -> visitor.startSection(function = FunctionId(sectionInput.v32u()))
-          Sections.ELEMENT_SECTION -> ElementSectionReader.read(input = sectionInput)
+          Sections.ELEMENT_SECTION -> ElementSectionReader.read(input = sectionInput, visitor = visitor.elementSection())
           Sections.CODE_SECTION -> CodeSectionReader.read(
             input = sectionInput,
             visitor = visitor.codeVisitor(),

@@ -289,19 +289,24 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun const(value: Float) {
+    out.i8u(Opcodes.F32_CONST)
     out.i32s(value.toBits())
   }
 
   override fun const(value: Double) {
+    out.i8u(Opcodes.F64_CONST)
     out.i64s(value.toBits())
   }
 
   override fun const(value: Int) {
-    out.i32s(value)
+    out.i8u(Opcodes.I32_CONST)
+    out.v32s(value)
+//    out.i32s(value)
   }
 
   override fun const(value: Long) {
-    out.i64s(value)
+    out.i8u(Opcodes.I64_CONST)
+    out.v64s(value)
   }
 
   override fun compare(opcode: UByte) {
@@ -560,8 +565,8 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
     return ValueWriter(out)
   }
 
-  override fun convertNumeric(opcode: UByte) {
-    when (opcode) {
+  override fun convertNumeric(numOpcode: UByte) {
+    when (numOpcode) {
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F32,
       Opcodes.NUMERIC_I32U_CONVERT_SAT_F32,
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F64,
@@ -572,20 +577,20 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
       Opcodes.NUMERIC_I64U_CONVERT_SAT_F64,
         -> {
         out.i8u(Opcodes.NUMERIC_PREFIX)
-        out.i8u(opcode)
+        out.i8u(numOpcode)
       }
 
       else -> throw IllegalArgumentException()
     }
   }
 
-  override fun gcConvert(opcode: UByte) {
-    when (opcode) {
+  override fun gcConvert(gcOpcode: UByte) {
+    when (gcOpcode) {
       Opcodes.GC_ANY_CONVERT_EXTERN,
       Opcodes.GC_EXTERN_CONVERT_ANY,
         -> {
         out.i8u(Opcodes.GC_PREFIX)
-        out.i8u(opcode)
+        out.i8u(gcOpcode)
       }
 
       else -> throw IllegalArgumentException()

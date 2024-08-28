@@ -10,7 +10,7 @@ import kotlin.contracts.contract
 
 interface WasmInput : Input {
   fun withLimit(limit: UInt): WasmInput
-  fun v32u(): UInt
+  fun v32u(firstByte: Byte = i8s()): UInt
   fun v32s(): Int
   fun v64u(): ULong
   fun v64s(): Long
@@ -68,7 +68,7 @@ fun WasmInput.readHeapType(
   if (Types.isAbsHeapType(byte)) {
     visitor.type(readAbsHeapType(byte))
   } else {
-    visitor.type(TypeId(v33s(byte.toByte()).toUInt()))
+    visitor.type(TypeId(v32u(byte.toByte()).toUInt()))
   }
 }
 
@@ -167,12 +167,12 @@ fun WasmInput.readStorageType() =
     Types.TYPE_REF_ABS_HEAP_FUNC_REF -> ValueType.Ref.FUNC_REF
     Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
     Types.TYPE_REF_NULL -> {
-      readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY)
+      readHeapType(visitor = ValueVisitor.HeapVisitor.SKIP)
       ValueType.Ref.NULL
     }
 
     Types.TYPE_REF -> {
-      readHeapType(visitor = ValueVisitor.HeapVisitor.EMPTY)
+      readHeapType(visitor = ValueVisitor.HeapVisitor.SKIP)
       ValueType.Ref.VALUE
     }
 

@@ -4,7 +4,7 @@ import pw.binom.wasm.FunctionId
 
 interface FunctionSectionVisitor {
   companion object {
-    val STUB = object : FunctionSectionVisitor {}
+    val SKIP = object : FunctionSectionVisitor {}
   }
 
   fun start() {}

@@ -4,7 +4,7 @@ import pw.binom.io.Input
 
 interface CustomSectionVisitor {
   companion object {
-    val STUB = object : CustomSectionVisitor {}
+    val SKIP = object : CustomSectionVisitor {}
   }
 
   fun start(name: String) {}

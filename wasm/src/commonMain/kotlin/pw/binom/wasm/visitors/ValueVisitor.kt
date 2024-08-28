@@ -10,7 +10,7 @@ interface ValueVisitor {
 
   interface HeapVisitor {
     companion object {
-      val EMPTY = object : HeapVisitor {}
+      val SKIP = object : HeapVisitor {}
     }
 
     fun type(type: AbsHeapType) {}
@@ -19,7 +19,7 @@ interface ValueVisitor {
 
   interface NumberVisitor {
     companion object {
-      val EMPTY = object : NumberVisitor {}
+      val SKIP = object : NumberVisitor {}
     }
 
     fun i32() {}
@@ -30,7 +30,7 @@ interface ValueVisitor {
 
   interface VectorVisitor {
     companion object {
-      val EMPTY = object : VectorVisitor {}
+      val SKIP = object : VectorVisitor {}
     }
 
     fun v128() {}
@@ -38,16 +38,16 @@ interface ValueVisitor {
 
   interface RefVisitor {
     companion object {
-      val EMPTY = object : RefVisitor {}
+      val SKIP = object : RefVisitor {}
     }
 
-    fun ref(): HeapVisitor = HeapVisitor.EMPTY
-    fun refNull(): HeapVisitor = HeapVisitor.EMPTY
+    fun ref(): HeapVisitor = HeapVisitor.SKIP
+    fun refNull(): HeapVisitor = HeapVisitor.SKIP
     fun refNull(type: AbsHeapType) {}
   }
 
-  fun numType(): NumberVisitor = NumberVisitor.EMPTY
-  fun refType(): RefVisitor = RefVisitor.EMPTY
+  fun numType(): NumberVisitor = NumberVisitor.SKIP
+  fun refType(): RefVisitor = RefVisitor.SKIP
   fun refType(type: AbsHeapType){}
-  fun vecType(): VectorVisitor = VectorVisitor.EMPTY
+  fun vecType(): VectorVisitor = VectorVisitor.SKIP
 }

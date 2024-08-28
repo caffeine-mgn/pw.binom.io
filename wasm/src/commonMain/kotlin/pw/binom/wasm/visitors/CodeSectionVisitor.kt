@@ -5,7 +5,7 @@ interface CodeSectionVisitor {
 
   interface CodeVisitor {
     companion object {
-      val STUB = object : CodeVisitor {}
+      val SKIP = object : CodeVisitor {}
     }
 
     fun start() {}
@@ -14,9 +14,9 @@ interface CodeSectionVisitor {
     fun code(): ExpressionsVisitor = ExpressionsVisitor.SKIP
   }
   companion object {
-    val STUB = object : CodeSectionVisitor {}
+    val SKIP = object : CodeSectionVisitor {}
   }
   fun start() {}
-  fun code(): CodeVisitor = CodeVisitor.STUB
+  fun code(): CodeVisitor = CodeVisitor.SKIP
   fun end() {}
 }

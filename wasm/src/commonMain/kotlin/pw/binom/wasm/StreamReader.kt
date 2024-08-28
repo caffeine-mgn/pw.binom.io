@@ -80,8 +80,17 @@ class StreamReader(
     }
   }
 
-  override fun v32u() =
-    Leb.readUnsigned(maxBits = 32) { readByte() }.toUInt()
+  override fun v32u(firstByte: Byte):UInt{
+    var first = false
+    return Leb.readUnsigned(maxBits = 32) {
+      if (!first) {
+        first = true
+        firstByte
+      } else {
+        readByte()
+      }
+    }.toUInt()
+  }
 
   override fun v32s() =
     Leb.readSigned(maxBits = 32) { readByte() }.toInt()

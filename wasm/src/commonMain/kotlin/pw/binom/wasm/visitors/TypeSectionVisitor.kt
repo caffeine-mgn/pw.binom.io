@@ -4,7 +4,7 @@ import pw.binom.wasm.TypeId
 
 interface TypeSectionVisitor {
   companion object {
-    val STUB = object : TypeSectionVisitor {}
+    val SKIP = object : TypeSectionVisitor {}
   }
 
   fun start() {}

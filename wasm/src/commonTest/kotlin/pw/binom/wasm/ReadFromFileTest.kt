@@ -5,9 +5,11 @@ import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.openRead
 import pw.binom.io.file.readBinary
+import pw.binom.wasm.readers.GlobalSectionReader
 import pw.binom.wasm.readers.TypeSectionReader
 import pw.binom.wasm.readers.WasmReader
 import pw.binom.wasm.visitors.*
+import pw.binom.wasm.writers.GlobalSectionWriter
 import pw.binom.wasm.writers.TypeSectionWriter
 import pw.binom.wasm.writers.WasmWriter
 import pw.binom.wrap
@@ -45,32 +47,31 @@ class ReadFromFileTest {
 
     val mm = InMemoryWasmOutput()
     val data = File(path).readBinary()
-    println("------DATA------")
-    for (i in 0xefe - 5..0xefe + 5) {
-      println("0x${i.toString(16)} -> 0x${data[i].toUByte().toString(16).padStart(2, '0')}")
-    }
-    println("------DATA------")
-/*    val typeSection = data.copyOfRange(fromIndex = 11, toIndex = 11 + 3188)
-    println("---->${typeSection.size}")
+//    println("------DATA------")
+//    for (i in 0xefe - 5..0xefe + 5) {
+//      println("0x${i.toString(16)} -> 0x${data[i].toUByte().toString(16).padStart(2, '0')}")
+//    }
+//    println("------DATA------")
+    /*    val typeSection = data.copyOfRange(fromIndex = 11, toIndex = 11 + 3188)
+        println("---->${typeSection.size}")
 
-    val bbbbb = typeSection.copyOfRange(fromIndex = 1, toIndex = typeSection.size)
+        val bbbbb = typeSection.copyOfRange(fromIndex = 1, toIndex = typeSection.size)
 
 
 
-    val b = DiffOutput(typeSection).asWasm
-    val r = ByteArrayInput(typeSection).asWasm()
-    try {
-      TypeSectionReader.read(
-        input = r,
-        visitor = TypeSectionWriter(mm),
-      )
-    } catch (e: Throwable) {
-      Console.err.append(b.callback[0x4a])
-      Console.err.append(b.callback[0x4b])
-      Console.err.append(b.callback[0x4c])
-      throw e
-    }*/
-
+        val b = DiffOutput(typeSection).asWasm
+        val r = ByteArrayInput(typeSection).asWasm()
+        try {
+          TypeSectionReader.read(
+            input = r,
+            visitor = TypeSectionWriter(mm),
+          )
+        } catch (e: Throwable) {
+          Console.err.append(b.callback[0x4a])
+          Console.err.append(b.callback[0x4b])
+          Console.err.append(b.callback[0x4c])
+          throw e
+        }*/
 
 
     /*try {
@@ -96,11 +97,36 @@ class ReadFromFileTest {
 //      visitor = TypeSectionWriter(StreamWriter(DiffOutput(typeSection)))
 //    )
 
-    val r = StreamWriter(DiffOutput(data))
+//    val globalSection = data.from(0xf00)
+//
+//    println("------DATA------")
+//    for (i in 0x64 - 5..0x64 + 5) {
+//      println("0x${i.toString(16)} -> 0x${globalSection[i].toUByte().toString(16).padStart(2, '0')}")
+//    }
+//    println("------DATA------")
+
+//    val v = DiffOutput(globalSection).asWasm
+//    try {
+//      GlobalSectionReader.read(
+//        input = StreamReader(ByteBuffer.wrap(globalSection)),
+//        visitor = GlobalSectionWriter(v)
+//      )
+//    } catch (e: Throwable) {
+//      println("0x64 " + v.callback[0x64])
+//      println("0x65 " + v.callback[0x65])
+//      println("0x66 " + v.callback[0x66])
+//      println("0x67 " + v.callback[0x67])
+//      println("0x68 " + v.callback[0x68])
+//      println("0x69 " + v.callback[0x69])
+//      throw e
+//    }
+//    return
+
+    val r = DiffOutput(data).asWasm
     try {
       WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(r))
-    } catch (e:Throwable) {
-      println(r.callback[0xefe-1])
+    } catch (e: Throwable) {
+      println("0x15bf "+r.callback[0x15bf])
       throw e
     }
 

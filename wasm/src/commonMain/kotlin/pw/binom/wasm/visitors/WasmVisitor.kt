@@ -6,14 +6,15 @@ interface WasmVisitor {
   fun start() {}
   fun end() {}
   fun version(version: Int) {}
-  fun importSection(): ImportSectionVisitor = ImportSectionVisitor.STUB
-  fun functionSection(): FunctionSectionVisitor = FunctionSectionVisitor.STUB
-  fun codeVisitor(): CodeSectionVisitor = CodeSectionVisitor.STUB
-  fun typeSection(): TypeSectionVisitor = TypeSectionVisitor.STUB
-  fun customSection(): CustomSectionVisitor = CustomSectionVisitor.STUB
+  fun importSection(): ImportSectionVisitor = ImportSectionVisitor.SKIP
+  fun functionSection(): FunctionSectionVisitor = FunctionSectionVisitor.SKIP
+  fun codeVisitor(): CodeSectionVisitor = CodeSectionVisitor.SKIP
+  fun typeSection(): TypeSectionVisitor = TypeSectionVisitor.SKIP
+  fun customSection(): CustomSectionVisitor = CustomSectionVisitor.SKIP
   fun startSection(function: FunctionId) {}
   fun tableSection(): TableSectionVisitor = TableSectionVisitor.SKIP
   fun memorySection(): MemorySectionVisitor = MemorySectionVisitor.SKIP
+  fun elementSection(): ElementSectionVisitor = ElementSectionVisitor.SKIP
   fun globalSection(): GlobalSectionVisitor = GlobalSectionVisitor.SKIP
   fun tagSection(): TagSectionVisitor = TagSectionVisitor.SKIP
   fun exportSection(): ExportSectionVisitor = ExportSectionVisitor.SKIP

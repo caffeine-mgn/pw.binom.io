@@ -9,7 +9,6 @@ import pw.binom.wasm.LocalId
 import pw.binom.wasm.TableId
 import pw.binom.wasm.TagId
 import pw.binom.wasm.TypeId
-import pw.binom.wasm.Types
 
 interface ExpressionsVisitor {
   companion object {
@@ -18,18 +17,18 @@ interface ExpressionsVisitor {
 
   interface BrOnCastFailVisitor {
     companion object {
-      val STUB = object : BrOnCastFailVisitor {}
+      val SKIP = object : BrOnCastFailVisitor {}
     }
 
     fun start() {}
     fun end() {}
-    fun source(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
-    fun target(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
+    fun source(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
+    fun target(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
   }
 
   interface BrTableVisitor {
     companion object {
-      val STUB = object : BrTableVisitor {}
+      val SKIP = object : BrTableVisitor {}
     }
 
     fun start() {}
@@ -40,7 +39,7 @@ interface ExpressionsVisitor {
 
   interface BlockStartVisitor {
     companion object {
-      val STUB = object : BlockStartVisitor {}
+      val SKIP = object : BlockStartVisitor {}
     }
 
     fun start() {}
@@ -65,7 +64,7 @@ interface ExpressionsVisitor {
   fun compare(opcode: UByte) {}
   fun convert(opcode: UByte) {}
   fun structOp(gcOpcode: UByte, type: TypeId, field: FieldId) {}
-  fun refNull(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
+  fun refNull(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
   fun call(opcode: UByte, function: FunctionId) {}
   fun call(opcode: UByte, type: TypeId, table: TableId) {}
   fun call(opcode: UByte, typeRef: TypeId) {}
@@ -73,22 +72,22 @@ interface ExpressionsVisitor {
   fun indexArgument(opcode: UByte, label: GlobalId) {}
   fun reinterpret(opcode: UByte) {}
   fun arrayOp(gcOpcode: UByte, type: TypeId) {}
-  fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.EMPTY
+  fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
   fun structNew(type: TypeId) {}
   fun arrayCopy(from: TypeId, to: TypeId) {}
   fun newArray(type: TypeId, size: UInt) {}
   fun newArray(type: TypeId, data: DataId) {}
-  fun brOnCastFail(flags: UByte, label: LabelId): BrOnCastFailVisitor = BrOnCastFailVisitor.STUB
+  fun brOnCastFail(flags: UByte, label: LabelId): BrOnCastFailVisitor = BrOnCastFailVisitor.SKIP
   fun arrayFull(type: TypeId) {}
   fun newArrayDefault(type: TypeId) {}
   fun arrayLen() {}
   fun ref(function: FunctionId) {}
   fun drop() {}
-  fun brTable(): BrTableVisitor = BrTableVisitor.STUB
+  fun brTable(): BrTableVisitor = BrTableVisitor.SKIP
   fun select() {}
   fun select(typeCount: Int): ValueVisitor = ValueVisitor.SKIP
   fun throwOp(tag: TagId) {}
-  fun startBlock(opcode: UByte): BlockStartVisitor = BlockStartVisitor.STUB
+  fun startBlock(opcode: UByte): BlockStartVisitor = BlockStartVisitor.SKIP
   fun refIsNull() {}
   fun refAsNonNull() {}
   fun throwRef() {}

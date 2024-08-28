@@ -10,31 +10,45 @@ import pw.binom.writeLong
 val Output.asWasm
   get() = StreamWriter(this)
 
+class CallbackRecord(val stacktract: String, val msg: String?, val num: Int) {
+  override fun toString(): String = "#$num: $msg $stacktract"
+}
+
 class StreamWriter(val out: Output) : WasmOutput {
-  val callback = LinkedList<String>()
+  val callback = LinkedList<CallbackRecord>()
   private var recording = false
+  private var msg: String? = null
 
   var cursor = 0
     private set
   private val buffer = ByteBuffer(8)
 
-  private inline fun <T> recording(a: () -> T): T {
+  private inline fun <T> recording(msg: String? = null, a: () -> T): T {
     recording = true
+    this.msg = msg
     val result = a()
+    this.msg = null
     recording = false
     return result
   }
 
   override fun write(data: ByteBuffer): DataTransferSize {
-    val e = out.write(data)
-    if (e.isAvailable) {
+    if (data.hasRemaining) {
       val s = Throwable().stackTraceToString()
       if (recording) {
-        repeat(e.length) {
-          callback += s
+        var index = 0
+        data.forEach { byte ->
+          callback += CallbackRecord(
+            stacktract = s,
+            num = index,
+            msg = msg,
+          )
+          index++
         }
       }
-
+    }
+    val e = out.write(data)
+    if (e.isAvailable) {
       cursor += e.length
     }
     return e
@@ -49,20 +63,20 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun bytes(data: ByteBuffer) {
-    recording {
+    recording("bytes:ByteBuffer size=${data.remaining}") {
       write(data)
     }
   }
 
   override fun bytes(data: Input) {
-    recording {
+    recording("bytes:Input") {
       data.copyTo(this)
     }
   }
 
-  fun write(byte: UByte) = recording { write(byte.toByte()) }
+  fun write(byte: UByte) = recording("ubyte $byte") { write(byte.toByte()) }
   fun write(byte: Byte) {
-    recording {
+    recording("byte $byte") {
       buffer.reset(0, 1)
       buffer[0] = byte
       writeFully(buffer)
@@ -70,17 +84,17 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun i8s(value: Byte) {
-    recording {
+    recording("i8s $value") {
       buffer.reset(0, 1)
       buffer[0] = value
       writeFully(buffer)
     }
   }
 
-  override fun i8u(value: UByte) = recording { i8s(value.toByte()) }
+  override fun i8u(value: UByte) = recording("i8u $value") { i8s(value.toByte()) }
 
   override fun v64u(value: ULong) {
-    recording {
+    recording("v64u $value") {
       buffer.clear()
       Leb.writeUnsignedLeb128(value = value) { byte ->
         buffer.put(byte)
@@ -91,7 +105,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun v64s(value: Long) {
-    recording {
+    recording("v64s $value") {
       buffer.clear()
       Leb.writeSignedLeb128(value = value) { byte ->
         buffer.put(byte)
@@ -102,19 +116,19 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun i64s(value: Long) {
-    recording {
+    recording("i64s $value") {
       writeLong(buffer, value.reverse())
     }
   }
 
   override fun i32s(value: Int) {
-    recording {
+    recording("i32s $value") {
       writeInt(buffer, value.reverse())
     }
   }
 
   override fun v32u(value: UInt) {
-    recording {
+    recording("v32u $value") {
       buffer.clear()
       Leb.writeUnsignedLeb128(value = value.toULong() and 0xFFFFFFFFuL) { byte ->
         buffer.put(byte)
@@ -125,7 +139,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun v32s(value: Int) {
-    recording {
+    recording("v32s $value") {
       buffer.clear()
       Leb.writeSignedLeb128(value = value.toLong() and 0xFFFFFFFFL) { byte ->
         buffer.put(byte)
@@ -136,7 +150,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   fun v33u(value: ULong) {
-    recording {
+    recording("v33u $value") {
       buffer.clear()
       Leb.writeUnsignedLeb128(value = value) { byte ->
         buffer.put(byte)
@@ -147,7 +161,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun v33s(value: Long) {
-    recording {
+    recording("v33u $value") {
       buffer.clear()
       Leb.writeSignedLeb128(value = value) { byte ->
         buffer.put(byte)
@@ -172,7 +186,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   }
 
   override fun v1u(b: Boolean) {
-    recording {
+    recording("v1u $b") {
       write(if (b) 1 else 0)
     }
   }

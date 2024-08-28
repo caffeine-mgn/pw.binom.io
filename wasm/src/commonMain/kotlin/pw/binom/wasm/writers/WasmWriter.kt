@@ -39,9 +39,14 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
       3 -> flushSection()
       else -> throw IllegalStateException()
     }
-    sectionCode=code
+    sectionCode = code
     println("---------START SECTION $code---------")
     out.i8u(code)
+  }
+
+  override fun elementSection(): ElementSectionVisitor {
+    startSection(Sections.ELEMENT_SECTION.index.toUByte())
+    return ElementSectionWriter(sectionData)
   }
 
   override fun importSection(): ImportSectionVisitor {

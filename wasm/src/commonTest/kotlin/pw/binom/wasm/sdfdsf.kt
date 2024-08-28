@@ -1,10 +1,10 @@
 package pw.binom.wasm
 
-import pw.binom.fromBytes
 import pw.binom.io.ByteArrayInput
-import pw.binom.io.ByteArrayOutput
 import kotlin.test.Test
 
+
+fun ByteArray.from(pos: Int) = copyOfRange(fromIndex = pos, toIndex = size)
 
 class AAAAA {
   @OptIn(ExperimentalStdlibApi::class)

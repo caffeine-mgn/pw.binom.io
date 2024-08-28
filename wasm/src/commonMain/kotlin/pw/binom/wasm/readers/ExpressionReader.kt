@@ -1,7 +1,6 @@
 package pw.binom.wasm.readers
 
 import pw.binom.io.EOFException
-import pw.binom.reverse
 import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ExpressionsVisitor
 
@@ -23,11 +22,12 @@ object ExpressionReader {
         break
       }
       lastOpcode = opcode
+//      println("OPCODE: 0x${opcode.toString(16).padStart(2, '0')}")
       when (opcode) {
-        Opcodes.GC_PREFIX -> gc(visitor = ExpressionsVisitor.SKIP, input = input)
-        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = ExpressionsVisitor.SKIP)
-        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = ExpressionsVisitor.SKIP)
-        else -> default(input = input, visitor = ExpressionsVisitor.SKIP, opcode = opcode, context = context)
+        Opcodes.GC_PREFIX -> gc(visitor = visitor, input = input)
+        Opcodes.SIMD_PREFIX -> smid(input = input, visitor = visitor)
+        Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = visitor)
+        else -> default(input = input, visitor = visitor, opcode = opcode, context = context)
       }
     }
 //    input.skipOther()
@@ -201,25 +201,21 @@ object ExpressionReader {
 
       Opcodes.F32_CONST -> {
         val value = Float.fromBits(input.i32s())
-        println("CONST f32 $value")
         visitor.const(value)
       }
 
       Opcodes.I64_CONST -> {
         val value = input.v64s()
-        println("CONST i64 $value")
         visitor.const(value)
       }
 
       Opcodes.F64_CONST -> {
         val value = Double.fromBits(input.i64s())
-        println("CONST f64 $value")
         visitor.const(value)
       }
 
       Opcodes.I32_CONST -> {
         val value = input.v32s()
-        println("CONST i32 $value")
         visitor.const(value)
       }
 
