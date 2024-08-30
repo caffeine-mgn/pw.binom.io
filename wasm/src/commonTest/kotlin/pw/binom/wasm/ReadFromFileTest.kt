@@ -5,10 +5,12 @@ import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.openRead
 import pw.binom.io.file.readBinary
+import pw.binom.wasm.readers.CodeSectionReader
 import pw.binom.wasm.readers.GlobalSectionReader
 import pw.binom.wasm.readers.TypeSectionReader
 import pw.binom.wasm.readers.WasmReader
 import pw.binom.wasm.visitors.*
+import pw.binom.wasm.writers.CodeSectionWriter
 import pw.binom.wasm.writers.GlobalSectionWriter
 import pw.binom.wasm.writers.TypeSectionWriter
 import pw.binom.wasm.writers.WasmWriter
@@ -97,6 +99,27 @@ class ReadFromFileTest {
 //      visitor = TypeSectionWriter(StreamWriter(DiffOutput(typeSection)))
 //    )
 
+/*
+    val codeSection = data.from(0x15c2)
+    val v = DiffOutput(codeSection).asWasm
+    println("-1 = ${codeSection[172]}")
+    val ee = codeSection.copyOfRange(10505, 10505 + 3)
+    ee.forEach {
+      println("--->${it}")
+    }
+    try {
+      CodeSectionReader.read(
+        input = StreamReader(ByteBuffer.wrap(codeSection)),
+        visitor = CodeSectionWriter(v)
+      )
+    } catch (e: Throwable) {
+      e.printStackTrace()
+//      println("0x20fc " + v.callback[0x20fc])
+      throw e
+    }
+    return
+*/
+
 //    val globalSection = data.from(0xf00)
 //
 //    println("------DATA------")
@@ -126,7 +149,7 @@ class ReadFromFileTest {
     try {
       WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(r))
     } catch (e: Throwable) {
-      println("0x15bf "+r.callback[0x15bf])
+      println("0x6c4b " + r.callback[0x6c4b])
       throw e
     }
 

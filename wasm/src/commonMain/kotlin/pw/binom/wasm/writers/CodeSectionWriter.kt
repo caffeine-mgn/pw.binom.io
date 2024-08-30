@@ -1,9 +1,10 @@
 package pw.binom.wasm.writers
 
-import pw.binom.io.ByteArrayOutput
 import pw.binom.wasm.InMemoryWasmOutput
-import pw.binom.wasm.StreamWriter
 import pw.binom.wasm.WasmOutput
+import pw.binom.wasm.readers.BAD_CODE_BLOCK
+import pw.binom.wasm.readers.WRITE_OP_COUNT
+import pw.binom.wasm.readers.writeCount
 import pw.binom.wasm.visitors.CodeSectionVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
@@ -43,7 +44,11 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
         CODE_START -> {
           val localCountStream = InMemoryWasmOutput()
           localCountStream.v32u(localCount.toUInt())
-          out.v32u((localCountStream.size + localStream.size + codeStream.size).toUInt()) // size of block
+          val blockSize = (localCountStream.size + localStream.size + codeStream.size).toUInt()
+          if (writeCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == -1) {
+            println("WRITE CODE $writeCount, size: $blockSize. codeSize: ${codeStream.size}")
+          }
+          out.v32u(blockSize) // size of block
           localCountStream.moveTo(out)
           localStream.moveTo(out)
           codeStream.moveTo(out)
@@ -65,6 +70,7 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
         check(state == LOCAL_START)
       }
       localCount++
+      localStream.v32u(size)
       return ValueWriter(localStream)
     }
 
@@ -72,6 +78,8 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
     override fun code(): ExpressionsVisitor {
       check(state == STARTED || state == LOCAL_START)
       state = CODE_START
+      writeCount++
+      WRITE_OP_COUNT = 0
       return ExpressionsWriter(codeStream)
     }
   }
@@ -87,7 +95,7 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
   override fun code(): CodeSectionVisitor.CodeVisitor {
     check(state == 1)
     count++
-    return CodeWriter(out)
+    return CodeWriter(data)
   }
 
   override fun end() {

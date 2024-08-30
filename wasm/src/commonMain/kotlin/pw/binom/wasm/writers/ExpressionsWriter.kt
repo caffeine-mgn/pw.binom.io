@@ -1,11 +1,16 @@
 package pw.binom.wasm.writers
 
 import pw.binom.wasm.*
+import pw.binom.wasm.readers.*
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor.BrOnCastFailVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
-class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
+/**
+ * https://webassembly.github.io/exception-handling/core/binary/instructions.html#binary-instr
+ * https://webassembly.github.io/gc/core/binary/instructions.html#binary-instr
+ */
+class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
   private val blockStartWriter = object : ExpressionsVisitor.BlockStartVisitor {
     private var status = 0
     override fun start() {
@@ -90,6 +95,26 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
       check(state == 2)
       state++
       return ValueWriter(out)
+    }
+  }
+
+  var originalOut = out1
+  var out = InMemoryWasmOutput()
+
+  override fun beforeOperation() {
+    super.beforeOperation()
+  }
+
+  override fun afterOperation() {
+    if (writeCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
+      if (WRITE_OP_COUNT==BAD_OP || WRITE_OP_COUNT==ALL) {
+        println("WRITE #$READ_OP_COUNT SIZE: ${out.size}")
+      }
+      LAST_WRITE_OP_SIZE = out.size
+    }
+    out.moveTo(originalOut)
+    if (writeCount == BAD_CODE_BLOCK) {
+      WRITE_OP_COUNT++
     }
   }
 
@@ -299,6 +324,9 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun const(value: Int) {
+    if (WRITE_OP_COUNT == BAD_OP) {
+      println("writing i32 $value")
+    }
     out.i8u(Opcodes.I32_CONST)
     out.v32s(value)
 //    out.i32s(value)
@@ -306,6 +334,9 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
 
   override fun const(value: Long) {
     out.i8u(Opcodes.I64_CONST)
+    if (WRITE_OP_COUNT == BAD_OP || BAD_OP == ALL) {
+//      println("writing v64s $value")
+    }
     out.v64s(value)
   }
 
@@ -507,7 +538,7 @@ class ExpressionsWriter(private val out: WasmOutput) : ExpressionsVisitor {
     out.i8u(Opcodes.GC_PREFIX)
     out.i8u(Opcodes.GC_ARRAY_NEW_FIXED)
     out.v32u(type.value)
-    out.v32u(size)
+    out.v32s(size.toInt()) // TODO выяснить почему котлин в это место пишет v32s, а не v32u
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {

@@ -4,6 +4,10 @@ import pw.binom.io.EOFException
 import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ExpressionsVisitor
 
+/**
+ * https://webassembly.github.io/exception-handling/core/binary/instructions.html#binary-instr
+ * https://webassembly.github.io/gc/core/binary/instructions.html#binary-instr
+ */
 object ExpressionReader {
   private class Context {
     var depth = 1
@@ -12,10 +16,12 @@ object ExpressionReader {
   fun readExpressions(input: WasmInput, visitor: ExpressionsVisitor) {
     val context = Context()
     var lastOpcode = Opcodes.END
+    input as StreamReader
     while (true) {
       if (context.depth == 0 && lastOpcode == Opcodes.END) {
         break
       }
+      val before = input.globalCursor
       val opcode = try {
         input.i8u()
       } catch (e: EOFException) {
@@ -23,11 +29,31 @@ object ExpressionReader {
       }
       lastOpcode = opcode
 //      println("OPCODE: 0x${opcode.toString(16).padStart(2, '0')}")
+
+
+      visitor.beforeOperation()
       when (opcode) {
         Opcodes.GC_PREFIX -> gc(visitor = visitor, input = input)
         Opcodes.SIMD_PREFIX -> smid(input = input, visitor = visitor)
         Opcodes.NUMERIC_PREFIX -> numeric(input = input, visitor = visitor)
         else -> default(input = input, visitor = visitor, opcode = opcode, context = context)
+      }
+      visitor.afterOperation()
+      if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
+        val size = input.globalCursor - before
+        if (READ_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
+          println(
+            "READ #$READ_OP_COUNT SIZE: $size, opcode: 0x${
+              opcode.toString(16).padStart(2, '0')
+            }\n"
+          )
+        }
+        if (LAST_WRITE_OP_SIZE != size) {
+          TODO("Invalid operation size! $READ_OP_COUNT")
+        }
+      }
+      if (readCount == BAD_CODE_BLOCK) {
+        READ_OP_COUNT++
       }
     }
 //    input.skipOther()
@@ -205,7 +231,13 @@ object ExpressionReader {
       }
 
       Opcodes.I64_CONST -> {
+        if (READ_OP_COUNT == BAD_OP || BAD_OP == ALL) {
+          println()
+        }
         val value = input.v64s()
+        if (READ_OP_COUNT == BAD_OP || BAD_OP == ALL) {
+//          println("reading i64s $value")
+        }
         visitor.const(value)
       }
 
@@ -215,7 +247,16 @@ object ExpressionReader {
       }
 
       Opcodes.I32_CONST -> {
+        input as StreamReader
+        val start = input.globalCursor
+        if (READ_OP_COUNT == BAD_OP) {
+          println("")
+        }
         val value = input.v32s()
+        if (READ_OP_COUNT == BAD_OP) {
+          println("reading i32 $value")
+          println("INT from $start to ${input.globalCursor - start}")
+        }
         visitor.const(value)
       }
 
@@ -359,6 +400,11 @@ object ExpressionReader {
 
   private fun gc(input: WasmInput, visitor: ExpressionsVisitor) {
     val opcode = input.i8u()
+    if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
+      if (READ_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
+        println("GC OPCODE 0x${opcode.toUByte().toString(16)}")
+      }
+    }
 //    println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
     when (opcode) {
       Opcodes.GC_STRUCT_NEW -> visitor.structNew(type = TypeId(input.v32u()))
@@ -402,10 +448,24 @@ object ExpressionReader {
         data = DataId(input.v32u()),
       )
 
-      Opcodes.GC_ARRAY_NEW_FIXED -> visitor.newArray(
-        type = TypeId(input.v32u()),
-        size = input.v32u()
-      )
+      Opcodes.GC_ARRAY_NEW_FIXED -> {
+        input as StreamReader
+        val start = input.globalCursor
+        val type = TypeId(input.v32u())
+        val middle = input.globalCursor
+        val size = input.v32u()
+        val end = input.globalCursor
+        if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
+          if (READ_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
+            println("array.new_fixed $type $size. startOn=${start.toString(16)} withLen=${end - start}")
+          }
+        }
+
+        visitor.newArray(
+          type = type,
+          size = size,
+        )
+      }
 
       Opcodes.GC_BR_ON_CAST_FAIL -> {
         val visitor = visitor.brOnCastFail(

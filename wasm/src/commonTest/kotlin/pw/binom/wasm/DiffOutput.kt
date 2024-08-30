@@ -31,7 +31,7 @@ class DiffOutput(val eq: () -> Byte) : Output {
         println("0x${cursor.toString(16)} FAIL -> expected: 0x$a, actual: 0x$b")
         fail("Invalid value on 0x${cursor.toString(16)}. expected 0x$a ($validByte), actual: 0x$b ($writeByte)")
       } else {
-        println("0x${cursor.toString(16)} -> 0x$b ($validByte)")
+//        println("0x${cursor.toString(16)} -> 0x$b ($validByte)")
       }
       cursor++
     }

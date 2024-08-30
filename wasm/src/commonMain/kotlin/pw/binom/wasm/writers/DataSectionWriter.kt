@@ -22,7 +22,7 @@ class DataSectionWriter(private val out: WasmOutput) : DataSectionVisitor {
     check(state == 2)
     state++
     count++
-    stream.i8u(DataSectionReader.ACTIVE_MEM_X)
+    stream.i8u(DataSectionReader.ACTIVE_MEM_0)
     return ExpressionsWriter(stream)
   }
 
@@ -30,7 +30,7 @@ class DataSectionWriter(private val out: WasmOutput) : DataSectionVisitor {
     check(state == 2)
     state++
     count++
-    stream.i8u(DataSectionReader.ACTIVE_MEM_0)
+    stream.i8u(DataSectionReader.ACTIVE_MEM_X)
     stream.v32u(memoryId.raw)
     return ExpressionsWriter(stream)
   }

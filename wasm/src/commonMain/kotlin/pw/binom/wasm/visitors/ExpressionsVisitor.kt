@@ -50,6 +50,8 @@ interface ExpressionsVisitor {
 
   fun start() {}
   fun end() {}
+  fun beforeOperation() {}
+  fun afterOperation() {}
 
   fun const(value: Float) {}
   fun const(value: Double) {}

@@ -21,7 +21,7 @@ class StreamWriter(val out: Output) : WasmOutput {
 
   var cursor = 0
     private set
-  private val buffer = ByteBuffer(8)
+  private val buffer = ByteBuffer(16)
 
   private inline fun <T> recording(msg: String? = null, a: () -> T): T {
     recording = true
@@ -130,7 +130,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   override fun v32u(value: UInt) {
     recording("v32u $value") {
       buffer.clear()
-      Leb.writeUnsignedLeb128(value = value.toULong() and 0xFFFFFFFFuL) { byte ->
+      Leb.writeUnsignedLeb1282(value = value.toULong()) { byte ->
         buffer.put(byte)
       }
       buffer.flip()
@@ -141,7 +141,7 @@ class StreamWriter(val out: Output) : WasmOutput {
   override fun v32s(value: Int) {
     recording("v32s $value") {
       buffer.clear()
-      Leb.writeSignedLeb128(value = value.toLong() and 0xFFFFFFFFL) { byte ->
+      Leb.writeSignedLeb128(value = value.toLong()) { byte ->
         buffer.put(byte)
       }
       buffer.flip()
