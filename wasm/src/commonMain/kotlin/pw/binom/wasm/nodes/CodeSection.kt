@@ -19,4 +19,12 @@ class CodeSection : CodeSectionVisitor {
   override fun end() {
     super.end()
   }
+
+  fun accept(visitor: CodeSectionVisitor) {
+    visitor.start()
+    functions.forEach {
+      it.accept(visitor.code())
+    }
+    visitor.end()
+  }
 }

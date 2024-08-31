@@ -16,9 +16,22 @@ class WasmModule : WasmVisitor {
 
   val codeSection = CodeSection()
 
-  override fun dataSection(): DataSectionVisitor {
-    return super.dataSection()
-  }
+  @JsName("globalSectionF")
+  val globalSection = GlobalSection()
+
+  @JsName("functionSectionF")
+  val functionSection = FunctionSection()
+
+  @JsName("customSectionF")
+  val customSection = CustomSection()
+
+  @JsName("dataSectionF")
+  var dataSection = DataSection()
+
+  @JsName("importSectionF")
+  var importSection = ImportSection()
+
+  override fun dataSection(): DataSectionVisitor = dataSection
 
   override fun dataCountSection(): DataCountSectionVisitor {
     return super.dataCountSection()
@@ -26,13 +39,9 @@ class WasmModule : WasmVisitor {
 
   override fun exportSection(): ExportSectionVisitor = exportSection
 
-  override fun tagSection(): TagSectionVisitor {
-    return super.tagSection()
-  }
+  override fun tagSection(): TagSectionVisitor = tagSection
 
-  override fun globalSection(): GlobalSectionVisitor {
-    return super.globalSection()
-  }
+  override fun globalSection(): GlobalSectionVisitor = globalSection
 
   override fun elementSection(): ElementSectionVisitor {
     return super.elementSection()
@@ -50,9 +59,7 @@ class WasmModule : WasmVisitor {
     startFunctionId = function
   }
 
-  override fun customSection(): CustomSectionVisitor {
-    return super.customSection()
-  }
+  override fun customSection() = customSection
 
   override fun typeSection(): TypeSectionVisitor {
     return super.typeSection()
@@ -60,13 +67,9 @@ class WasmModule : WasmVisitor {
 
   override fun codeVisitor(): CodeSectionVisitor = codeSection
 
-  override fun functionSection(): FunctionSectionVisitor {
-    return super.functionSection()
-  }
+  override fun functionSection() = functionSection
 
-  override fun importSection(): ImportSectionVisitor {
-    return super.importSection()
-  }
+  override fun importSection(): ImportSectionVisitor = importSection
 
   override fun version(version: Int) {
     this.version = version
@@ -81,6 +84,10 @@ class WasmModule : WasmVisitor {
     this.version = 1
     exportSection.elements.clear()
     tagSection.elements.clear()
+    globalSection.elements.clear()
+    functionSection.elements.clear()
+    customSection.elements.clear()
+    importSection.elements.clear()
   }
 
   fun accept(visitor: WasmVisitor) {
@@ -95,6 +102,26 @@ class WasmModule : WasmVisitor {
     }
     if (tagSection.elements.isNotEmpty()) {
       tagSection.accept(visitor.tagSection())
+    }
+    if (codeSection.functions.isNotEmpty()) {
+      codeSection.accept(visitor.codeVisitor())
+    }
+    if (globalSection.elements.isNotEmpty()) {
+      globalSection.accept(visitor.globalSection())
+    }
+    if (functionSection.elements.isNotEmpty()) {
+      functionSection.accept(visitor.functionSection())
+    }
+    if (dataSection.elements.isNotEmpty()) {
+      dataSection.accept(visitor.dataSection())
+      visitor.dataCountSection().also {
+        it.start()
+        it.value(dataSection.elements.size.toUInt())
+        it.end()
+      }
+    }
+    if (importSection.elements.isNotEmpty()) {
+      importSection.accept(visitor.importSection())
     }
     visitor.end()
   }
