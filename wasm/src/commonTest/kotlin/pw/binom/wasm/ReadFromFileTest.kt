@@ -5,6 +5,7 @@ import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.openRead
 import pw.binom.io.file.readBinary
+import pw.binom.wasm.nodes.WasmModule
 import pw.binom.wasm.readers.CodeSectionReader
 import pw.binom.wasm.readers.GlobalSectionReader
 import pw.binom.wasm.readers.TypeSectionReader
@@ -153,6 +154,10 @@ class ReadFromFileTest {
       throw e
     }
 
+
+    val m = WasmModule()
+    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), m)
+    println(m)
     //    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(mm))
 
 

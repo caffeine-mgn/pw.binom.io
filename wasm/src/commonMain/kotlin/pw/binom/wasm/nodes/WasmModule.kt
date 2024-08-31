@@ -14,6 +14,8 @@ class WasmModule : WasmVisitor {
   @JsName("tagSectionElement")
   val tagSection = TagSection()
 
+  val codeSection = CodeSection()
+
   override fun dataSection(): DataSectionVisitor {
     return super.dataSection()
   }
@@ -56,9 +58,7 @@ class WasmModule : WasmVisitor {
     return super.typeSection()
   }
 
-  override fun codeVisitor(): CodeSectionVisitor {
-    return super.codeVisitor()
-  }
+  override fun codeVisitor(): CodeSectionVisitor = codeSection
 
   override fun functionSection(): FunctionSectionVisitor {
     return super.functionSection()
