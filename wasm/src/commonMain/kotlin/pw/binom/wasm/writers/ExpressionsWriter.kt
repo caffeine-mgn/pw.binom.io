@@ -107,7 +107,7 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
 
   override fun afterOperation() {
     if (writeCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
-      if (WRITE_OP_COUNT==BAD_OP || WRITE_OP_COUNT==ALL) {
+      if (WRITE_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
         println("WRITE #$READ_OP_COUNT SIZE: ${out.size}")
       }
       LAST_WRITE_OP_SIZE = out.size
@@ -141,13 +141,13 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
     out.i8u(Opcodes.SELECT)
   }
 
-  override fun indexArgument(opcode: UByte, label: GlobalId) {
+  override fun indexArgument(opcode: UByte, value: GlobalId) {
     when (opcode) {
       Opcodes.GET_GLOBAL,
       Opcodes.SET_GLOBAL,
         -> {
         out.i8u(opcode)
-        out.v32u(label.id)
+        out.v32u(value.id)
       }
 
       else -> throw IllegalArgumentException()
@@ -425,18 +425,18 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
     out.i8u(Opcodes.REF_AS_NON_NULL)
   }
 
-  override fun call(opcode: UByte, type: TypeId, table: TableId) {
+  override fun callIndirect(type: TypeId, table: TableId) {
     out.i8u(Opcodes.CALL_INDIRECT)
     out.v32u(type.value)
     out.v32u(table.id)
   }
 
-  override fun call(opcode: UByte, function: FunctionId) {
+  override fun call(function: FunctionId) {
     out.i8u(Opcodes.CALL)
     out.v32u(function.id)
   }
 
-  override fun call(opcode: UByte, typeRef: TypeId) {
+  override fun call(typeRef: TypeId) {
     out.i8u(Opcodes.CALL_REF)
     out.v32u(typeRef.value)
   }
@@ -590,10 +590,34 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
     out.v32u(v32u)
   }
 
-  override fun select(typeCount: Int): ValueVisitor {
+  private val selectVisitor = object : ExpressionsVisitor.SelectVisitor {
+    private val stream = InMemoryWasmOutput()
+    private var count = 0
+    private var status = 0
+
+    override fun start() {
+      check(status == 0)
+      status++
+    }
+
+    override fun type(): ValueVisitor {
+      check(status == 1)
+      count++
+      ValueWriter(stream)
+      return super.type()
+    }
+
+    override fun end() {
+      check(status == 1)
+      status = 0
+      out.v32s(count)
+      stream.moveTo(out)
+    }
+  }
+
+  override fun selectWithType(): ExpressionsVisitor.SelectVisitor {
     out.i8u(Opcodes.SELECT_WITH_TYPE)
-    out.v32s(typeCount)
-    return ValueWriter(out)
+    return selectVisitor
   }
 
   override fun convertNumeric(numOpcode: UByte) {

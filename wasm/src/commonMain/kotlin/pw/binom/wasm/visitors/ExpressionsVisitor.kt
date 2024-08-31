@@ -48,6 +48,16 @@ interface ExpressionsVisitor {
     fun end() {}
   }
 
+  interface SelectVisitor {
+    companion object {
+      val SKIP = object : SelectVisitor {}
+    }
+
+    fun start() {}
+    fun type(): ValueVisitor = ValueVisitor.SKIP
+    fun end() {}
+  }
+
   fun start() {}
   fun end() {}
   fun beforeOperation() {}
@@ -67,11 +77,11 @@ interface ExpressionsVisitor {
   fun convert(opcode: UByte) {}
   fun structOp(gcOpcode: UByte, type: TypeId, field: FieldId) {}
   fun refNull(): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
-  fun call(opcode: UByte, function: FunctionId) {}
-  fun call(opcode: UByte, type: TypeId, table: TableId) {}
-  fun call(opcode: UByte, typeRef: TypeId) {}
-  fun indexArgument(opcode: UByte, label: LocalId) {}
-  fun indexArgument(opcode: UByte, label: GlobalId) {}
+  fun call(function: FunctionId) {}
+  fun callIndirect(type: TypeId, table: TableId) {}
+  fun call(typeRef: TypeId) {}
+  fun indexArgument(opcode: UByte, value: LocalId) {}
+  fun indexArgument(opcode: UByte, value: GlobalId) {}
   fun reinterpret(opcode: UByte) {}
   fun arrayOp(gcOpcode: UByte, type: TypeId) {}
   fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
@@ -87,7 +97,7 @@ interface ExpressionsVisitor {
   fun drop() {}
   fun brTable(): BrTableVisitor = BrTableVisitor.SKIP
   fun select() {}
-  fun select(typeCount: Int): ValueVisitor = ValueVisitor.SKIP
+  fun selectWithType(): SelectVisitor = SelectVisitor.SKIP
   fun throwOp(tag: TagId) {}
   fun startBlock(opcode: UByte): BlockStartVisitor = BlockStartVisitor.SKIP
   fun refIsNull() {}
@@ -98,6 +108,6 @@ interface ExpressionsVisitor {
   fun memoryGrow(size: UInt) {}
   fun rethrow(v32u: UInt) {}
   fun catch(v32u: UInt) {}
-  fun convertNumeric(opcode: UByte) {}
-  fun gcConvert(opcode: UByte) {}
+  fun convertNumeric(numOpcode: UByte) {}
+  fun gcConvert(gcOpcode: UByte) {}
 }

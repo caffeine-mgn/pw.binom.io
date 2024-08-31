@@ -74,11 +74,11 @@ object ExpressionReader {
       Opcodes.GET_LOCAL,
       Opcodes.SET_LOCAL,
       Opcodes.TEE_LOCAL,
-        -> visitor.indexArgument(opcode = opcode, label = LocalId(input.v32u()))
+        -> visitor.indexArgument(opcode = opcode, value = LocalId(input.v32u()))
 
       Opcodes.GET_GLOBAL,
       Opcodes.SET_GLOBAL,
-        -> visitor.indexArgument(opcode = opcode, label = GlobalId(input.v32u()))
+        -> visitor.indexArgument(opcode = opcode, value = GlobalId(input.v32u()))
 
       Opcodes.SELECT -> visitor.select()
 
@@ -328,19 +328,16 @@ object ExpressionReader {
 
       Opcodes.REF_NULL -> input.readHeapType(visitor = visitor.refNull())
 
-      Opcodes.CALL_INDIRECT -> visitor.call(
-        opcode = opcode,
+      Opcodes.CALL_INDIRECT -> visitor.callIndirect(
         type = TypeId(input.v32u()),
         table = TableId(input.v32u()),
       )
 
       Opcodes.CALL -> visitor.call(
-        opcode = opcode,
         function = FunctionId(input.v32u()),
       )
 
       Opcodes.CALL_REF -> visitor.call(
-        opcode = opcode,
         typeRef = TypeId(input.v32u()),
       )
 
@@ -360,8 +357,12 @@ object ExpressionReader {
 
       Opcodes.SELECT_WITH_TYPE -> {
         val typeCount = input.v32s()
-        check(typeCount == 1)
-        input.readValueType(visitor = visitor.select(typeCount))
+        val v = visitor.selectWithType()
+        v.start()
+        repeat(typeCount) {
+          input.readValueType(visitor = v.type())
+        }
+        v.end()
       }
 
       Opcodes.I32_REINTERPRET_F32,
@@ -449,21 +450,9 @@ object ExpressionReader {
       )
 
       Opcodes.GC_ARRAY_NEW_FIXED -> {
-        input as StreamReader
-        val start = input.globalCursor
-        val type = TypeId(input.v32u())
-        val middle = input.globalCursor
-        val size = input.v32u()
-        val end = input.globalCursor
-        if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
-          if (READ_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
-            println("array.new_fixed $type $size. startOn=${start.toString(16)} withLen=${end - start}")
-          }
-        }
-
         visitor.newArray(
-          type = type,
-          size = size,
+          type = TypeId(input.v32u()),
+          size = input.v32u(),
         )
       }
 

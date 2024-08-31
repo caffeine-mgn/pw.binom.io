@@ -1,7 +1,6 @@
 package pw.binom.wasm.readers
 
-import pw.binom.wasm.WasmInput
-import pw.binom.wasm.readVec
+import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ExportSectionVisitor
 
 object ExportSectionReader {
@@ -14,10 +13,10 @@ object ExportSectionReader {
     input.readVec {
       val name = input.string()
       when (val type = input.i8u()) {
-        FUNC -> visitor.func(name, input.v32u())
-        TABLE -> visitor.table(name, input.v32u())
-        MEM -> visitor.memory(name, input.v32u())
-        GLOBAL -> visitor.global(name, input.v32u())
+        FUNC -> visitor.func(name, FunctionId(input.v32u()))
+        TABLE -> visitor.table(name, TableId(input.v32u()))
+        MEM -> visitor.memory(name, MemoryId(input.v32u()))
+        GLOBAL -> visitor.global(name, GlobalId(input.v32u()))
         else -> TODO("Unknown export type: 0x${type.toString(16).padStart(2, '0')}")
       }
     }
