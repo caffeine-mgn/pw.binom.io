@@ -1,0 +1,9 @@
+package pw.binom.wasm.dom.inst
+
+import pw.binom.wasm.visitors.ExpressionsVisitor
+
+object CatchAll : Inst {
+  override fun accept(visitor: ExpressionsVisitor) {
+    visitor.catchAll()
+  }
+}

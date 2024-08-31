@@ -1,24 +1,13 @@
 package pw.binom.wasm
 
-import pw.binom.Console
 import pw.binom.io.*
 import pw.binom.io.file.File
-import pw.binom.io.file.openRead
 import pw.binom.io.file.readBinary
-import pw.binom.wasm.nodes.WasmModule
-import pw.binom.wasm.readers.CodeSectionReader
-import pw.binom.wasm.readers.GlobalSectionReader
-import pw.binom.wasm.readers.TypeSectionReader
+import pw.binom.wasm.dom.WasmModule
 import pw.binom.wasm.readers.WasmReader
-import pw.binom.wasm.visitors.*
-import pw.binom.wasm.writers.CodeSectionWriter
-import pw.binom.wasm.writers.GlobalSectionWriter
-import pw.binom.wasm.writers.TypeSectionWriter
 import pw.binom.wasm.writers.WasmWriter
 import pw.binom.wrap
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class ReadDetecter(val input: Input, val func: (Byte, Int) -> Unit) : Input {
   private var cursor = 0
