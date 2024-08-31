@@ -4,7 +4,6 @@ import pw.binom.io.EOFException
 import pw.binom.io.use
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.Sections
-import pw.binom.wasm.StreamReader
 import pw.binom.wasm.WasmInput
 import pw.binom.wasm.visitors.WasmVisitor
 
@@ -68,7 +67,7 @@ object WasmReader {
           Sections.ELEMENT_SECTION -> ElementSectionReader.read(input = sectionInput, visitor = visitor.elementSection())
           Sections.CODE_SECTION -> CodeSectionReader.read(
             input = sectionInput,
-            visitor = visitor.codeVisitor(),
+            visitor = visitor.codeSection(),
           )
 
           Sections.DATA_SECTION -> DataSectionReader.read(input = sectionInput, visitor = visitor.dataSection())

@@ -4,6 +4,7 @@ import pw.binom.wasm.*
 import pw.binom.wasm.dom.inst.*
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
+import pw.binom.wasm.dom.inst.MemoryOp
 
 class Expressions : ExpressionsVisitor {
   val elements = ArrayList<Inst>()
@@ -322,7 +323,9 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {
-    return super.brOnCastFail(flags, label)
+    val e = BrOnCastFail(flags = flags, labelId = label)
+    elements += e
+    return e
   }
 
   override fun arrayFull(type: TypeId) {
@@ -394,11 +397,11 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun memorySize(size: UInt) {
-    elements += Memory.Size(size)
+    elements += MemoryOp.Size(size)
   }
 
   override fun memoryGrow(size: UInt) {
-    elements += Memory.Grow(size)
+    elements += MemoryOp.Grow(size)
   }
 
   override fun rethrow(v32u: UInt) {

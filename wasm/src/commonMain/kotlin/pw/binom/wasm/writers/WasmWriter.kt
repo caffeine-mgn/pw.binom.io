@@ -59,7 +59,7 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
     return FunctionSectionWriter(sectionData)
   }
 
-  override fun codeVisitor(): CodeSectionVisitor {
+  override fun codeSection(): CodeSectionVisitor {
     startSection(Sections.CODE_SECTION.index.toUByte())
     return CodeSectionWriter(sectionData)
   }

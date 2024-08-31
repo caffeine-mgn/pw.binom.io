@@ -14,6 +14,7 @@ class WasmModule : WasmVisitor {
   @JsName("tagSectionElement")
   val tagSection = TagSection()
 
+  @JsName("codeSectionF")
   val codeSection = CodeSection()
 
   @JsName("globalSectionF")
@@ -31,6 +32,9 @@ class WasmModule : WasmVisitor {
   @JsName("importSectionF")
   var importSection = ImportSection()
 
+  @JsName("memorySectionF")
+  var memorySection = MemorySection()
+
   override fun dataSection(): DataSectionVisitor = dataSection
 
   override fun dataCountSection(): DataCountSectionVisitor {
@@ -47,9 +51,7 @@ class WasmModule : WasmVisitor {
     return super.elementSection()
   }
 
-  override fun memorySection(): MemorySectionVisitor {
-    return super.memorySection()
-  }
+  override fun memorySection() = memorySection
 
   override fun tableSection(): TableSectionVisitor {
     return super.tableSection()
@@ -65,7 +67,7 @@ class WasmModule : WasmVisitor {
     return super.typeSection()
   }
 
-  override fun codeVisitor(): CodeSectionVisitor = codeSection
+  override fun codeSection(): CodeSectionVisitor = codeSection
 
   override fun functionSection() = functionSection
 
@@ -88,6 +90,7 @@ class WasmModule : WasmVisitor {
     functionSection.elements.clear()
     customSection.elements.clear()
     importSection.elements.clear()
+    memorySection.elements.clear()
   }
 
   fun accept(visitor: WasmVisitor) {
@@ -104,7 +107,7 @@ class WasmModule : WasmVisitor {
       tagSection.accept(visitor.tagSection())
     }
     if (codeSection.functions.isNotEmpty()) {
-      codeSection.accept(visitor.codeVisitor())
+      codeSection.accept(visitor.codeSection())
     }
     if (globalSection.elements.isNotEmpty()) {
       globalSection.accept(visitor.globalSection())
@@ -122,6 +125,9 @@ class WasmModule : WasmVisitor {
     }
     if (importSection.elements.isNotEmpty()) {
       importSection.accept(visitor.importSection())
+    }
+    if (memorySection.elements.isNotEmpty()) {
+      memorySection.accept(visitor.memorySection())
     }
     visitor.end()
   }

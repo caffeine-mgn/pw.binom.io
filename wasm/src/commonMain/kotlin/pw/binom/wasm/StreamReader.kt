@@ -66,7 +66,7 @@ class StreamReader(
   override fun i64s() = readLong(buffer).reverse()
 
   override fun v33u() =
-    Leb.readUnsigned(maxBits = 32) { readByte() }
+    Leb.readUnsigned(maxBits = 32) { i8s() }
 
   override fun v33s(firstByte: Byte): Long {
     var first = false
@@ -75,31 +75,22 @@ class StreamReader(
         first = true
         firstByte
       } else {
-        readByte()
+        i8s()
       }
     }
   }
 
-  override fun v32u(firstByte: Byte):UInt{
-    var first = false
-    return Leb.readUnsigned(maxBits = 32) {
-      if (!first) {
-        first = true
-        firstByte
-      } else {
-        readByte()
-      }
-    }.toUInt()
-  }
+  override fun v32u(firstByte: Byte): UInt =
+    WasmIO.v32u(firstByte = firstByte, nextByte = { i8s() })
 
   override fun v32s() =
-    Leb.readSigned(maxBits = 32) { readByte() }.toInt()
+    Leb.readSigned(maxBits = 32) { i8s() }.toInt()
 
   override fun v64u() =
-    Leb.readUnsigned(maxBits = 64) { readByte() }
+    Leb.readUnsigned(maxBits = 64) { i8s() }
 
   override fun v64s() =
-    Leb.readSigned(maxBits = 64) { readByte() }
+    Leb.readSigned(maxBits = 64) { i8s() }
 
   override fun v1u(): Boolean {
     val value = v32s()
@@ -115,32 +106,6 @@ class StreamReader(
     val len = v32u().toInt()
     val bytes = readByteArray(len, buffer)
     return bytes.decodeToString()
-  }
-
-  @OptIn(ExperimentalContracts::class)
-  inline fun readLimit(min: (UInt) -> Unit, range: (UInt, UInt) -> Unit) {
-    contract {
-      callsInPlace(min, InvocationKind.AT_MOST_ONCE)
-      callsInPlace(range, InvocationKind.AT_MOST_ONCE)
-    }
-    val limitExist = v1u()
-    val min = v32u()
-    if (!limitExist) {
-      min(min)
-      return
-    }
-    val max = v32u()
-    range(min, max)
-  }
-
-  inline fun <T> readList(func: () -> T): List<T> {
-    var count = v32u()
-    val result = ArrayList<T>(count.toInt())
-    while (count > 0u) {
-      count--
-      result += func()
-    }
-    return result
   }
 
   inline fun readVec(func: (UInt) -> Unit) {
@@ -159,9 +124,6 @@ class StreamReader(
       func(r)
     }
   }
-
-  fun readByte() = readByte(buffer)
-  fun readUByte() = readByte().toUByte()
 
   override fun i8s(): Byte = readByte(buffer)
   override fun i8u() = i8s().toUByte()

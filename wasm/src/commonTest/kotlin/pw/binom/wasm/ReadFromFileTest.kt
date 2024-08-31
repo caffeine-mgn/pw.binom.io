@@ -147,6 +147,11 @@ class ReadFromFileTest {
     val m = WasmModule()
     WasmReader.read(StreamReader(ByteBuffer.wrap(data)), m)
     println(m)
+    val e =ByteArrayOutput().use {
+      m.accept(WasmWriter(it.asWasm))
+      it.toByteArray().size
+    }
+    println("Result size: $e")
     //    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(mm))
 
 

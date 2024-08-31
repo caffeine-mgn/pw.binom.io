@@ -8,7 +8,7 @@ interface WasmVisitor {
   fun version(version: Int) {}
   fun importSection(): ImportSectionVisitor = ImportSectionVisitor.SKIP
   fun functionSection(): FunctionSectionVisitor = FunctionSectionVisitor.SKIP
-  fun codeVisitor(): CodeSectionVisitor = CodeSectionVisitor.SKIP
+  fun codeSection(): CodeSectionVisitor = CodeSectionVisitor.SKIP
   fun typeSection(): TypeSectionVisitor = TypeSectionVisitor.SKIP
   fun customSection(): CustomSectionVisitor = CustomSectionVisitor.SKIP
   fun startSection(function: FunctionId) {}
