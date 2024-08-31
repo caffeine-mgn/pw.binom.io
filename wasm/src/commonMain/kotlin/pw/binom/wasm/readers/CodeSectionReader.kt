@@ -4,6 +4,7 @@ import pw.binom.io.use
 import pw.binom.wasm.StreamReader
 import pw.binom.wasm.WasmInput
 import pw.binom.wasm.readValueType
+import pw.binom.wasm.readVec
 import pw.binom.wasm.visitors.CodeSectionVisitor
 
 const val ALL = -1
@@ -11,10 +12,10 @@ const val NONE = -2
 
 var readCount = 0
 var writeCount = 0
-var BAD_CODE_BLOCK = 129
+var BAD_CODE_BLOCK = NONE
 var READ_OP_COUNT = 0
 var WRITE_OP_COUNT = 0
-val BAD_OP = 646
+val BAD_OP = NONE
 var LAST_WRITE_OP_SIZE = 0
 
 /**
@@ -27,8 +28,6 @@ var LAST_WRITE_OP_SIZE = 0
  */
 object CodeSectionReader {
   fun read(input: WasmInput, visitor: CodeSectionVisitor) {
-    input as StreamReader
-    println("Code -> 0x${input.globalCursor.toString(16)}")
     visitor.start()
     input.readVec {
       read(input = input, visitor = visitor.code())

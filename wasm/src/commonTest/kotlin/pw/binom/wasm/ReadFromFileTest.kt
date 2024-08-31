@@ -139,7 +139,7 @@ class ReadFromFileTest {
     try {
       WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(r))
     } catch (e: Throwable) {
-      println("0x6c4b " + r.callback[0x6c4b])
+//      println("0x6c4b " + r.callback[0x6c4b])
       throw e
     }
 

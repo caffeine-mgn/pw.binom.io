@@ -21,8 +21,6 @@ object TypeSectionReader {
   const val kWasmRecursiveTypeGroupCode: UByte = 0x4eu
 
   private fun readFuncType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.FuncTypeVisitor) {
-    input as StreamReader
-    println("READING FUNC 0x${input.globalCursor.toString(16)}")
     visitor.start(shared = shared)
     input.readVec {
       // args
@@ -36,24 +34,16 @@ object TypeSectionReader {
   }
 
   private fun readStructType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.StructTypeVisitor) {
-    input as StreamReader
-    println("READING STRUCT 0x${input.globalCursor.toString(16)}")
     visitor.start(shared = shared)
     input.readVec {
-      val cursor = input.globalCursor
-      println("before reading storage 0x${input.globalCursor.toString(16)}")
       input.readStorageType(visitor = visitor.fieldStart())
-      println("before reading mutable 0x${input.globalCursor.toString(16)}. storage type len: ${input.globalCursor - cursor}")
       val mutable = input.v1u()
-      println("after reading mutable 0x${input.globalCursor.toString(16)}, value: $mutable")
       visitor.fieldEnd(mutable)
     }
     visitor.end()
   }
 
   private fun readArrayType(input: WasmInput, shared: Boolean, visitor: TypeSectionVisitor.ArrayVisitor) {
-    input as StreamReader
-    println("READING ARRAY 0x${input.globalCursor.toString(16)}")
     visitor.start(shared = shared)
     input.readStorageType(visitor = visitor.type())
     visitor.mutable(value = input.v1u())
@@ -68,11 +58,8 @@ object TypeSectionReader {
     var kind = kind ?: input.i8u()
     var shared = false
     if (kind == kSharedFlagCode) {
-      println("is shared")
       shared = true
       kind = input.i8u()
-    } else {
-//      println("is not shared")
     }
     when (kind) {
       kWasmArrayTypeCode -> {
@@ -129,10 +116,7 @@ object TypeSectionReader {
 
   fun read(input: WasmInput, visitor: TypeSectionVisitor) {
     visitor.start()
-    input as StreamReader
-    println("BEFORE CURSOR = ${input.globalCursor}")
     input.readVec {
-      println("CURSOR = ${input.globalCursor}")
       DecodeTypeSection(input = input, visitor = visitor.recType())
     }
     visitor.end()

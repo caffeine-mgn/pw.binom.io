@@ -13,7 +13,6 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
   override fun start() {
     check(state == 0)
     state++
-    println("---------WRITE MAGIC---------")
     WasmReader.MAGIC.forEach { magicByte ->
       out.i8u(magicByte)
     }
@@ -22,12 +21,10 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
   override fun version(version: Int) {
     check(state == 1)
     state++
-    println("---------WRITE VERSION---------")
     out.i32s(version)
   }
 
   private fun flushSection() {
-    println("---------FLUSH SECTION $sectionCode, len: ${sectionData.size}---------")
     out.v32u(sectionData.size.toUInt())
     sectionData.moveTo(out)
   }
@@ -40,7 +37,6 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
       else -> throw IllegalStateException()
     }
     sectionCode = code
-    println("---------START SECTION $code---------")
     out.i8u(code)
   }
 
@@ -91,9 +87,7 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
   }
 
   override fun globalSection(): GlobalSectionVisitor {
-    println("---------1--------")
     startSection(Sections.GLOBAL_SECTION.index.toUByte())
-    println("---------2--------")
     return GlobalSectionWriter(sectionData)
   }
 

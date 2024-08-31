@@ -15,35 +15,35 @@ class CallbackRecord(val stacktract: String, val msg: String?, val num: Int) {
 }
 
 class StreamWriter(val out: Output) : WasmOutput {
-  val callback = LinkedList<CallbackRecord>()
-  private var recording = false
+//  val callback = LinkedList<CallbackRecord>()
+//  private var recording = false
   private var msg: String? = null
 
   private val buffer = ByteBuffer(16)
 
   private inline fun <T> recording(msg: String? = null, a: () -> T): T {
-    recording = true
-    this.msg = msg
+//    recording = true
+//    this.msg = msg
     val result = a()
-    this.msg = null
-    recording = false
+//    this.msg = null
+//    recording = false
     return result
   }
 
   override fun write(data: ByteBuffer): DataTransferSize {
     if (data.hasRemaining) {
       val s = Throwable().stackTraceToString()
-      if (recording) {
-        var index = 0
-        data.forEach { byte ->
-          callback += CallbackRecord(
-            stacktract = s,
-            num = index,
-            msg = msg,
-          )
-          index++
-        }
-      }
+//      if (recording) {
+//        var index = 0
+//        data.forEach { byte ->
+//          callback += CallbackRecord(
+//            stacktract = s,
+//            num = index,
+//            msg = msg,
+//          )
+//          index++
+//        }
+//      }
     }
     val e = out.write(data)
     return e

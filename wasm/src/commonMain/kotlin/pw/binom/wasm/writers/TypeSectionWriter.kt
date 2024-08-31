@@ -85,7 +85,7 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
     private var status = 0
 
     override fun start(shared: Boolean) {
-      check(status == 0)
+      check(status == 0) { "status=$status" }
       status++
       if (shared) {
         out.i8u(TypeSectionReader.kSharedFlagCode)
@@ -93,22 +93,17 @@ class TypeSectionWriter(private val out: WasmOutput) : TypeSectionVisitor {
       out.i8u(TypeSectionReader.kWasmStructTypeCode)
     }
 
-    private var cursor = 0
     override fun fieldStart(): StorageVisitor {
       check(status == 1)
       status++
       count++
-      cursor = stream.size
       return StorageWriter(stream)
     }
 
     override fun fieldEnd(mutable: Boolean) {
       check(status == 2)
       status--
-      println("before write mutable. size of type: ${stream.size - cursor}")
-      cursor = stream.size
       stream.v1u(mutable)
-      println("v1u size: ${stream.size - cursor}")
     }
 
     override fun end() {

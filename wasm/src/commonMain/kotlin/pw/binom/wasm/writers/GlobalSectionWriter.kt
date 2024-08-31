@@ -25,7 +25,6 @@ class GlobalSectionWriter(private val out: WasmOutput) : GlobalSectionVisitor {
 
   override fun end() {
     check(state == STARTED)
-    println("GLOBAL SECTION count=$count")
     out.v32u(count.toUInt())
     stream.moveTo(out)
     count = 0

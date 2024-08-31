@@ -6,8 +6,8 @@ import pw.binom.io.Input
 
 class InMemoryWasmOutput : ByteArrayOutput(), WasmOutput {
   private val stream = StreamWriter(this)
-  val callback
-    get() = stream.callback
+//  val callback
+//    get() = stream.callback
 
   override fun i8u(value: UByte) {
     stream.i8u(value)
@@ -65,15 +65,15 @@ class InMemoryWasmOutput : ByteArrayOutput(), WasmOutput {
   }
 
   fun moveTo(out: WasmOutput) {
-    when (out) {
-      is StreamWriter -> out.callback.addAll(stream.callback)
-      is InMemoryWasmOutput -> out.callback.addAll(stream.callback)
-      else -> TODO()
-    }
+//    when (out) {
+//      is StreamWriter -> out.callback.addAll(stream.callback)
+//      is InMemoryWasmOutput -> out.callback.addAll(stream.callback)
+//      else -> TODO()
+//    }
     locked {
       out.write(it)
     }
-    stream.callback.clear()
+//    stream.callback.clear()
     clear()
   }
 }
