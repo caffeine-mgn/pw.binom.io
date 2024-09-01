@@ -4,7 +4,13 @@ import pw.binom.io.*
 import pw.binom.io.file.File
 import pw.binom.io.file.readBinary
 import pw.binom.wasm.dom.WasmModule
+import pw.binom.wasm.readers.CodeSectionReader
+import pw.binom.wasm.readers.ImportSectionReader
+import pw.binom.wasm.readers.TypeSectionReader
 import pw.binom.wasm.readers.WasmReader
+import pw.binom.wasm.writers.CodeSectionWriter
+import pw.binom.wasm.writers.ImportSectionWriter
+import pw.binom.wasm.writers.TypeSectionWriter
 import pw.binom.wasm.writers.WasmWriter
 import pw.binom.wrap
 import kotlin.test.Test
@@ -28,17 +34,35 @@ class ReadDetecter(val input: Input, val func: (Byte, Int) -> Unit) : Input {
 class ReadFromFileTest {
   @Test
   fun aaa() {
-//    val path = "/home/subochev/tmp/wasm-test/c/dot.o"
+    val path = "/home/subochev/tmp/wasm-test/c/dot.o"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/developmentExecutable/kotlin/www-wasm-wasi.wasm"
-    val path =
-      "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/kotlin/www-wasm-wasi.wasm"
+//    val path =
+//      "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/kotlin/www-wasm-wasi.wasm"
 //    val path =
 //      "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/developmentExecutable/kotlin/www-wasm-js.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/productionExecutable/kotlin/www-wasm-js.wasm"
 //    val path = "/home/subochev/tmp/wasm-test/build/compileSync/wasmJs/main/productionExecutable/optimized/www-wasm-js.wasm"
 
-    val mm = InMemoryWasmOutput()
     val data = File(path).readBinary()
+
+
+
+//    val importSection = data.copyOfRange(0x1f, 0x1f + 66)
+//    DiffOutput(importSection).asWasm.use { v ->
+//      ImportSectionReader.readImportSection(input = ByteArrayInput(importSection).asWasm(), ImportSectionWriter(v))
+//    }
+
+//    val typeSection = data.copyOfRange(0xe, 0xe + 11)
+//    DiffOutput(typeSection).asWasm.use { v ->
+//      try {
+//        TypeSectionReader.read(input = ByteArrayInput(typeSection).asWasm(), TypeSectionWriter(v))
+//      } catch (e:Throwable){
+//        println("0x5 ${v.callback[0x5]}")
+//        throw   e
+//      }
+//    }
+//    return
+
 //    println("------DATA------")
 //    for (i in 0xefe - 5..0xefe + 5) {
 //      println("0x${i.toString(16)} -> 0x${data[i].toUByte().toString(16).padStart(2, '0')}")
@@ -90,25 +114,27 @@ class ReadFromFileTest {
 //    )
 
 /*
-    val codeSection = data.from(0x15c2)
-    val v = DiffOutput(codeSection).asWasm
-    println("-1 = ${codeSection[172]}")
-    val ee = codeSection.copyOfRange(10505, 10505 + 3)
-    ee.forEach {
-      println("--->${it}")
-    }
-    try {
-      CodeSectionReader.read(
-        input = StreamReader(ByteBuffer.wrap(codeSection)),
-        visitor = CodeSectionWriter(v)
-      )
-    } catch (e: Throwable) {
-      e.printStackTrace()
-//      println("0x20fc " + v.callback[0x20fc])
-      throw e
-    }
-    return
+
+        val codeSection = data.copyOfRange(0xa376,0xa376+134764)
+        val v = DiffOutput(codeSection).asWasm
+        println("-1 = ${codeSection[172]}")
+        val ee = codeSection.copyOfRange(10505, 10505 + 3)
+        ee.forEach {
+          println("--->${it}")
+        }
+        try {
+          CodeSectionReader.read(
+            input = StreamReader(ByteBuffer.wrap(codeSection)),
+            visitor = CodeSectionWriter(v)
+          )
+        } catch (e: Exception) {
+          println("0x33c " + v.callback[0x33c])
+          e.printStackTrace()
+          throw e
+        }
+        return
 */
+
 
 //    val globalSection = data.from(0xf00)
 //
@@ -144,20 +170,16 @@ class ReadFromFileTest {
     }
 
 
-    val m = WasmModule()
-    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), m)
-    println(m)
-    val e =ByteArrayOutput().use {
-      m.accept(WasmWriter(it.asWasm))
-      it.toByteArray().size
-    }
-    println("Result size: $e")
-    //    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(mm))
-
-
-    mm.locked {
-      println("Out data: ${it.remaining}")
-    }
-    println("Original data: ${data.size}")
+//    val m = WasmModule()
+//    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), m)
+//    println(m)
+//    val e = ByteArrayOutput().use {
+//      m.accept(WasmWriter(it.asWasm))
+//      it.toByteArray().size
+//    }
+//    println("Result size: $e")
+//    //    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), WasmWriter(mm))
+//
+//    println("Original data: ${data.size}")
   }
 }

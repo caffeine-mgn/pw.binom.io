@@ -75,7 +75,7 @@ class ValueWriter(private val out: WasmOutput) :
   // ValueVisitor.NumberVisitor
 
   override fun f32() {
-    out.i8u(Types.TYPE_NUM_I32)
+    out.i8u(Types.TYPE_NUM_F32)
   }
 
   override fun f64() {

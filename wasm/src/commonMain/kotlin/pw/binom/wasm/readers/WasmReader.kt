@@ -4,6 +4,7 @@ import pw.binom.io.EOFException
 import pw.binom.io.use
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.Sections
+import pw.binom.wasm.StreamReader
 import pw.binom.wasm.WasmInput
 import pw.binom.wasm.visitors.WasmVisitor
 
@@ -31,12 +32,12 @@ object WasmReader {
 //      if (sectionId > Sections.maxIndex) throw RuntimeException("IoErr.InvalidSectionId($sectionId), cursor: ${input.cursor}")
       val section = Sections.byIndex(sectionId)
       val sectionLen = input.v32u()
-//      input as StreamReader
-//      println(
-//        "---------READING $section 0x${
-//          input.cursor.toUInt().toString(16)
-//        } (${input.cursor}) with len $sectionLen---------"
-//      )
+      input as StreamReader
+      println(
+        "---------READING $section 0x${
+          input.globalCursor.toUInt().toString(16)
+        } (#$sectionId) on ${input.globalCursor} with len $sectionLen---------"
+      )
       input.withLimit(sectionLen).use { sectionInput ->
         when (section) {
           Sections.CUSTOM_SECTION -> {

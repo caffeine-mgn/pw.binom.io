@@ -35,19 +35,13 @@ class AAAAA {
   @Test
   fun ttt() {
     val e = InMemoryWasmOutput()
-    e.i8u(Opcodes.GC_PREFIX)
-    e.i8u(Opcodes.GC_ARRAY_NEW_FIXED)
-    e.v32u(31u)
-    e.v32u(87u)
+    e.v32u(11u)
     println("wrote size: ${e.size}")
     val ee = e.locked {
       val bytes = it.toByteArray()
       println("hex=${bytes.toHexString(HexFormat.UpperCase)}")
       StreamReader(ByteArrayInput(bytes)).use {
-        it.i8u()
-        it.i8u()
-        val type = it.v32u()
-        val size = it.v32u()
+        it.v32u()
       }
     }
 

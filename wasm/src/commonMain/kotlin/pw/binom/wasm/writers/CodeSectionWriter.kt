@@ -3,9 +3,9 @@ package pw.binom.wasm.writers
 import pw.binom.wasm.InMemoryWasmOutput
 import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.readers.ALL
-import pw.binom.wasm.readers.BAD_CODE_BLOCK
-import pw.binom.wasm.readers.WRITE_OP_COUNT
-import pw.binom.wasm.readers.writeCount
+import pw.binom.wasm.readers.BAD_FUNCTION_BLOCK
+import pw.binom.wasm.readers.writeOpCount
+import pw.binom.wasm.readers.writeFunctionCount
 import pw.binom.wasm.visitors.CodeSectionVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
@@ -46,8 +46,8 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
           val localCountStream = InMemoryWasmOutput()
           localCountStream.v32u(localCount.toUInt())
           val blockSize = (localCountStream.size + localStream.size + codeStream.size).toUInt()
-          if (writeCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
-            println("WRITE CODE $writeCount, size: $blockSize. codeSize: ${codeStream.size}")
+          if (writeFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
+            println("WRITE FUNCTION $writeFunctionCount, size: $blockSize. codeSize: ${codeStream.size}")
           }
           out.v32u(blockSize) // size of block
           localCountStream.moveTo(out)
@@ -79,8 +79,8 @@ class CodeSectionWriter(private val out: WasmOutput) : CodeSectionVisitor {
     override fun code(): ExpressionsVisitor {
       check(state == STARTED || state == LOCAL_START)
       state = CODE_START
-      writeCount++
-      WRITE_OP_COUNT = 0
+      writeFunctionCount++
+      writeOpCount = 0
       return ExpressionsWriter(codeStream)
     }
   }

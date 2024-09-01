@@ -238,18 +238,18 @@ object Opcodes {
 
 
   const val GC_PREFIX: UByte = 0xfbu
-  const val GC_STRUCT_NEW: UByte = 0x0u // struct.new
-  const val GC_STRUCT_NEW_DEFAULT: UByte = 0x1u // struct.new_default
-  const val GC_STRUCT_GET: UByte = 0x2u // struct.get
-  const val GC_STRUCT_GET_S: UByte = 0x3u // struct.get_s
-  const val GC_STRUCT_GET_U: UByte = 0x4u // struct.get_u
-  const val GC_STRUCT_SET: UByte = 0x5u // struct.set typeid(u32) fieldid(u32)
-  const val GC_ARRAY_NEW: UByte = 0x6u // array.new
-  const val GC_ARRAY_NEW_DEFAULT: UByte = 0x7u // array.new_default
-  const val GC_ARRAY_NEW_FIXED: UByte = 0x8u // array.new_fixed
-  const val GC_ARRAY_NEW_DATA: UByte = 0x9u // array.new_data
-  const val GC_ARRAY_NEW_ELEM: UByte = 0xau // array.new_elem
-  const val GC_ARRAY_GET: UByte = 0xbu // array.get
+  const val GC_STRUCT_NEW: UByte = 0x00u // struct.new
+  const val GC_STRUCT_NEW_DEFAULT: UByte = 0x01u // struct.new_default
+  const val GC_STRUCT_GET: UByte = 0x02u // struct.get
+  const val GC_STRUCT_GET_S: UByte = 0x03u // struct.get_s
+  const val GC_STRUCT_GET_U: UByte = 0x04u // struct.get_u
+  const val GC_STRUCT_SET: UByte = 0x05u // struct.set typeid(u32) fieldid(u32)
+  const val GC_ARRAY_NEW: UByte = 0x06u // array.new
+  const val GC_ARRAY_NEW_DEFAULT: UByte = 0x07u // array.new_default
+  const val GC_ARRAY_NEW_FIXED: UByte = 0x08u // array.new_fixed
+  const val GC_ARRAY_NEW_DATA: UByte = 0x09u // array.new_data
+  const val GC_ARRAY_NEW_ELEM: UByte = 0x0au // array.new_elem
+  const val GC_ARRAY_GET: UByte = 0x0bu // array.get
   const val GC_ARRAY_GET_S: UByte = 0x0cu // array.get_s
   const val GC_ARRAY_GET_U: UByte = 0x0du // array.get_u
   const val GC_ARRAY_SET: UByte = 0x0eu // array.set

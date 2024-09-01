@@ -1,11 +1,12 @@
 package pw.binom.wasm.readers
 
-import pw.binom.wasm.FunctionId
-import pw.binom.wasm.WasmInput
-import pw.binom.wasm.readRefType
-import pw.binom.wasm.readVec
+import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ImportSectionVisitor
+import pw.binom.wasm.visitors.ValueVisitor
 
+/**
+ * https://webassembly.github.io/gc/core/binary/modules.html#binary-importsec
+ */
 internal object ImportSectionReader {
 
   private fun readTable(
@@ -50,7 +51,20 @@ internal object ImportSectionReader {
     }
   }
 
+  private fun readGlobal(module: String, field: String, input: WasmInput, visitor: ImportSectionVisitor){
+    val v = visitor.global(
+      module = module,
+      field = field,
+    )
+    v.start()
+    input.readValueType(visitor= v.type())
+    v.mutable(input.v1u())
+    v.end()
+  }
+
   fun readImportSection(input: WasmInput, visitor: ImportSectionVisitor) {
+    input as StreamReader
+    println("START IMPORT ON 0x${input.globalCursor.toString(16)}")
     visitor.start()
     input.readVec {
       val module = input.string()
@@ -77,7 +91,12 @@ internal object ImportSectionReader {
           field = field,
         )
 
-        3.toByte() -> TODO("global")
+        3.toByte() -> readGlobal(
+          input = input,
+          visitor = visitor,
+          module = module,
+          field = field,
+        )
         4.toByte() -> TODO("tag")
         else -> TODO("Unknown import kind  $kind (0x${kind.toUByte().toString(16)})")
       }

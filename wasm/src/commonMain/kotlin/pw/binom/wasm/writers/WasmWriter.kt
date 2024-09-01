@@ -25,6 +25,7 @@ class WasmWriter(private val out: WasmOutput) : WasmVisitor {
   }
 
   private fun flushSection() {
+    println("Flushing section $sectionCode. Size: ${sectionData.size}")
     out.v32u(sectionData.size.toUInt())
     sectionData.moveTo(out)
   }

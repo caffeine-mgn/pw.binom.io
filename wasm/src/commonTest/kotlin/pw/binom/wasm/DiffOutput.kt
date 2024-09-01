@@ -6,7 +6,7 @@ import pw.binom.io.Output
 import pw.binom.io.empty
 import kotlin.test.fail
 
-class DiffOutput(val eq: () -> Byte) : Output {
+class DiffOutput(val eq: () -> Byte, val len: Int) : Output {
   companion object {
     fun makeEq(array: ByteArray): () -> Byte {
       var cursor = 0
@@ -18,7 +18,7 @@ class DiffOutput(val eq: () -> Byte) : Output {
     }
   }
 
-  constructor(data: ByteArray) : this(makeEq(data))
+  constructor(data: ByteArray) : this(makeEq(data), data.size)
 
   private var cursor = 0
   override fun write(data: ByteBuffer): DataTransferSize = if (data.hasRemaining) {
@@ -45,5 +45,8 @@ class DiffOutput(val eq: () -> Byte) : Output {
   }
 
   override fun close() {
+    if (cursor != len) {
+      throw IllegalStateException("Not all data was wrote. Len $len, wrote $cursor")
+    }
   }
 }

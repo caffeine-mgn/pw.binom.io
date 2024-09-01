@@ -54,4 +54,10 @@ class ImportSection : ImportSectionVisitor {
     }
     visitor.end()
   }
+
+  override fun global(module: String, field: String): ImportSectionVisitor.GlobalVisitor {
+    val e = ImportGlobal(module = module, field = field)
+    elements += e
+    return e
+  }
 }

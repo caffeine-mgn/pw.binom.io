@@ -10,13 +10,14 @@ import pw.binom.wasm.visitors.CodeSectionVisitor
 const val ALL = -1
 const val NONE = -2
 
-var readCount = 0
-var writeCount = 0
-var BAD_CODE_BLOCK = NONE
-var READ_OP_COUNT = 0
-var WRITE_OP_COUNT = 0
+val BAD_FUNCTION_BLOCK = NONE
 val BAD_OP = NONE
-var LAST_WRITE_OP_SIZE = 0
+
+var readOpCount = 0
+var readFunctionCount = 0
+var writeFunctionCount = 0
+var writeOpCount = 0
+var lastWriteOpSize = 0
 
 /**
  * https://webassembly.github.io/exception-handling/core/binary/modules.html#binary-codesec
@@ -40,7 +41,7 @@ object CodeSectionReader {
     val cur = input.globalCursor
     val sizeInBytes = input.v32u()
     visitor.start()
-    readCount++
+    readFunctionCount++
 
     if (sizeInBytes == 0u) {
       visitor.end()
@@ -52,10 +53,10 @@ object CodeSectionReader {
         sectionInput.readValueType(visitor = visitor.local(size))
       }
       val before = input.globalCursor
-      READ_OP_COUNT = 0
+      readOpCount = 0
       ExpressionReader.readExpressions(input = sectionInput, visitor = visitor.code())
-      if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == -1) {
-        println("READ $readCount size: $sizeInBytes. codeSize: ${input.globalCursor - before} on 0x${cur.toString(16)}")
+      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
+        println("READ FUNCTION $readFunctionCount size: $sizeInBytes. codeSize: ${input.globalCursor - before} on 0x${cur.toString(16)}")
       }
     }
     visitor.end()

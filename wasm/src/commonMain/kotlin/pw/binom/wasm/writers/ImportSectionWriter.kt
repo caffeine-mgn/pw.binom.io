@@ -3,8 +3,36 @@ package pw.binom.wasm.writers
 import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ImportSectionVisitor
 import pw.binom.wasm.visitors.TableVisitor
+import pw.binom.wasm.visitors.ValueVisitor
 
 class ImportSectionWriter(private val out: WasmOutput) : ImportSectionVisitor {
+
+  private val global = object : ImportSectionVisitor.GlobalVisitor {
+    private var state = 0
+    override fun start() {
+      check(state == 0)
+      state++
+    }
+
+    override fun type(): ValueVisitor {
+      check(state == 1)
+      state++
+      return ValueWriter(stream)
+    }
+
+    override fun mutable(value: Boolean) {
+      check(state == 2)
+      state++
+      stream.v1u(value)
+    }
+
+    override fun end() {
+      check(state == 3)
+      state = 0
+      super.end()
+    }
+  }
+
   private var state = 0
   private val stream = InMemoryWasmOutput()
   private var count = 0
@@ -54,5 +82,14 @@ class ImportSectionWriter(private val out: WasmOutput) : ImportSectionVisitor {
     stream.string(field)
     stream.i8s(2)
     stream.limit(inital = initial, max = maximum)
+  }
+
+  override fun global(module: String, field: String): ImportSectionVisitor.GlobalVisitor {
+    check(state == 1)
+    count++
+    stream.string(module)
+    stream.string(field)
+    stream.i8s(3)
+    return global
   }
 }

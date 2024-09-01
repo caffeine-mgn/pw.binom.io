@@ -106,16 +106,17 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun afterOperation() {
-    if (writeCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
-      if (WRITE_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
-        println("WRITE #$READ_OP_COUNT SIZE: ${out.size}")
+    if (writeFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
+      if (writeOpCount == BAD_OP || BAD_OP == ALL || true) {
+        println("WRITE OPCODE #$readOpCount SIZE: ${out.size}")
       }
-      LAST_WRITE_OP_SIZE = out.size
+
     }
+    if (writeFunctionCount == BAD_FUNCTION_BLOCK || writeFunctionCount == ALL) {
+      writeOpCount++
+    }
+    lastWriteOpSize = out.size
     out.moveTo(originalOut)
-    if (writeCount == BAD_CODE_BLOCK) {
-      WRITE_OP_COUNT++
-    }
   }
 
   override fun startBlock(opcode: UByte): ExpressionsVisitor.BlockStartVisitor {
@@ -324,7 +325,7 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun const(value: Int) {
-    if (WRITE_OP_COUNT == BAD_OP) {
+    if (writeOpCount == BAD_OP) {
       println("writing i32 $value")
     }
     out.i8u(Opcodes.I32_CONST)
@@ -334,7 +335,7 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
 
   override fun const(value: Long) {
     out.i8u(Opcodes.I64_CONST)
-    if (WRITE_OP_COUNT == BAD_OP || BAD_OP == ALL) {
+    if (writeOpCount == BAD_OP || BAD_OP == ALL) {
 //      println("writing v64s $value")
     }
     out.v64s(value)
@@ -539,6 +540,7 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
     out.i8u(Opcodes.GC_ARRAY_NEW_FIXED)
     out.v32u(type.value)
     out.v32s(size.toInt()) // TODO выяснить почему котлин в это место пишет v32s, а не v32u
+//    out.v32u(size) // TODO выяснить почему котлин в это место пишет v32s, а не v32u
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {

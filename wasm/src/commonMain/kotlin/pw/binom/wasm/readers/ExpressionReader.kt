@@ -32,6 +32,7 @@ object ExpressionReader {
 
 
       visitor.beforeOperation()
+      val opcodeStart = input.globalCursor
       when (opcode) {
         Opcodes.GC_PREFIX -> gc(visitor = visitor, input = input)
         Opcodes.SIMD_PREFIX -> smid(input = input, visitor = visitor)
@@ -39,22 +40,24 @@ object ExpressionReader {
         else -> default(input = input, visitor = visitor, opcode = opcode, context = context)
       }
       visitor.afterOperation()
-      if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
-        val size = input.globalCursor - before
-        if (READ_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
+      val size = input.globalCursor - before
+      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
+
+        if (readOpCount == BAD_OP || BAD_OP == ALL) {
           println(
-            "READ #$READ_OP_COUNT SIZE: $size, opcode: 0x${
+            "READ #$readOpCount SIZE: $size, opcode: 0x${
               opcode.toString(16).padStart(2, '0')
-            }\n"
+            } on 0x${opcodeStart.toString(16)}\n"
           )
         }
-        if (LAST_WRITE_OP_SIZE != size) {
-          TODO("Invalid operation size! $READ_OP_COUNT")
-        }
       }
-      if (readCount == BAD_CODE_BLOCK) {
-        READ_OP_COUNT++
+      if (lastWriteOpSize != size) {
+        TODO("Invalid operation size! $readOpCount, opcode: 0x${opcode.toString(16)}, should be $size, but got $lastWriteOpSize")
       }
+      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK==ALL) {
+
+      }
+      readOpCount++
     }
 //    input.skipOther()
     visitor.end()
@@ -116,6 +119,7 @@ object ExpressionReader {
           visitor.target(LabelId(input.v32u()))
         }
         visitor.default(LabelId(input.v32u()))
+        visitor.end()
       }
 
       Opcodes.UNREACHABLE,
@@ -231,11 +235,11 @@ object ExpressionReader {
       }
 
       Opcodes.I64_CONST -> {
-        if (READ_OP_COUNT == BAD_OP || BAD_OP == ALL) {
+        if (readOpCount == BAD_OP || BAD_OP == ALL) {
           println()
         }
         val value = input.v64s()
-        if (READ_OP_COUNT == BAD_OP || BAD_OP == ALL) {
+        if (readOpCount == BAD_OP || BAD_OP == ALL) {
 //          println("reading i64s $value")
         }
         visitor.const(value)
@@ -249,11 +253,11 @@ object ExpressionReader {
       Opcodes.I32_CONST -> {
         input as StreamReader
         val start = input.globalCursor
-        if (READ_OP_COUNT == BAD_OP) {
+        if (readOpCount == BAD_OP) {
           println("")
         }
         val value = input.v32s()
-        if (READ_OP_COUNT == BAD_OP) {
+        if (readOpCount == BAD_OP) {
           println("reading i32 $value")
           println("INT from $start to ${input.globalCursor - start}")
         }
@@ -401,8 +405,8 @@ object ExpressionReader {
 
   private fun gc(input: WasmInput, visitor: ExpressionsVisitor) {
     val opcode = input.i8u()
-    if (readCount == BAD_CODE_BLOCK || BAD_CODE_BLOCK == ALL) {
-      if (READ_OP_COUNT == BAD_OP || WRITE_OP_COUNT == ALL) {
+    if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
+      if (readOpCount == BAD_OP || writeOpCount == ALL) {
         println("GC OPCODE 0x${opcode.toUByte().toString(16)}")
       }
     }

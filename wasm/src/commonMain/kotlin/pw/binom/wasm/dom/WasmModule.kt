@@ -38,17 +38,17 @@ class WasmModule : WasmVisitor {
   @JsName("typeSectionF")
   var typeSection = TypeSection()
 
-  override fun dataSection(): DataSectionVisitor = dataSection
+  override fun dataSection() = dataSection
 
   override fun dataCountSection(): DataCountSectionVisitor {
     return super.dataCountSection()
   }
 
-  override fun exportSection(): ExportSectionVisitor = exportSection
+  override fun exportSection() = exportSection
 
-  override fun tagSection(): TagSectionVisitor = tagSection
+  override fun tagSection() = tagSection
 
-  override fun globalSection(): GlobalSectionVisitor = globalSection
+  override fun globalSection() = globalSection
 
   override fun elementSection(): ElementSectionVisitor {
     return super.elementSection()
@@ -66,13 +66,13 @@ class WasmModule : WasmVisitor {
 
   override fun customSection() = customSection
 
-  override fun typeSection(): TypeSectionVisitor = typeSection
+  override fun typeSection() = typeSection
 
-  override fun codeSection(): CodeSectionVisitor = codeSection
+  override fun codeSection() = codeSection
 
   override fun functionSection() = functionSection
 
-  override fun importSection(): ImportSectionVisitor = importSection
+  override fun importSection() = importSection
 
   override fun version(version: Int) {
     this.version = version
