@@ -1,6 +1,5 @@
 package pw.binom.wasm.writers
 
-import pw.binom.io.ByteArrayOutput
 import pw.binom.wasm.InMemoryWasmOutput
 import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.ExpressionsVisitor

@@ -1,6 +1,5 @@
 package pw.binom.wasm.writers
 
-import pw.binom.copyTo
 import pw.binom.io.Input
 import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.CustomSectionVisitor

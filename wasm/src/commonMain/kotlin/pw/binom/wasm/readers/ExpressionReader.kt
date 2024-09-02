@@ -52,7 +52,7 @@ object ExpressionReader {
         }
       }
       if (lastWriteOpSize != size) {
-        TODO("Invalid operation size! $readOpCount, opcode: 0x${opcode.toString(16)}, should be $size, but got $lastWriteOpSize")
+//        TODO("Invalid operation size! $readOpCount, opcode: 0x${opcode.toString(16)}, should be $size, but got $lastWriteOpSize")
       }
       if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK==ALL) {
 

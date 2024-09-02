@@ -9,8 +9,16 @@ import kotlin.test.Test
 
 fun ByteArray.from(pos: Int) = copyOfRange(fromIndex = pos, toIndex = size)
 
-@OptIn(ExperimentalStdlibApi::class)
+@OptIn(ExperimentalStdlibApi::class, ExperimentalUnsignedTypes::class)
 class AAAAA {
+
+  @Test
+  fun test11() {
+    val data = ubyteArrayOf(0x8bu, 0x80u, 0x80u, 0x80u, 0x00u, 0x02u).toByteArray()
+    val b = ByteBuffer.wrap(data)
+    println("=>${b.asWasm().v32u()}")
+    println("read: ${b.capacity - b.remaining}/${b.capacity}")
+  }
 
   @Test
   fun testRead87() {
@@ -41,7 +49,7 @@ class AAAAA {
       val bytes = it.toByteArray()
       println("hex=${bytes.toHexString(HexFormat.UpperCase)}")
       StreamReader(ByteArrayInput(bytes)).use {
-        it.v32u()
+        it.v32s()
       }
     }
 
