@@ -8,7 +8,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
 @OptIn(ExperimentalTime::class)
-@Deprecated(message = "Used for find cycle loop. Not use")
+@Deprecated(message = "Used for find cycle loop. Not use it")
 class LoopWatcher(name: String) : Closeable {
   val metricName = name.lowercase().replace(' ', '_').replace('-', '_')
   private val avgGauge = DurationRollingAverageGauge(
