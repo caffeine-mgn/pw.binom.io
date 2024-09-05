@@ -653,4 +653,24 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
       else -> throw IllegalArgumentException()
     }
   }
+
+  override fun bulkOperator(numberOpcode: UByte) {
+    when (numberOpcode) {
+      Opcodes.NUMERIC_MEMORY_INIT,
+      Opcodes.NUMERIC_DATA_DROP,
+      Opcodes.NUMERIC_MEMORY_COPY,
+      Opcodes.NUMERIC_MEMORY_FILL,
+      Opcodes.NUMERIC_TABLE_INIT,
+      Opcodes.NUMERIC_ELEM_DROP,
+      Opcodes.NUMERIC_TABLE_COPY,
+      Opcodes.NUMERIC_TABLE_SIZE,
+        -> {
+        out.i8u(Opcodes.NUMERIC_PREFIX)
+        out.i8u(numberOpcode)
+      }
+
+      else -> throw IllegalArgumentException()
+    }
+
+  }
 }

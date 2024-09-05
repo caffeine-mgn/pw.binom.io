@@ -17,6 +17,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core"))
+      api(project(":wasm-node"))
     }
     commonTest.dependencies {
       api(kotlin("test-common"))

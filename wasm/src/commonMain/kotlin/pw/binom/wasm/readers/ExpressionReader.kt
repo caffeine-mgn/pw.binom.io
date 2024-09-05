@@ -54,7 +54,7 @@ object ExpressionReader {
       if (lastWriteOpSize != size) {
 //        TODO("Invalid operation size! $readOpCount, opcode: 0x${opcode.toString(16)}, should be $size, but got $lastWriteOpSize")
       }
-      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK==ALL) {
+      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
 
       }
       readOpCount++
@@ -395,11 +395,19 @@ object ExpressionReader {
       Opcodes.NUMERIC_I64U_CONVERT_SAT_F32,
       Opcodes.NUMERIC_I64S_CONVERT_SAT_F64,
       Opcodes.NUMERIC_I64U_CONVERT_SAT_F64,
-        -> {
-        visitor.convertNumeric(opcode)
-      }
+        -> visitor.convertNumeric(opcode)
 
-      else -> TODO("Unknown MISC code: 0x${opcode.toString(16)}")
+      Opcodes.NUMERIC_MEMORY_INIT,
+      Opcodes.NUMERIC_DATA_DROP,
+      Opcodes.NUMERIC_MEMORY_COPY,
+      Opcodes.NUMERIC_MEMORY_FILL,
+      Opcodes.NUMERIC_TABLE_INIT,
+      Opcodes.NUMERIC_ELEM_DROP,
+      Opcodes.NUMERIC_TABLE_COPY,
+      Opcodes.NUMERIC_TABLE_SIZE,
+         -> visitor.bulkOperator(opcode)
+
+      else -> TODO("Unknown MISC code: 0xfc${opcode.toString(16).padStart(2, '0')}")
     }
   }
 

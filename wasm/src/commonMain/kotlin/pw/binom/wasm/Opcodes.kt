@@ -211,7 +211,10 @@ object Opcodes {
   const val NUMERIC_I64U_CONVERT_SAT_F32: UByte = 0x05u // i64.trunc_sat_f32_u
   const val NUMERIC_I64S_CONVERT_SAT_F64: UByte = 0x06u // i64.trunc_sat_f64_s
   const val NUMERIC_I64U_CONVERT_SAT_F64: UByte = 0x07u // i64.trunc_sat_f64_u
+  const val NUMERIC_MEMORY_INIT: UByte = 0x08u // memory.init
   const val NUMERIC_DATA_DROP: UByte = 0x09u // data.drop
+  const val NUMERIC_MEMORY_COPY: UByte = 0x0au // memory.copy
+  const val NUMERIC_MEMORY_FILL: UByte = 0x0bu // memory.fill
   const val NUMERIC_TABLE_INIT: UByte = 0x0cu // table.init
   const val NUMERIC_ELEM_DROP: UByte = 0x0du // elem.drop
   const val NUMERIC_TABLE_COPY: UByte = 0x0eu // table.copy

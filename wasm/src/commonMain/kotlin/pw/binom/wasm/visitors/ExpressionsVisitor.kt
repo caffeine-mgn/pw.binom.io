@@ -110,4 +110,5 @@ interface ExpressionsVisitor {
   fun catch(v32u: UInt) {}
   fun convertNumeric(numOpcode: UByte) {}
   fun gcConvert(gcOpcode: UByte) {}
+  fun bulkOperator(numberOpcode: UByte) {}
 }

@@ -158,32 +158,6 @@ fun WasmInput.readStorageType(byte: UByte = i8u(), visitor: StorageVisitor) =
     else -> TODO("Unknown byte 0x${byte.toString(16).padStart(2, '0')}")
   }
 
-fun WasmInput.readStorageType() =
-  when (val value = i8u()) {
-    Types.TYPE_NUM_I32 -> ValueType.Num.I32
-    Types.TYPE_NUM_I64 -> ValueType.Num.I64
-    Types.TYPE_NUM_F32 -> ValueType.Num.F32
-    Types.TYPE_NUM_F64 -> ValueType.Num.F64
-    Types.TYPE_VEC_V128 -> ValueType.Vector.V128
-    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> ValueType.Ref.FUNC_REF
-    Types.TYPE_REF_EXTERN_REF -> ValueType.Ref.EXTERN_REF
-    Types.TYPE_REF_NULL -> {
-      readHeapType(visitor = ValueVisitor.HeapVisitor.SKIP)
-      ValueType.Ref.NULL
-    }
-
-    Types.TYPE_REF -> {
-      readHeapType(visitor = ValueVisitor.HeapVisitor.SKIP)
-      ValueType.Ref.VALUE
-    }
-
-    Types.TYPE_PAK_I8 -> StorageType.Packed.I8
-    Types.TYPE_PAK_I16 -> StorageType.Packed.I16
-    Types.TYPE_PAK_F16 -> StorageType.Packed.F16
-    Types.TYPE_REF_ABS_HEAP_STRUCT -> ValueType.Ref.STRUCT
-    else -> TODO("Unknown type 0x${value.toString(16)}")
-  }
-
 fun WasmInput.readBlockType(visitor: ExpressionsVisitor.BlockStartVisitor) {
   val firstByte1 = v33u()
   val firstByte = firstByte1.toUByte()

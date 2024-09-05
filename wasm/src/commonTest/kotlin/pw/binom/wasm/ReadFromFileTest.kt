@@ -1,17 +1,12 @@
 package pw.binom.wasm
 
-import pw.binom.io.*
-import pw.binom.io.file.*
-import pw.binom.wasm.dom.WasmModule
-import pw.binom.wasm.readers.CodeSectionReader
-import pw.binom.wasm.readers.ImportSectionReader
-import pw.binom.wasm.readers.TypeSectionReader
+import pw.binom.io.file.File
+import pw.binom.io.file.openRead
+import pw.binom.io.file.openWrite
+import pw.binom.io.file.readBinary
+import pw.binom.io.use
 import pw.binom.wasm.readers.WasmReader
-import pw.binom.wasm.writers.CodeSectionWriter
-import pw.binom.wasm.writers.ImportSectionWriter
-import pw.binom.wasm.writers.TypeSectionWriter
 import pw.binom.wasm.writers.WasmWriter
-import pw.binom.wrap
 import kotlin.test.Test
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -162,9 +157,11 @@ class ReadFromFileTest {
     }
 
 
-    val m = WasmModule()
-    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), m)
-    println(m)
+//    val m = WasmModule()
+//    WasmReader.read(StreamReader(ByteBuffer.wrap(data)), m)
+//    println(m)
+
+
 //    val e = ByteArrayOutput().use {
 //      m.accept(WasmWriter(it.asWasm))
 //      it.toByteArray().size

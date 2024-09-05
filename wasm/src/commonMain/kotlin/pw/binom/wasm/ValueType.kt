@@ -11,37 +11,6 @@ package pw.binom.wasm
 //}
 
 
-sealed interface ValueType : StorageType {
-  sealed interface Num : ValueType {
-    data object I32 : Num
-    data object I64 : Num
-    data object F32 : Num
-    data object F64 : Num
-  }
-
-  sealed interface Ref : ValueType {
-    data object FUNC_REF : Ref
-    data object EXTERN_REF : Ref
-    data object NONE : Ref
-    data object ANY : Ref
-    data object STRUCT : Ref
-    data object NULL : Ref
-    data object VALUE : Ref
-  }
-
-  sealed interface Vector : ValueType {
-    data object V128 : Vector
-  }
-}
-
-sealed interface StorageType {
-  interface Packed : StorageType {
-    data object I8 : Packed
-    data object I16 : Packed
-    data object F16 : Packed
-  }
-}
-
 /**
  * reftype
  *
