@@ -26,7 +26,9 @@ class RunTest {
         println("CONST ${it.value} -> $index")
       }
     }
-    val result = Runner(module).runFunc("fff", args = listOf())
+    val runner = Runner(module)
+    runner.setGlobal(module = "env", field = "__stack_pointer", value = 0)
+    val result = runner.runFunc("fff", args = listOf())
     println("result: $result")
     println("start: ${module.startFunctionId}")
   }

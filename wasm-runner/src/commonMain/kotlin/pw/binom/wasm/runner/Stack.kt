@@ -18,7 +18,24 @@ class Stack {
     l.addLast(value)
   }
 
-  fun popI32() = l.removeLast() as Int
+  fun push(value: Long) {
+    l.addLast(value)
+  }
+
+  fun popI32():Int{
+    val value = l.removeLast()
+    if (value !is Int){
+      TODO("$value is not int")
+    }
+    return value
+  }
+  fun popI64():Long{
+    val value = l.removeLast()
+    if (value !is Long){
+      TODO("$value is not int")
+    }
+    return value
+  }
   fun pop() = l.removeLast()
 
   fun clear(): List<Any?> {

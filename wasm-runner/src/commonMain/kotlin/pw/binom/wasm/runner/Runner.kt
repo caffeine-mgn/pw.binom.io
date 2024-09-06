@@ -2,13 +2,12 @@ package pw.binom.wasm.runner
 
 import pw.binom.collections.LinkedList
 import pw.binom.wasm.FunctionId
-import pw.binom.wasm.node.Export
-import pw.binom.wasm.node.RecType
-import pw.binom.wasm.node.WasmModule
+import pw.binom.wasm.node.*
 import pw.binom.wasm.node.inst.*
 
 class Runner(private val module: WasmModule) {
-  private val memorySpace = MemorySpace()
+  private val memorySpace = MemorySpace(100)
+  private val importGlobals = module.importSection.elements.filterIsInstance<ImportGlobal>()
 
   private val functionDesc = run {
     val result = HashMap<FunctionId, RecType.FuncType>()
@@ -58,10 +57,6 @@ class Runner(private val module: WasmModule) {
     args: MutableList<Any?>,
     resultSize: Int,
   ): List<Any?> {
-
-    fun local(index: Int) =
-      args.getOrNull(index) ?: locals.getOrNull(index - args.size)
-
     var index = 0
     val stack = Stack()
     while (true) {
@@ -73,10 +68,11 @@ class Runner(private val module: WasmModule) {
         }
 
         is LocalIndexArgument.SET -> {
-          if (cmd.id.id.toInt() in args.indices) {
-            args[cmd.id.id.toInt()] = stack.pop()
+          val e = cmd.id.id.toInt()
+          if (e in args.indices) {
+            args[e] = stack.pop()
           } else {
-            locals[index - args.size].set(stack.pop())
+            locals[e - args.size].set(stack.pop())
           }
           index++
         }
@@ -84,7 +80,7 @@ class Runner(private val module: WasmModule) {
         is LocalIndexArgument.TEE -> {
           val value = stack.pop()
           stack.push(value)
-          val e =cmd.id.id.toInt()
+          val e = cmd.id.id.toInt()
           if (e in args.indices) {
             args[e] = value
           } else {
@@ -121,10 +117,12 @@ class Runner(private val module: WasmModule) {
         }
 
         is GlobalIndexArgument.GET -> {
-          val value = if (cmd.id.id.toInt() in module.importSection.elements.indices){
-            module.importSection.elements[cmd.id.id.toInt()]
+          val value = if (cmd.id.id.toInt() in importGlobals.indices) {
+            val e = importGlobals[cmd.id.id.toInt()]
+            val module = globals[e.module] ?: TODO("module ${e.module} not found")
+            module[e.field] ?: TODO("Field ${e.field} not found in module ${e.module}")
           } else {
-            module.globalSection.elements[index - module.importSection.elements.size]
+            module.globalSection.elements[index - importGlobals.size]
           }
           stack.push(value)
           index++
@@ -140,12 +138,66 @@ class Runner(private val module: WasmModule) {
           index++
         }
 
+        is Numeric.I32_MUL -> {
+          stack.push(stack.popI32() * stack.popI32())
+          index++
+        }
+
+        is Numeric.I32_DIV_S -> {
+          stack.push(stack.popI32() / stack.popI32())
+          index++
+        }
+
+        is Numeric.I32_DIV_U -> {
+          stack.push((stack.popI32().toUInt() / stack.popI32().toUInt()).toInt())
+          index++
+        }
+        is Numeric.I32_REM_S -> {
+          stack.push(stack.popI32() % stack.popI32())
+          index++
+        }
+        is Numeric.I32_REM_U -> {
+          stack.push((stack.popI32().toUInt() % stack.popI32().toUInt()).toInt())
+          index++
+        }
         is Memory.I32_STORE -> {
-          TODO()
-          memorySpace.pushInt(
-            value = stack.popI32(),
-            offset = cmd.offset,
+          val value = stack.popI32()
+          val address = stack.popI32()
+          memorySpace.pushI32(
+            value = value,
+            offset = address.toUInt() + cmd.offset,
             align = cmd.align,
+          )
+          index++
+        }
+
+        is Memory.I64_STORE -> {
+          val value = stack.popI64()
+          val address = stack.popI32()
+          memorySpace.pushI64(
+            value = value,
+            offset = address.toUInt() + cmd.offset,
+            align = cmd.align,
+          )
+          index++
+        }
+
+        is Memory.I32_LOAD -> {
+          val offset = stack.popI32()
+          stack.push(
+            memorySpace.getI32(
+              cmd.offset + offset.toUInt()
+            )
+          )
+          index++
+        }
+
+        is Memory.I64_LOAD -> {
+          val offset = stack.popI32()
+          stack.push(
+            memorySpace.getI64(
+              cmd.offset + offset.toUInt()
+            )
           )
           index++
         }
@@ -153,5 +205,11 @@ class Runner(private val module: WasmModule) {
         else -> TODO("Unknown ${cmd::class}")
       }
     }
+  }
+
+  private val globals = HashMap<String, HashMap<String, Any>>()
+
+  fun setGlobal(module: String, field: String, value: Int) {
+    globals.getOrPut(module) { HashMap() }[field] = value
   }
 }

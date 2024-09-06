@@ -18,31 +18,31 @@ class ImportSection : ImportSectionVisitor {
 
   override fun function(module: String, field: String, index: FunctionId) {
     elements += Import.Function(
-        module = module,
-        field = field,
-        index = index,
+      module = module,
+      field = field,
+      index = index,
     )
   }
 
   override fun memory(module: String, field: String, initial: UInt, maximum: UInt) {
     elements += Import.Memory2(
-        module = module,
-        field = field,
-        initial = initial,
-        maximum = maximum,
+      module = module,
+      field = field,
+      initial = initial,
+      maximum = maximum,
     )
   }
 
   override fun memory(module: String, field: String, initial: UInt) {
     elements += Import.Memory1(
-        module = module,
-        field = field,
-        initial = initial,
+      module = module,
+      field = field,
+      initial = initial,
     )
   }
 
   override fun table(module: String, field: String): TableVisitor {
-    val e = Table(type = RefType(), min = 0u, max = null)
+    val e = Import.Table(module = module, field = field, table = Table(type = RefType(), min = 0u, max = null))
     elements + e
     return e
   }
