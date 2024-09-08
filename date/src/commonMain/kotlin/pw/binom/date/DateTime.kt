@@ -3,7 +3,7 @@ package pw.binom.date
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 
-@JvmInline
+
 expect value class DateTime(val milliseconds: Long = nowTime) {
   companion object {
     val systemZoneOffset: Int

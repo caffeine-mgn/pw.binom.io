@@ -30,7 +30,7 @@ private val internalOs =
 @OptIn(ExperimentalNativeApi::class)
 private val internalPlatform =
   when (KPlatform.cpuArchitecture) {
-    CpuArchitecture.WASM32 -> Platform.WASM32
+    CpuArchitecture.WASM32 -> Platform.WASM
     CpuArchitecture.ARM32 ->
       when (KPlatform.osFamily) {
         OsFamily.WINDOWS -> Platform.MINGW_ARM_32
@@ -39,7 +39,7 @@ private val internalPlatform =
         OsFamily.MACOSX -> Platform.MACOS_ARM_32
         OsFamily.UNKNOWN -> Platform.UNKNOWN
         OsFamily.IOS -> Platform.IOS_ARM_32
-        OsFamily.WASM -> Platform.WASM32
+        OsFamily.WASM -> Platform.WASM
         OsFamily.TVOS -> Platform.TVOS_ARM_32
         OsFamily.WATCHOS -> Platform.WATCHOS_ARM_32
       }
@@ -52,7 +52,7 @@ private val internalPlatform =
         OsFamily.MACOSX -> Platform.MACOS_ARM_X64
         OsFamily.UNKNOWN -> Platform.UNKNOWN
         OsFamily.IOS -> Platform.IOS_ARM_64
-        OsFamily.WASM -> Platform.WASM32
+        OsFamily.WASM -> Platform.WASM
         OsFamily.TVOS -> Platform.TVOS_ARM_64
         OsFamily.WATCHOS -> Platform.WATCHOS_ARM_64
       }
@@ -65,7 +65,7 @@ private val internalPlatform =
         OsFamily.MACOSX -> Platform.MACOS_X64
         OsFamily.UNKNOWN -> Platform.UNKNOWN
         OsFamily.IOS -> Platform.IOS_X64
-        OsFamily.WASM -> Platform.WASM64
+        OsFamily.WASM -> Platform.WASM
         OsFamily.TVOS -> Platform.TVOS_X86
         OsFamily.WATCHOS -> Platform.WATCHOS_X86
       }
@@ -78,7 +78,7 @@ private val internalPlatform =
         OsFamily.MACOSX -> Platform.MACOS_X86
         OsFamily.UNKNOWN -> Platform.UNKNOWN
         OsFamily.IOS -> Platform.IOS_X86
-        OsFamily.WASM -> Platform.WASM32
+        OsFamily.WASM -> Platform.WASM
         OsFamily.TVOS -> Platform.TVOS_X86
         OsFamily.WATCHOS -> Platform.WATCHOS_X86
       }

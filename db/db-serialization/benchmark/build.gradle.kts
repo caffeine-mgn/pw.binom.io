@@ -16,6 +16,8 @@ allOpen {
 kotlin {
   allTargets {
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {

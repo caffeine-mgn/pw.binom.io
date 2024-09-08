@@ -7,6 +7,7 @@ import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.readers.WasmReader
 import pw.binom.wasm.visitors.*
 
+@OptIn(ExperimentalUnsignedTypes::class)
 class WasmWriter(private val out: WasmOutput) : WasmVisitor {
   private var state = 0
   private var sectionData = InMemoryWasmOutput()

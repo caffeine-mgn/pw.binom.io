@@ -39,15 +39,13 @@ kotlin {
       api(project(":metric"))
       api(project(":memory"))
     }
-    val nonJvmMain by creating {
-      dependsOn(commonMain.get())
-    }
-    jsMain {
-      dependsOn(nonJvmMain)
-    }
-    val nativeMain by getting {
-      dependsOn(nonJvmMain)
-    }
+    val nonJvmMain by getting
+//    val commonWasmMain by getting {
+//      dependsOn(nativeMain.get())
+//    }
+//    val nativeMain by getting {
+//      dependsOn(nonJvmMain)
+//    }
     /*
     val jvmLikeMain by creating {
       dependsOn(commonMain.get())

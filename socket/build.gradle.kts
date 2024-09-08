@@ -56,7 +56,7 @@ fun KotlinNativeTarget.useNativeNet() {
   compilations["test"].kotlinOptions.freeCompilerArgs = args
   compilations["main"].cinterops {
     create("nativeCommon") {
-      defFile = project.file("src/cinterop/native.def")
+      definitionFile.set(project.file("src/cinterop/native.def"))
       packageName = "platform.socket"
       includeDirs.headerFilterOnly(headersPath)
     }
@@ -66,7 +66,7 @@ fun KotlinNativeTarget.useNativeNet() {
 fun KotlinNativeTarget.useNativeUtils() {
   compilations["main"].cinterops {
     create("native") {
-      defFile = project.file("src/cinterop/native_utils.def")
+      definitionFile.set(project.file("src/cinterop/native_utils.def"))
       packageName = "platform.common"
     }
   }
@@ -75,7 +75,7 @@ fun KotlinNativeTarget.useNativeUtils() {
 fun KotlinNativeTarget.useNativeMacos() {
   compilations["main"].cinterops {
     create("macos") {
-      defFile = project.file("src/cinterop/mac.def")
+      definitionFile.set(project.file("src/cinterop/mac.def"))
       packageName = "platform.common"
     }
   }
@@ -84,7 +84,7 @@ fun KotlinNativeTarget.useNativeMacos() {
 fun KotlinNativeTarget.useNativeMingw() {
   compilations["main"].cinterops {
     create("mingw") {
-      defFile = project.file("src/cinterop/mingw.def")
+      definitionFile.set(project.file("src/cinterop/mingw.def"))
       packageName = "platform.common"
     }
   }
@@ -95,6 +95,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
 
   eachNative {

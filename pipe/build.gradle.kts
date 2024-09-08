@@ -17,7 +17,7 @@ apply<pw.binom.KotlinConfigPlugin>()
 fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useLinux() {
   compilations["main"].cinterops {
     create("linux") {
-      defFile = project.file("src/cinterop/linux.def")
+      definitionFile.set(project.file("src/cinterop/linux.def"))
       packageName = "platform.common"
     }
   }
@@ -27,6 +27,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
 
   eachNative {

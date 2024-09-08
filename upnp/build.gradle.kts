@@ -12,6 +12,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
   applyDefaultHierarchyTemplate()
   sourceSets {

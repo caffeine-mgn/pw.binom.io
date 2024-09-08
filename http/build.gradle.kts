@@ -15,7 +15,7 @@ apply<pw.binom.KotlinConfigPlugin>()
 fun KotlinNativeTarget.useNativeUtils() {
   compilations["main"].cinterops {
     create("native") {
-      defFile = project.file("src/nativeMain/interop/encode.def")
+      definitionFile.set(project.file("src/nativeMain/interop/encode.def"))
       packageName = "platform.websocket"
     }
   }
@@ -46,6 +46,13 @@ kotlin {
     jvmTest.dependencies {
       api(kotlin("test-junit"))
     }
+    val manualMain by creating {
+      dependsOn(commonMain.get())
+    }
+
+    dependsOn("jsMain", manualMain)
+    dependsOn("jvmLikeMain", manualMain)
+    dependsOn("wasm*Main", manualMain)
   }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()

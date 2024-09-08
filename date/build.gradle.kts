@@ -1,6 +1,7 @@
 import pw.binom.eachKotlinCompile
 import pw.binom.publish.allTargets
 import pw.binom.publish.applyDefaultHierarchyBinomTemplate
+import pw.binom.publish.dependsOn
 import java.util.*
 
 plugins {
@@ -23,6 +24,7 @@ kotlin {
     jsMain {
       dependsOn(implMain)
     }
+    dependsOn("wasm*Main", implMain)
     val posixMain by getting {
       dependsOn(implMain)
     }

@@ -6,6 +6,7 @@ import kotlinx.serialization.SerialInfo
 /**
  * Define column type for standard SQL
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.BINARY)
 @SerialInfo

@@ -15,6 +15,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
   eachNative {
     if (konanTarget.family == Family.ANDROID || konanTarget.family == Family.LINUX) {

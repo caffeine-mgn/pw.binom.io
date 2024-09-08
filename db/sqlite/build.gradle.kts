@@ -16,6 +16,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
   eachNative {
     val headersPath = file("${buildFile.parentFile}/src/native")
@@ -44,7 +46,7 @@ kotlin {
     binaries {
       compilations["main"].cinterops {
         val sqlite by creating {
-          defFile = project.file("src/nativeInterop/nativeSqlite3.def")
+          definitionFile.set(project.file("src/nativeInterop/nativeSqlite3.def"))
           packageName = sqlitePackageName
           includeDirs.headerFilterOnly(headersPath.absolutePath)
         }

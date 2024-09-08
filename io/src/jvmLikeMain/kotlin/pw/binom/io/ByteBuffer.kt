@@ -195,7 +195,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return len
   }
 
-  actual override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
+  actual override fun read(dest: ByteBuffer): DataTransferSize = DataTransferSize.ofSize(readInto(dest))
 
   actual fun readInto(dest: ByteArray, offset: Int, length: Int): Int {
     if (closed) {

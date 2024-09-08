@@ -18,6 +18,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmJs"
+    -"wasmWasi"
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
@@ -81,7 +83,7 @@ tasks {
 
     compilations["main"].cinterops {
       val openssl by creating {
-        defFile = project.file("src/cinterop/openssl.def")
+        definitionFile.set(project.file("src/cinterop/openssl.def"))
         packageName = "platform.openssl"
         includeDirs.headerFilterOnly(headersPath.absolutePath)
       }

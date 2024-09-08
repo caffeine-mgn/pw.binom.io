@@ -1,5 +1,6 @@
 import pw.binom.publish.allTargets
 import pw.binom.publish.applyDefaultHierarchyBinomTemplate
+import pw.binom.publish.dependsOn
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -24,6 +25,7 @@ kotlin {
     val nativeIconvMain by creating {
       dependsOn(commonMain)
     }
+    dependsOn("wasm*Main", otherMain)
 
 //    val jvmLikeMain by creating {
 //      dependsOn(commonMain)

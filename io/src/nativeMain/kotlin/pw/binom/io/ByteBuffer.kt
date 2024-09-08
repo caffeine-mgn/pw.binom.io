@@ -263,10 +263,10 @@ actual open class ByteBuffer private constructor(
     return r
   }
 
-  actual override fun read(dest: ByteBuffer) = DataTransferSize.ofSize(readInto(dest))
+  actual override fun read(dest: ByteBuffer): DataTransferSize = DataTransferSize.ofSize(readInto(dest))
 
   @OptIn(ExperimentalTime::class)
-  actual override fun write(data: ByteBuffer) = DataTransferSize.ofSize(data.readInto(this))
+  actual override fun write(data: ByteBuffer): DataTransferSize = DataTransferSize.ofSize(data.readInto(this))
 
   actual override fun flush() {
 

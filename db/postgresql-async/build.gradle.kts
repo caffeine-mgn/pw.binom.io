@@ -11,6 +11,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {

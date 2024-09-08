@@ -13,7 +13,7 @@ plugins {
 fun KotlinNativeTarget.useNativeUtils() {
   compilations["main"].cinterops {
     create("native") {
-      defFile = project.file("src/cinterop/native_utils.def")
+      definitionFile.set(project.file("src/cinterop/native_utils.def"))
       packageName = "platform.common"
     }
   }

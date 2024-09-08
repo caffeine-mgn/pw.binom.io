@@ -13,7 +13,7 @@ plugins {
 fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
   compilations["main"].cinterops {
     create("native") {
-      defFile = project.file("src/cinterop/native.def")
+      definitionFile.set(project.file("src/cinterop/native.def"))
       packageName = "platform.common"
     }
   }
@@ -24,6 +24,8 @@ kotlin {
   allTargets {
     config()
     -"js"
+    -"wasmWasi"
+    -"wasmJs"
   }
   eachNative {
     useNative()

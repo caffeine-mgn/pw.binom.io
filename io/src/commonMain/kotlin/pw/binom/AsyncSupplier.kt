@@ -1,7 +1,6 @@
 package pw.binom
 
 fun interface AsyncSupplier<T> {
-  @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
   suspend fun get(): T
 }
 
