@@ -1,7 +1,7 @@
 package pw.binom.wasm.writers
 
-import pw.binom.wasm.FunctionId
 import pw.binom.wasm.InMemoryWasmOutput
+import pw.binom.wasm.TypeId
 import pw.binom.wasm.WasmOutput
 import pw.binom.wasm.visitors.FunctionSectionVisitor
 
@@ -24,9 +24,9 @@ class FunctionSectionWriter(private val out: WasmOutput) : FunctionSectionVisito
     count = 0
   }
 
-  override fun value(int: FunctionId) {
+  override fun value(int: TypeId) {
     check(state == 1)
     count++
-    stream.v32u(int.id)
+    stream.v32u(int.value)
   }
 }

@@ -5,8 +5,11 @@ import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.date.parseIso8601Date
 import pw.binom.uuid.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 interface DataProvider {
+  val keys: Collection<String>
   fun getString(key: String): String {
     val value = get(key) ?: throw NullPointerException("Value \"$key\" is null")
     return value.toString()
@@ -34,6 +37,9 @@ interface DataProvider {
 
   fun getUUID(key: String): UUID = UUID.fromString(getString(key))
 
+  @OptIn(ExperimentalUuidApi::class)
+  fun getUuid(key: String): Uuid = Uuid.parse(getString(key))
+
   fun getDateTime(key: String): DateTime {
     val str = getString(key)
     return str.parseIso8601Date() ?: throw SerializationException("Can't parse $str to DateTime")
@@ -52,6 +58,8 @@ interface DataProvider {
     val EMPTY =
       object : DataProvider {
         private fun throwException(): Nothing = throw IllegalStateException("Not supported")
+        override val keys: Set<String>
+          get() = emptySet()
 
         override fun getString(key: String) = throwException()
 

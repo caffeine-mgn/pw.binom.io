@@ -4,12 +4,11 @@ import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.GlobalSectionVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
-class GlobalSection : GlobalSectionVisitor {
-  val elements = ArrayList<Global>()
+class GlobalSection : GlobalSectionVisitor, MutableList<Global> by ArrayList() {
   private var type: ValueType? = null
 
   override fun start() {
-    elements.clear()
+    clear()
     super.start()
   }
 
@@ -30,13 +29,14 @@ class GlobalSection : GlobalSectionVisitor {
       mutable = mutable,
       expressions = e,
     )
-    elements += g
+    type = null
+    this += g
     return e
   }
 
   fun accept(visitor: GlobalSectionVisitor) {
     visitor.start()
-    elements.forEach {
+    forEach {
       it.type.accept(visitor.type())
       it.expressions.accept(visitor.code(it.mutable))
     }

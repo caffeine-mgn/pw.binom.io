@@ -1,9 +1,11 @@
 package pw.binom.wasm.node
 
 import pw.binom.wasm.FunctionId
+import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.ImportSectionVisitor
 import pw.binom.wasm.visitors.TableVisitor
 import pw.binom.wasm.visitors.ValueVisitor
+import kotlin.js.JsName
 
 sealed interface Import {
   var module: String
@@ -13,18 +15,22 @@ sealed interface Import {
   class Function(
     override var module: String,
     override var field: String,
-    var index: FunctionId,
+    var index: TypeId,
   ) : Import {
     override fun accept(visitor: ImportSectionVisitor) {
       visitor.function(module = module, field = field, index = index)
     }
   }
 
+  interface Memory:Import{
+    var initial: UInt
+  }
+
   class Memory1(
     override var module: String,
     override var field: String,
-    var initial: UInt,
-  ) : Import {
+    override var initial: UInt,
+  ) : Memory {
     override fun accept(visitor: ImportSectionVisitor) {
       visitor.memory(module = module, field = field, initial = initial)
     }
@@ -33,9 +39,9 @@ sealed interface Import {
   class Memory2(
     override var module: String,
     override var field: String,
-    var initial: UInt,
+    override var initial: UInt,
     var maximum: UInt,
-  ) : Import {
+  ) : Memory {
     override fun accept(visitor: ImportSectionVisitor) {
       visitor.memory(module = module, field = field, initial = initial, maximum = maximum)
     }
@@ -75,6 +81,36 @@ sealed interface Import {
       }
       v.end()
     }
+  }
 
+  class Global(
+    override var module: String,
+    override var field: String,
+  ) : ImportSectionVisitor.GlobalVisitor, Import {
+    @JsName("typeF")
+    var type = ValueType()
+    var mutable = false
+
+    override fun type(): ValueVisitor = type
+
+    override fun mutable(value: Boolean) {
+      this.mutable = value
+    }
+
+    fun accept(visitor: ImportSectionVisitor.GlobalVisitor) {
+      visitor.start()
+      type.accept(visitor.type())
+      visitor.mutable(mutable)
+      visitor.end()
+    }
+
+    override fun accept(visitor: ImportSectionVisitor) {
+      accept(
+        visitor.global(
+          module = module,
+          field = field
+        )
+      )
+    }
   }
 }

@@ -1,23 +1,22 @@
 package pw.binom.wasm.node
 
-import pw.binom.wasm.FunctionId
+import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.ImportSectionVisitor
 import pw.binom.wasm.visitors.TableVisitor
 
-class ImportSection : ImportSectionVisitor {
-  val elements = ArrayList<Import>()
+class ImportSection : ImportSectionVisitor,MutableList<Import> by ArrayList() {
 
   override fun start() {
     super.start()
-    elements.clear()
+    clear()
   }
 
   override fun end() {
     super.end()
   }
 
-  override fun function(module: String, field: String, index: FunctionId) {
-    elements += Import.Function(
+  override fun function(module: String, field: String, index: TypeId) {
+    this += Import.Function(
       module = module,
       field = field,
       index = index,
@@ -25,7 +24,7 @@ class ImportSection : ImportSectionVisitor {
   }
 
   override fun memory(module: String, field: String, initial: UInt, maximum: UInt) {
-    elements += Import.Memory2(
+    this += Import.Memory2(
       module = module,
       field = field,
       initial = initial,
@@ -34,7 +33,7 @@ class ImportSection : ImportSectionVisitor {
   }
 
   override fun memory(module: String, field: String, initial: UInt) {
-    elements += Import.Memory1(
+    this += Import.Memory1(
       module = module,
       field = field,
       initial = initial,
@@ -43,21 +42,21 @@ class ImportSection : ImportSectionVisitor {
 
   override fun table(module: String, field: String): TableVisitor {
     val e = Import.Table(module = module, field = field, table = Table(type = RefType(), min = 0u, max = null))
-    elements + e
+    this += e
+    return e
+  }
+
+  override fun global(module: String, field: String): ImportSectionVisitor.GlobalVisitor {
+    val e = Import.Global(module = module, field = field)
+    this += e
     return e
   }
 
   fun accept(visitor: ImportSectionVisitor) {
     visitor.start()
-    elements.forEach {
+    forEach {
       it.accept(visitor)
     }
     visitor.end()
-  }
-
-  override fun global(module: String, field: String): ImportSectionVisitor.GlobalVisitor {
-    val e = ImportGlobal(module = module, field = field)
-    elements += e
-    return e
   }
 }

@@ -1,16 +1,18 @@
 package pw.binom.wasm.node
 
+import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.TypeSectionVisitor
 
-class TypeSection : TypeSectionVisitor {
-  val types = ArrayList<RecType>()
+class TypeSection : TypeSectionVisitor, MutableList<RecType> by ArrayList() {
   override fun start() {
-    types.clear()
+    clear()
   }
+
+  operator fun get(type: TypeId): RecType = get(type.value.toInt())
 
   override fun recType(): TypeSectionVisitor.RecTypeVisitor {
     val e = RecType()
-    types += e
+    this += e
     return e
   }
 
@@ -19,7 +21,7 @@ class TypeSection : TypeSectionVisitor {
 
   fun accept(visitor: TypeSectionVisitor) {
     visitor.start()
-    types.forEach {
+    forEach {
       it.accept(visitor.recType())
     }
     visitor.end()

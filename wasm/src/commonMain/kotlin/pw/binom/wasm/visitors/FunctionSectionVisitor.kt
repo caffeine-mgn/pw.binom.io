@@ -1,6 +1,6 @@
 package pw.binom.wasm.visitors
 
-import pw.binom.wasm.FunctionId
+import pw.binom.wasm.TypeId
 
 interface FunctionSectionVisitor {
   companion object {
@@ -8,6 +8,6 @@ interface FunctionSectionVisitor {
   }
 
   fun start() {}
-  fun value(int: FunctionId) {}
+  fun value(int: TypeId) {}
   fun end() {}
 }

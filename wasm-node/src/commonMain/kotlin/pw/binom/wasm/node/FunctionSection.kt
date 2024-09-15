@@ -1,19 +1,18 @@
 package pw.binom.wasm.node
 
-import pw.binom.wasm.FunctionId
+import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.FunctionSectionVisitor
 
-class FunctionSection : FunctionSectionVisitor {
-  val elements = ArrayList<FunctionId>()
+class FunctionSection : FunctionSectionVisitor, MutableList<TypeId> by ArrayList() {
 
   override fun start() {
     super.start()
-    elements.clear()
+    clear()
   }
 
-  override fun value(int: FunctionId) {
+  override fun value(int: TypeId) {
     super.value(int)
-    elements += int
+    this += int
   }
 
   override fun end() {
@@ -22,7 +21,7 @@ class FunctionSection : FunctionSectionVisitor {
 
   fun accept(visitor: FunctionSectionVisitor) {
     visitor.start()
-    elements.forEach {
+    forEach {
       visitor.value(it)
     }
     visitor.end()

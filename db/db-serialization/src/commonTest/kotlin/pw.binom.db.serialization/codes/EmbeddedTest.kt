@@ -2,6 +2,7 @@ package pw.binom.db.serialization.codes
 
 import kotlinx.serialization.Serializable
 import pw.binom.db.serialization.DefaultSQLSerializePool
+import pw.binom.db.serialization.Embedded
 import pw.binom.db.serialization.EmbeddedSplitter
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,14 +13,19 @@ class EmbeddedTest {
   data class Root(
     val a: String,
     @EmbeddedSplitter("_")
+    @Embedded
     val s: Subclass,
     @EmbeddedSplitter("_")
+    @Embedded
     val d: Subclass?,
     @EmbeddedSplitter("_")
+    @Embedded
     val n: SubclassNullable?,
     @EmbeddedSplitter("_")
+    @Embedded
     val m: SubclassNullable?,
     @EmbeddedSplitter("_")
+    @Embedded
     val k: SubclassNullable2?,
   )
 
@@ -91,7 +97,12 @@ class EmbeddedTest {
 
   @Test
   fun decodeEmbedded() {
-    val data = hashMapOf<String, Any?>("n_b" to null, "a" to "a", "d" to null, "s_b" to "b", "m" to null)
+    val data = hashMapOf<String, Any?>(
+      "n_b" to null,
+      "a" to "a",
+      "d_b" to null,
+      "s_b" to "b",
+      "m" to null)
     val d = DefaultSQLSerializePool.decode(
       serializer = Root.serializer(),
       name = "",

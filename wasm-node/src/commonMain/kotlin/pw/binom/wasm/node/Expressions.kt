@@ -6,11 +6,10 @@ import pw.binom.wasm.visitors.ValueVisitor
 import pw.binom.wasm.node.inst.MemoryOp
 import pw.binom.wasm.node.inst.*
 
-class Expressions : ExpressionsVisitor {
-  val elements = ArrayList<Inst>()
+class Expressions : ExpressionsVisitor,MutableList<Inst> by ArrayList() {
 
   override fun start() {
-    elements.clear()
+    clear()
   }
 
   override fun end() {
@@ -18,23 +17,23 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun const(value: Float) {
-    elements += F32Const(value)
+    this += F32Const(value)
   }
 
   override fun const(value: Double) {
-    elements += F64Const(value)
+    this += F64Const(value)
   }
 
   override fun const(value: Int) {
-    elements += I32Const(value)
+    this += I32Const(value)
   }
 
   override fun const(value: Long) {
-    elements += I64Const(value)
+    this += I64Const(value)
   }
 
   override fun controlFlow(opcode: UByte) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.UNREACHABLE -> ControlFlow.UNREACHABLE
       Opcodes.NOP -> ControlFlow.NOP
       Opcodes.ELSE -> ControlFlow.ELSE
@@ -44,7 +43,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun br(opcode: UByte, label: LabelId) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.BR -> Br.BR(label)
       Opcodes.BR_IF -> Br.BR_IF(label)
       Opcodes.BR_ON_NULL -> Br.BR_ON_NULL(label)
@@ -54,41 +53,41 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun endBlock() {
-    elements += EndBlock
+    this += EndBlock
   }
 
-  override fun memory(opcode: UByte, align: UInt, offset: UInt) {
-    elements += when (opcode) {
-      Opcodes.I32_LOAD -> Memory.I32_LOAD(align = align, offset = offset)
-      Opcodes.I64_LOAD -> Memory.I64_LOAD(align = align, offset = offset)
-      Opcodes.F32_LOAD -> Memory.F32_LOAD(align = align, offset = offset)
-      Opcodes.F64_LOAD -> Memory.F64_LOAD(align = align, offset = offset)
-      Opcodes.I32_LOAD8_S -> Memory.I32_LOAD8_S(align = align, offset = offset)
-      Opcodes.I32_LOAD8_U -> Memory.I32_LOAD8_U(align = align, offset = offset)
-      Opcodes.I32_LOAD16_S -> Memory.I32_LOAD16_S(align = align, offset = offset)
-      Opcodes.I32_LOAD16_U -> Memory.I32_LOAD16_U(align = align, offset = offset)
-      Opcodes.I64_LOAD8_S -> Memory.I64_LOAD8_S(align = align, offset = offset)
-      Opcodes.I64_LOAD8_U -> Memory.I64_LOAD8_U(align = align, offset = offset)
-      Opcodes.I64_LOAD16_S -> Memory.I64_LOAD16_S(align = align, offset = offset)
-      Opcodes.I64_LOAD16_U -> Memory.I64_LOAD16_U(align = align, offset = offset)
-      Opcodes.I64_LOAD32_S -> Memory.I64_LOAD32_S(align = align, offset = offset)
-      Opcodes.I64_LOAD32_U -> Memory.I64_LOAD32_U(align = align, offset = offset)
-      Opcodes.I32_STORE -> Memory.I32_STORE(align = align, offset = offset)
-      Opcodes.I64_STORE -> Memory.I64_STORE(align = align, offset = offset)
-      Opcodes.F32_STORE -> Memory.F32_STORE(align = align, offset = offset)
-      Opcodes.F64_STORE -> Memory.F64_STORE(align = align, offset = offset)
-      Opcodes.I32_STORE8 -> Memory.I32_STORE8(align = align, offset = offset)
-      Opcodes.I32_STORE16 -> Memory.I32_STORE16(align = align, offset = offset)
-      Opcodes.I64_STORE8 -> Memory.I64_STORE8(align = align, offset = offset)
-      Opcodes.I64_STORE16 -> Memory.I64_STORE16(align = align, offset = offset)
-      Opcodes.I64_STORE32 -> Memory.I64_STORE32(align = align, offset = offset)
+  override fun memory(opcode: UByte, align: UInt, offset: UInt, memoryId: MemoryId) {
+    this += when (opcode) {
+      Opcodes.I32_LOAD -> Memory.I32_LOAD(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD -> Memory.I64_LOAD(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.F32_LOAD -> Memory.F32_LOAD(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.F64_LOAD -> Memory.F64_LOAD(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_LOAD8_S -> Memory.I32_LOAD8_S(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_LOAD8_U -> Memory.I32_LOAD8_U(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_LOAD16_S -> Memory.I32_LOAD16_S(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_LOAD16_U -> Memory.I32_LOAD16_U(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD8_S -> Memory.I64_LOAD8_S(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD8_U -> Memory.I64_LOAD8_U(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD16_S -> Memory.I64_LOAD16_S(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD16_U -> Memory.I64_LOAD16_U(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD32_S -> Memory.I64_LOAD32_S(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_LOAD32_U -> Memory.I64_LOAD32_U(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_STORE -> Memory.I32_STORE(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_STORE -> Memory.I64_STORE(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.F32_STORE -> Memory.F32_STORE(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.F64_STORE -> Memory.F64_STORE(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_STORE8 -> Memory.I32_STORE8(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I32_STORE16 -> Memory.I32_STORE16(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_STORE8 -> Memory.I64_STORE8(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_STORE16 -> Memory.I64_STORE16(align = align, offset = offset, memoryId = memoryId)
+      Opcodes.I64_STORE32 -> Memory.I64_STORE32(align = align, offset = offset, memoryId = memoryId)
 
       else -> throw IllegalArgumentException()
     }
   }
 
   override fun numeric(opcode: UByte) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.I32_CLZ -> Numeric.I32_CLZ
       Opcodes.I32_CTZ -> Numeric.I32_CTZ
       Opcodes.I32_POPCNT -> Numeric.I32_POPCNT
@@ -159,7 +158,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun compare(opcode: UByte) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.I32_EQZ -> Compare.I32_EQZ
       Opcodes.I32_EQ -> Compare.I32_EQ
       Opcodes.I32_NE -> Compare.I32_NE
@@ -200,7 +199,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun convert(opcode: UByte) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.I32_WRAP_I64 -> Convert.I32_WRAP_I64
       Opcodes.I32_TRUNC_S_F32 -> Convert.I32_TRUNC_S_F32
       Opcodes.I32_TRUNC_U_F32 -> Convert.I32_TRUNC_U_F32
@@ -227,7 +226,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun structOp(gcOpcode: UByte, type: TypeId, field: FieldId) {
-    elements += when (gcOpcode) {
+    this += when (gcOpcode) {
       Opcodes.GC_STRUCT_SET -> StructOp.GC_STRUCT_SET(type = type, field = field)
       Opcodes.GC_STRUCT_GET -> StructOp.GC_STRUCT_GET(type = type, field = field)
       Opcodes.GC_STRUCT_GET_S -> StructOp.GC_STRUCT_GET_S(type = type, field = field)
@@ -238,24 +237,24 @@ class Expressions : ExpressionsVisitor {
 
   override fun refNull(): ValueVisitor.HeapVisitor {
     val e = Ref.NULL()
-    elements += e
+    this += e
     return e.heap
   }
 
   override fun call(function: FunctionId) {
-    elements += CallFunction(function)
+    this += CallFunction(function)
   }
 
   override fun callIndirect(type: TypeId, table: TableId) {
-    elements += CallIndirect(type = type, table = table)
+    this += CallIndirect(type = type, table = table)
   }
 
   override fun call(typeRef: TypeId) {
-    elements += CallType(typeRef)
+    this += CallType(typeRef)
   }
 
   override fun indexArgument(opcode: UByte, value: LocalId) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.GET_LOCAL -> LocalIndexArgument.GET(value)
       Opcodes.SET_LOCAL -> LocalIndexArgument.SET(value)
       Opcodes.TEE_LOCAL -> LocalIndexArgument.TEE(value)
@@ -265,7 +264,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun indexArgument(opcode: UByte, label: GlobalId) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.GET_GLOBAL -> GlobalIndexArgument.GET(label)
       Opcodes.SET_GLOBAL -> GlobalIndexArgument.SET(label)
 
@@ -274,7 +273,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun reinterpret(opcode: UByte) {
-    elements += when (opcode) {
+    this += when (opcode) {
       Opcodes.I32_REINTERPRET_F32 -> Reinterpret.I32ToF32
       Opcodes.I64_REINTERPRET_F64 -> Reinterpret.I64ToF64
       Opcodes.F32_REINTERPRET_I32 -> Reinterpret.F32ToI32
@@ -284,7 +283,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun arrayOp(gcOpcode: UByte, type: TypeId) {
-    elements += when (gcOpcode) {
+    this += when (gcOpcode) {
       Opcodes.GC_ARRAY_GET -> ArrayOp.Get(type)
       Opcodes.GC_ARRAY_SET -> ArrayOp.Set(type)
       Opcodes.GC_ARRAY_GET_S -> ArrayOp.GetS(type)
@@ -302,70 +301,70 @@ class Expressions : ExpressionsVisitor {
       Opcodes.GC_REF_CAST_NULL -> Ref.GC_REF_CAST_NULL()
       else -> throw IllegalArgumentException()
     }
-    elements += e
+    this += e
     return e.heap
   }
 
   override fun structNew(type: TypeId) {
-    elements += StructNew(type)
+    this += StructNew(type)
   }
 
   override fun arrayCopy(from: TypeId, to: TypeId) {
-    elements += ArrayCopy(from = from, to = to)
+    this += ArrayCopy(from = from, to = to)
   }
 
   override fun newArray(type: TypeId, size: UInt) {
-    elements += NewArray.Size(id = type, size = size)
+    this += NewArray.Size(id = type, size = size)
   }
 
   override fun newArray(type: TypeId, data: DataId) {
-    elements += NewArray.Data(id = type, data = data)
+    this += NewArray.Data(id = type, data = data)
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {
     val e = BrOnCastFail(flags = flags, labelId = label)
-    elements += e
+    this += e
     return e
   }
 
   override fun arrayFull(type: TypeId) {
-    elements += ArrayFull(type)
+    this += ArrayFull(type)
   }
 
   override fun newArrayDefault(type: TypeId) {
-    elements += NewArrayDefault(type)
+    this += NewArrayDefault(type)
   }
 
   override fun arrayLen() {
-    elements += ArrayLen
+    this += ArrayLen
   }
 
   override fun ref(function: FunctionId) {
-    elements += RefFunction(function)
+    this += RefFunction(function)
   }
 
   override fun drop() {
-    elements += Drop
+    this += Drop
   }
 
   override fun brTable(): ExpressionsVisitor.BrTableVisitor {
     val e = BrTable()
-    elements += e
+    this += e
     return e
   }
 
   override fun select() {
-    elements += Select
+    this += Select
   }
 
   override fun selectWithType(): ExpressionsVisitor.SelectVisitor {
     val e = SelectWithType()
-    elements += e
+    this += e
     return e
   }
 
   override fun throwOp(tag: TagId) {
-    elements += ThrowTag(tag)
+    this += ThrowTag(tag)
   }
 
   override fun startBlock(opcode: UByte): ExpressionsVisitor.BlockStartVisitor {
@@ -376,44 +375,44 @@ class Expressions : ExpressionsVisitor {
       Opcodes.IF -> BlockStart.IF()
       else -> throw IllegalArgumentException()
     }
-    elements += e
+    this += e
     return e
   }
 
   override fun refIsNull() {
-    elements += RefIsNull
+    this += RefIsNull
   }
 
   override fun refAsNonNull() {
-    elements += RefAsNonNull
+    this += RefAsNonNull
   }
 
   override fun throwRef() {
-    elements += ThrowRef
+    this += ThrowRef
   }
 
   override fun catchAll() {
-    elements += CatchAll
+    this += CatchAll
   }
 
-  override fun memorySize(size: UInt) {
-    elements += MemoryOp.Size(size)
+  override fun memorySize(id: MemoryId) {
+    this += MemoryOp.Size(id)
   }
 
-  override fun memoryGrow(size: UInt) {
-    elements += MemoryOp.Grow(size)
+  override fun memoryGrow(id: MemoryId) {
+    this += MemoryOp.Grow(id)
   }
 
   override fun rethrow(v32u: UInt) {
-    elements += Rethrow(v32u)
+    this += Rethrow(v32u)
   }
 
   override fun catch(v32u: UInt) {
-    elements += Catch(v32u)
+    this += Catch(v32u)
   }
 
   override fun convertNumeric(numOpcode: UByte) {
-    elements += when (numOpcode) {
+    this += when (numOpcode) {
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F32 -> Convert.NUMERIC_I32S_CONVERT_SAT_F32
       Opcodes.NUMERIC_I32U_CONVERT_SAT_F32 -> Convert.NUMERIC_I32U_CONVERT_SAT_F32
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F64 -> Convert.NUMERIC_I32S_CONVERT_SAT_F64
@@ -428,7 +427,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun gcConvert(gcOpcode: UByte) {
-    elements += when (gcOpcode) {
+    this += when (gcOpcode) {
       Opcodes.GC_ANY_CONVERT_EXTERN -> Convert.GC_ANY_CONVERT_EXTERN
       Opcodes.GC_EXTERN_CONVERT_ANY -> Convert.GC_EXTERN_CONVERT_ANY
 
@@ -437,7 +436,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun bulkOperator(numberOpcode: UByte) {
-    elements += when (numberOpcode) {
+    this += when (numberOpcode) {
       Opcodes.NUMERIC_MEMORY_INIT -> BulkOperator.MemoryInit
       Opcodes.NUMERIC_DATA_DROP -> BulkOperator.DataDrop
       Opcodes.NUMERIC_MEMORY_COPY -> BulkOperator.MemoryCopy
@@ -452,7 +451,7 @@ class Expressions : ExpressionsVisitor {
 
   fun accept(visitor: ExpressionsVisitor) {
     visitor.start()
-    elements.forEach {
+    forEach {
       visitor.beforeOperation()
       it.accept(visitor)
       visitor.afterOperation()

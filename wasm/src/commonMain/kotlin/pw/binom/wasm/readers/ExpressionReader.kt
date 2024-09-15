@@ -9,6 +9,8 @@ import pw.binom.wasm.visitors.ExpressionsVisitor
  * https://webassembly.github.io/gc/core/binary/instructions.html#binary-instr
  */
 object ExpressionReader {
+  val POW_2_6 = 2u * 2u * 2u * 2u * 2u * 2u
+  val POW_2_7 = POW_2_6 * 2u
   private class Context {
     var depth = 1
   }
@@ -154,12 +156,24 @@ object ExpressionReader {
       Opcodes.I64_STORE16,
       Opcodes.I64_STORE32,
         -> {
-        val align = input.v32u()
+        var align = input.v32u()
+        val memoryId: MemoryId
+        when {
+          POW_2_6 < align && align < POW_2_7 -> {
+            align -= POW_2_6
+            memoryId = MemoryId(input.v32u())
+          }
+
+          align < POW_2_6 -> memoryId = MemoryId(0u)
+          else -> throw IllegalStateException("Illegal align value: $align")
+        }
         val offset = input.v32u()
+
         visitor.memory(
           opcode = opcode,
           align = align,
           offset = offset,
+          memoryId = memoryId,
         )
       }
 
@@ -345,9 +359,9 @@ object ExpressionReader {
         typeRef = TypeId(input.v32u()),
       )
 
-      Opcodes.MEMORY_SIZE -> visitor.memorySize(size = input.v32u())
+      Opcodes.MEMORY_SIZE -> visitor.memorySize(id = MemoryId(input.v32u()))
 
-      Opcodes.MEMORY_GROW -> visitor.memoryGrow(size = input.v32u())
+      Opcodes.MEMORY_GROW -> visitor.memoryGrow(id = MemoryId(input.v32u()))
 
       Opcodes.THROW -> visitor.throwOp(tag = TagId(input.v32u()))
 
@@ -405,7 +419,7 @@ object ExpressionReader {
       Opcodes.NUMERIC_ELEM_DROP,
       Opcodes.NUMERIC_TABLE_COPY,
       Opcodes.NUMERIC_TABLE_SIZE,
-         -> visitor.bulkOperator(opcode)
+        -> visitor.bulkOperator(opcode)
 
       else -> TODO("Unknown MISC code: 0xfc${opcode.toString(16).padStart(2, '0')}")
     }

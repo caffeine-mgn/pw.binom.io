@@ -12,6 +12,8 @@ import pw.binom.date.DateTime
 import pw.binom.db.ResultSet
 import pw.binom.db.serialization.codes.SQLDecoder
 import pw.binom.uuid.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class SQLValueDecoder(
   val classDescriptor: SerialDescriptor,
@@ -27,6 +29,8 @@ class SQLValueDecoder(
   override fun decodeDate(): Date = resultSet.getDate(columnName)!!
 
   override fun decodeUUID(): UUID = resultSet.getUUID(columnName)!!
+  @OptIn(ExperimentalUuidApi::class)
+  override fun decodeUuid(): Uuid = resultSet.getUuid(columnName)!!
 
   override fun decodeByteArray(): ByteArray = resultSet.getBlob(columnName)!!
 

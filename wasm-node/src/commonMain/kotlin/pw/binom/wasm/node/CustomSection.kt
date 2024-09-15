@@ -5,10 +5,10 @@ import pw.binom.io.ByteArrayOutput
 import pw.binom.io.Input
 import pw.binom.io.use
 import pw.binom.wasm.visitors.CustomSectionVisitor
+import pw.binom.wasm.visitors.WasmVisitor
 
-class CustomSection : CustomSectionVisitor {
+class CustomSection : CustomSectionVisitor, MutableList<CustomBlock> by ArrayList() {
 
-  val elements = ArrayList<CustomBlock>()
   private var name = ""
 
   override fun start(name: String) {
@@ -22,11 +22,17 @@ class CustomSection : CustomSectionVisitor {
       input.copyTo(it)
       it.toByteArray()
     }
-    elements += CustomBlock(name = name, data = data)
+    this += CustomBlock(name = name, data = data)
   }
 
   override fun end() {
     name = ""
     super.end()
+  }
+
+  fun accept(visitor: WasmVisitor) {
+    forEach { block ->
+      block.accept(visitor.customSection())
+    }
   }
 }

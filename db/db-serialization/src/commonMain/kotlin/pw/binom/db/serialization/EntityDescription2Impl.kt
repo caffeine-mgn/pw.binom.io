@@ -45,6 +45,9 @@ internal class EntityDescription2Impl(val serializer: KSerializer<*>) : EntityDe
   override val idFields: List<EntityDescription2.Field> = fields.values.filter { it.id }
   private val binder =
     object : DataBinder {
+      override val keys: Set<String>
+        get() = params!!.keys
+
       override fun get(key: String): Any? = params!![key]
 
       override fun contains(key: String): Boolean = params!!.containsKey(key)

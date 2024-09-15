@@ -48,13 +48,13 @@ class ImportSectionWriter(private val out: WasmOutput) : ImportSectionVisitor {
     stream.moveTo(out)
   }
 
-  override fun function(module: String, field: String, index: FunctionId) {
+  override fun function(module: String, field: String, index: TypeId) {
     check(state == 1)
     count++
     stream.string(module)
     stream.string(field)
     stream.i8s(0)
-    stream.v32u(index.id)
+    stream.v32u(index.value)
   }
 
   override fun table(module: String, field: String): TableVisitor {

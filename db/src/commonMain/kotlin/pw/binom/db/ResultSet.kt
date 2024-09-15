@@ -5,6 +5,8 @@ import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.io.IOException
 import pw.binom.uuid.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 interface ResultSet {
   val columns: List<String>
@@ -33,6 +35,8 @@ interface ResultSet {
   fun isNull(index: Int): Boolean
 
   fun getUUID(index: Int) = getBlob(index)?.let { UUID.create(it) }
+  @OptIn(ExperimentalUuidApi::class)
+  fun getUuid(index: Int) = getBlob(index)?.let { Uuid.fromByteArray(it) }
 
   fun getDateTime(index: Int): DateTime?
 
@@ -55,6 +59,8 @@ interface ResultSet {
   fun isNull(column: String): Boolean
 
   fun getUUID(column: String) = getBlob(column)?.let { UUID.create(it) }
+  @OptIn(ExperimentalUuidApi::class)
+  fun getUuid(column: String) = getBlob(column)?.let { Uuid.fromByteArray(it) }
 
   fun getDateTime(column: String): DateTime?
 

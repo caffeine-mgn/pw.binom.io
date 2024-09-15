@@ -9,28 +9,27 @@ import pw.binom.wasm.MemoryId
 import pw.binom.wasm.visitors.DataSectionVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor
 
-class DataSection : DataSectionVisitor {
-  val elements = ArrayList<Data>()
+class DataSection : DataSectionVisitor, MutableList<Data> by ArrayList() {
   private var memory: MemoryId? = null
-  private var e: Expressions? = null
+  private var exp: Expressions? = null
 
   override fun active(memoryId: MemoryId): ExpressionsVisitor {
     memory = memoryId
     val e = Expressions()
-    this.e = e
+    this.exp = e
     return e
   }
 
   override fun active(): ExpressionsVisitor {
     memory = null
     val e = Expressions()
-    this.e = e
+    this.exp = e
     return e
   }
 
   override fun passive() {
     memory = null
-    e = null
+    exp = null
   }
 
   override fun data(input: Input) {
@@ -38,9 +37,9 @@ class DataSection : DataSectionVisitor {
       input.copyTo(it)
       it.toByteArray()
     }
-    elements += Data(
+    this += Data(
       memoryId = memory,
-      expressions = e,
+      expressions = exp,
       data = data
     )
   }
@@ -51,11 +50,11 @@ class DataSection : DataSectionVisitor {
 
   override fun elementEnd() {
     memory = null
-    e = null
+    exp = null
   }
 
   override fun start() {
-    elements.clear()
+    clear()
     super.start()
   }
 
@@ -65,20 +64,20 @@ class DataSection : DataSectionVisitor {
 
   fun accept(visitor: DataSectionVisitor) {
     visitor.start()
-    elements.forEach {
+    forEach { data ->
       visitor.elementStart()
-      if (it.memoryId == null) {
-        if (it.expressions == null) {
+      if (data.memoryId == null) {
+        if (data.expressions == null) {
           visitor.passive()
         } else {
-          it.expressions!!.accept(visitor.active())
+          data.expressions!!.accept(visitor.active())
         }
       } else {
-        check(it.expressions != null)
-        visitor.active(it.memoryId!!)
-        it.expressions!!.accept(visitor.active())
+        check(data.expressions != null)
+        visitor.active(data.memoryId!!)
+        data.expressions!!.accept(visitor.active())
       }
-      ByteArrayInput(it.data).use { d ->
+      ByteArrayInput(data.data).use { d ->
         visitor.data(d)
       }
       visitor.elementEnd()

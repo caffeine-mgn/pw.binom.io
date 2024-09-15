@@ -205,7 +205,7 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
     out.i8u(Opcodes.DROP)
   }
 
-  override fun memory(opcode: UByte, align: UInt, offset: UInt) {
+  override fun memory(opcode: UByte, align: UInt, offset: UInt, memoryId: MemoryId) {
     when (opcode) {
       Opcodes.I32_LOAD,
       Opcodes.I64_LOAD,
@@ -231,8 +231,15 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
       Opcodes.I64_STORE16,
       Opcodes.I64_STORE32,
         -> {
+        require(align < ExpressionReader.POW_2_6)
         out.i8u(opcode)
-        out.v32u(align)
+        if (memoryId.raw > 0u) {
+          out.v32u(align + ExpressionReader.POW_2_6)
+          out.v32u(memoryId.raw)
+        } else {
+          out.v32u(align)
+        }
+
         out.v32u(offset)
       }
 
@@ -572,14 +579,14 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
     return ValueWriter(out)
   }
 
-  override fun memorySize(size: UInt) {
+  override fun memorySize(id: MemoryId) {
     out.i8u(Opcodes.MEMORY_SIZE)
-    out.v32u(size)
+    out.v32u(id.raw)
   }
 
-  override fun memoryGrow(size: UInt) {
+  override fun memoryGrow(id: MemoryId) {
     out.i8u(Opcodes.MEMORY_GROW)
-    out.v32u(size)
+    out.v32u(id.raw)
   }
 
   override fun rethrow(v32u: UInt) {

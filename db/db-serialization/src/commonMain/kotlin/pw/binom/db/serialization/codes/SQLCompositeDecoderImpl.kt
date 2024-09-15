@@ -39,11 +39,11 @@ class SQLCompositeDecoderImpl(val ctx: SQLDecoderPool, val onClose: () -> Unit) 
         return cursor++
       } else {
         val column = prefix + descriptor.getElementName(it)
-
         if (input.contains(column)) {
           return cursor++
         }
       }
+      println("Column ${descriptor.serialName}.${descriptor.getElementName(it)} not found. prefix=\"$prefix\", columns: ${input.keys}")
     }
     return CompositeDecoder.DECODE_DONE
   }
@@ -51,8 +51,9 @@ class SQLCompositeDecoderImpl(val ctx: SQLDecoderPool, val onClose: () -> Unit) 
   override fun decodeFloatElement(descriptor: SerialDescriptor, index: Int): Float =
     input.getFloat(prefix + descriptor.getElementName(index))
 
-  override fun decodeIntElement(descriptor: SerialDescriptor, index: Int): Int =
-    input.getInt(prefix + descriptor.getElementName(index))
+  override fun decodeIntElement(descriptor: SerialDescriptor, index: Int): Int {
+    return input.getInt(prefix + descriptor.getElementName(index))
+  }
 
   override fun decodeLongElement(descriptor: SerialDescriptor, index: Int): Long =
     input.getLong(prefix + descriptor.getElementName(index))
@@ -66,11 +67,12 @@ class SQLCompositeDecoderImpl(val ctx: SQLDecoderPool, val onClose: () -> Unit) 
   ): T? {
     val embedded = descriptor.getElementAnnotation<Embedded>(index)
     val embedded2 = descriptor.getElementAnnotation<EmbeddedSplitter>(index)?.splitter
+    val splitter = embedded2 ?: "_"
     if (embedded != null) {
       val fieldDescriptor = descriptor.getElementDescriptor(index)
       val exist = (0 until fieldDescriptor.elementsCount).any { fieldIndex ->
         val elementName = fieldDescriptor.getElementName(fieldIndex)
-        val splitter = embedded2 ?: "_"
+
         val el = "$prefix${descriptor.getElementName(index)}$splitter$elementName"
         input.contains(el) && !input.isNull(el)
       }
@@ -78,7 +80,7 @@ class SQLCompositeDecoderImpl(val ctx: SQLDecoderPool, val onClose: () -> Unit) 
         return previousValue
       }
       val c = ctx.decoderValue(
-        name = "$prefix${descriptor.getElementName(index)}",
+        name = "$prefix${descriptor.getElementName(index)}$splitter",
         input = input,
         serializersModule = serializersModule
       )

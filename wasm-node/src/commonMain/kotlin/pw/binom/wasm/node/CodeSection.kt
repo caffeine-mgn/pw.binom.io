@@ -2,17 +2,15 @@ package pw.binom.wasm.node
 
 import pw.binom.wasm.visitors.CodeSectionVisitor
 
-class CodeSection : CodeSectionVisitor {
-
-  val functions = ArrayList<CodeFunction>()
+class CodeSection : CodeSectionVisitor, MutableList<CodeFunction> by ArrayList() {
 
   override fun start() {
-    functions.clear()
+    clear()
   }
 
   override fun code(): CodeSectionVisitor.CodeVisitor {
     val e = CodeFunction()
-    functions += e
+    this += e
     return e
   }
 
@@ -22,7 +20,7 @@ class CodeSection : CodeSectionVisitor {
 
   fun accept(visitor: CodeSectionVisitor) {
     visitor.start()
-    functions.forEach {
+    forEach {
       it.accept(visitor.code())
     }
     visitor.end()

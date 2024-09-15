@@ -6,4 +6,6 @@ class LocalVar {
   fun set(value: Any?) {
     this.value = value
   }
+
+  override fun toString(): String = "LocalVar($value)"
 }

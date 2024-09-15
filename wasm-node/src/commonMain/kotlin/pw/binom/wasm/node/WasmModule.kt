@@ -85,14 +85,14 @@ class WasmModule : WasmVisitor {
   override fun start() {
     startFunctionId = null
     this.version = 1
-    exportSection.elements.clear()
-    tagSection.elements.clear()
-    globalSection.elements.clear()
-    functionSection.elements.clear()
-    customSection.elements.clear()
-    importSection.elements.clear()
-    memorySection.elements.clear()
-    typeSection.types.clear()
+    exportSection.clear()
+    tagSection.clear()
+    globalSection.clear()
+    functionSection.clear()
+    customSection.clear()
+    importSection.clear()
+    memorySection.clear()
+    typeSection.clear()
   }
 
   fun accept(visitor: WasmVisitor) {
@@ -102,37 +102,40 @@ class WasmModule : WasmVisitor {
     if (startFunctionId != null) {
       visitor.startSection(startFunctionId)
     }
-    if (exportSection.isNotEmpty) {
+    if (exportSection.isNotEmpty()) {
       exportSection.accept(visitor.exportSection())
     }
-    if (tagSection.elements.isNotEmpty()) {
+    if (tagSection.isNotEmpty()) {
       tagSection.accept(visitor.tagSection())
     }
-    if (codeSection.functions.isNotEmpty()) {
+    if (codeSection.isNotEmpty()) {
       codeSection.accept(visitor.codeSection())
     }
-    if (globalSection.elements.isNotEmpty()) {
+    if (globalSection.isNotEmpty()) {
       globalSection.accept(visitor.globalSection())
     }
-    if (functionSection.elements.isNotEmpty()) {
+    if (functionSection.isNotEmpty()) {
       functionSection.accept(visitor.functionSection())
     }
-    if (dataSection.elements.isNotEmpty()) {
+    if (dataSection.isNotEmpty()) {
       dataSection.accept(visitor.dataSection())
       visitor.dataCountSection().also {
         it.start()
-        it.value(dataSection.elements.size.toUInt())
+        it.value(dataSection.size.toUInt())
         it.end()
       }
     }
-    if (importSection.elements.isNotEmpty()) {
+    if (importSection.isNotEmpty()) {
       importSection.accept(visitor.importSection())
     }
-    if (memorySection.elements.isNotEmpty()) {
+    if (memorySection.isNotEmpty()) {
       memorySection.accept(visitor.memorySection())
     }
-    if (typeSection.types.isNotEmpty()) {
+    if (typeSection.isNotEmpty()) {
       typeSection.accept(visitor.typeSection())
+    }
+    if (customSection.isNotEmpty()){
+      customSection.accept(visitor)
     }
     visitor.end()
   }

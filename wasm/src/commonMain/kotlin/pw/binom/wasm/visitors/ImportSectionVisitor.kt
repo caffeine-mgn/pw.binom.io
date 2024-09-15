@@ -1,6 +1,6 @@
 package pw.binom.wasm.visitors
 
-import pw.binom.wasm.FunctionId
+import pw.binom.wasm.TypeId
 
 interface ImportSectionVisitor {
   companion object {
@@ -20,7 +20,7 @@ interface ImportSectionVisitor {
 
   fun start() {}
   fun end() {}
-  fun function(module: String, field: String, index: FunctionId) {}
+  fun function(module: String, field: String, index: TypeId) {}
   fun memory(module: String, field: String, initial: UInt, maximum: UInt) {}
   fun memory(module: String, field: String, initial: UInt) {}
   fun table(module: String, field: String): TableVisitor = TableVisitor.SKIP

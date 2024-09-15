@@ -33,6 +33,8 @@ class ResultSetDataProvider(val rs: ResultSet) : DataProvider {
   override fun get(key: String): Any? = rs.getString(key)
 
   private fun columnNotDefined(key: String): Nothing = throw SQLException("Column \"$key\" is null")
+  override val keys: Collection<String>
+    get() = rs.columns
 
   override fun getString(key: String): String = rs.getString(key) ?: columnNotDefined(key)
 

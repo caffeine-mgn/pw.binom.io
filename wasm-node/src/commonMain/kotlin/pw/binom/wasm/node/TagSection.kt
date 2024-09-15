@@ -3,14 +3,13 @@ package pw.binom.wasm.node
 import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.TagSectionVisitor
 
-class TagSection : TagSectionVisitor {
-  var elements = ArrayList<TypeId>()
+class TagSection : TagSectionVisitor,MutableList<TypeId> by ArrayList() {
   override fun start() {
-    elements.clear()
+    clear()
   }
 
   override fun tag(type: TypeId) {
-    elements += type
+    this += type
   }
 
   override fun end() {
@@ -19,7 +18,7 @@ class TagSection : TagSectionVisitor {
 
   fun accept(visitor: TagSectionVisitor) {
     visitor.start()
-    elements.forEach {
+    forEach {
       visitor.tag(it)
     }
     visitor.end()

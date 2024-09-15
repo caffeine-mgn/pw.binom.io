@@ -1,14 +1,6 @@
 package pw.binom.wasm.visitors
 
-import pw.binom.wasm.DataId
-import pw.binom.wasm.FieldId
-import pw.binom.wasm.FunctionId
-import pw.binom.wasm.GlobalId
-import pw.binom.wasm.LabelId
-import pw.binom.wasm.LocalId
-import pw.binom.wasm.TableId
-import pw.binom.wasm.TagId
-import pw.binom.wasm.TypeId
+import pw.binom.wasm.*
 
 interface ExpressionsVisitor {
   companion object {
@@ -71,7 +63,7 @@ interface ExpressionsVisitor {
 
   fun br(opcode: UByte, label: LabelId) {}
   fun endBlock() {}
-  fun memory(opcode: UByte, align: UInt, offset: UInt) {}
+  fun memory(opcode: UByte, align: UInt, offset: UInt, memoryId: MemoryId) {}
   fun numeric(opcode: UByte) {}
   fun compare(opcode: UByte) {}
   fun convert(opcode: UByte) {}
@@ -104,8 +96,8 @@ interface ExpressionsVisitor {
   fun refAsNonNull() {}
   fun throwRef() {}
   fun catchAll() {}
-  fun memorySize(size: UInt) {}
-  fun memoryGrow(size: UInt) {}
+  fun memorySize(id: MemoryId) {}
+  fun memoryGrow(id: MemoryId) {}
   fun rethrow(v32u: UInt) {}
   fun catch(v32u: UInt) {}
   fun convertNumeric(numOpcode: UByte) {}

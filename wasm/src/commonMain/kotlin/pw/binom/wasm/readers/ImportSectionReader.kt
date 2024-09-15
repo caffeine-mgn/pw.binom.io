@@ -2,7 +2,6 @@ package pw.binom.wasm.readers
 
 import pw.binom.wasm.*
 import pw.binom.wasm.visitors.ImportSectionVisitor
-import pw.binom.wasm.visitors.ValueVisitor
 
 /**
  * https://webassembly.github.io/gc/core/binary/modules.html#binary-importsec
@@ -74,7 +73,7 @@ internal object ImportSectionReader {
         0.toByte() -> visitor.function(
           module = module,
           field = field,
-          index = FunctionId(input.v32u())
+          index = TypeId(input.v32u())
         )
 
         1.toByte() -> readTable(

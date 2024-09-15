@@ -14,6 +14,8 @@ import pw.binom.date.Date
 import pw.binom.date.DateTime
 import pw.binom.db.serialization.*
 import pw.binom.uuid.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> Unit) : SQLDecoder {
   var name = ""
@@ -92,6 +94,13 @@ class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> U
 
   override fun decodeUUID(): UUID {
     val r = input.getUUID(name)
+    onClose(this)
+    return r
+  }
+
+  @OptIn(ExperimentalUuidApi::class)
+  override fun decodeUuid(): Uuid {
+    val r = input.getUuid(name)
     onClose(this)
     return r
   }
