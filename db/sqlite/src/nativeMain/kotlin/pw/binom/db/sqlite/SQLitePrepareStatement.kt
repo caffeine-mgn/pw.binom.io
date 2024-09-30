@@ -12,6 +12,7 @@ import pw.binom.db.sync.SyncPreparedStatement
 import pw.binom.db.sync.SyncResultSet
 import pw.binom.io.ClosedException
 
+@Suppress("NOTHING_TO_INLINE")
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 class SQLitePrepareStatement(
   override val connection: SQLiteConnector,

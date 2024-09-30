@@ -55,8 +55,8 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
   override suspend fun write(data: ByteBuffer): DataTransferSize {
     checkClosed()
     var l = 0
-    while (data.remaining > 0) {
-      if (buffer.remaining <= 0) {
+    while (data.hasRemaining) {
+      if (!buffer.hasRemaining) {
         flush()
       }
       val wrote = buffer.write(data)
@@ -69,7 +69,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
   }
 
   suspend fun writeByte(value: Byte) {
-    if (buffer.remaining <= 0) {
+    if (!buffer.hasRemaining) {
       flush()
     }
     buffer.put(value)

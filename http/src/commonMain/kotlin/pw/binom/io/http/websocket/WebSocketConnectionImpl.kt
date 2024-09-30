@@ -3,6 +3,7 @@
 package pw.binom.io.http.websocket
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.InternalLog
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.coroutines.SimpleAsyncLock
 import pw.binom.io.*
@@ -16,6 +17,9 @@ class WebSocketConnectionImpl(
   private val mainChannel: AsyncCloseable,
   private val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : WebSocketConnection {
+  private val logger = InternalLog
+    .file("WebSocketConnectionImpl")
+    .prefix { "this=${hashCode()} " }
   private val closing = AtomicBoolean(false)
 
   private val receivedCloseMessage = AtomicBoolean(false)
@@ -32,6 +36,9 @@ class WebSocketConnectionImpl(
   //  private val header = WebSocketHeader()
   private val message = WebSocketInputImpl(input = _input, connection = this)
   private var writing: WebSocketOutput? = null
+
+  override fun toString() =
+    "WebSocketConnectionImpl"
 
   private fun checkClosed() {
     if (closing.getValue()) {
@@ -66,20 +73,27 @@ class WebSocketConnectionImpl(
   override suspend fun read(): WebSocketInput {
     checkClosed()
     if (receivedCloseMessage.getValue()) {
+      logger.info(method = "read") { "Can't read message because connection already received close flag" }
       throw IllegalStateException("Can't read message. Already received close message")
     }
     if (sentCloseMessage.getValue()) {
+      logger.info(method = "read") { "Can't read message because connection already sent close flag" }
       throw IllegalStateException("Can't read message. Already sent close message")
     }
     try {
+      logger.info(method = "read") { "Try lock for reading" }
       readChannelLock.lock()
+      logger.info(method = "read") { "Lock for reading done. Try to read message header" }
       message.startMessage()
       val type = message.type
+      logger.info(method = "read") { "Message header was read. Message type: $type" }
       if (type == MessageType.CLOSE) {
         this.receivedCloseMessage.setValue(true)
       }
+      logger.info(method = "read") { "Message read for read. Return it" }
       return message
     } catch (e: ChannelClosedException) {
+      logger.info(method = "read") { "Channel closed exception $e" }
       readChannelLock.unlock()
       runCatching {
         closeTcp()
@@ -88,6 +102,7 @@ class WebSocketConnectionImpl(
         connection = this,
       )
     } catch (e: Throwable) {
+      logger.info(method = "read") { "Unknown exception $e" }
       readChannelLock.unlock()
       throw e
     }
@@ -104,10 +119,12 @@ class WebSocketConnectionImpl(
 
   internal fun writingMessageFinished() {
     writing = null
+    logger.info(method = "writingMessageFinished") { "release writeChannelLock" }
     writeChannelLock.unlock()
   }
 
   internal fun readingMessageFinished() {
+    logger.info(method = "readingMessageFinished") { "release readChannelLock" }
     readChannelLock.unlock()
   }
 
@@ -154,7 +171,7 @@ class WebSocketConnectionImpl(
     mainChannel.asyncCloseAnyway()
   }
 
-  internal fun tcpClosed(){
+  internal fun tcpClosed() {
 
   }
 

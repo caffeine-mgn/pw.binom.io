@@ -44,7 +44,7 @@ class MessageTest {
     val data = ByteArray(50) { it.toByte() }
     val mask = 1234
     val bytes = data.wrap {
-      WebSocketInput.encode(0L, mask, it)
+      WebSocketInput.encode(cursor = 0L, mask = mask, data = it)
       assertEquals(it.capacity, it.limit)
       assertEquals(it.capacity, it.position)
       it.clear()
@@ -66,9 +66,9 @@ class MessageTest {
     }
     buf.clear()
     val mask = Random.nextInt()
-    WebSocketInput.encode(0L, mask, buf)
+    WebSocketInput.encode(cursor = 0L, mask = mask, data = buf)
     buf.clear()
-    WebSocketInput.encode(0L, mask, buf)
+    WebSocketInput.encode(cursor = 0L, mask = mask, data = buf)
     buf.clear()
     buf.forEachIndexed { i, byte ->
       assertEquals(data[i], byte)

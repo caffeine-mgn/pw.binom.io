@@ -86,7 +86,7 @@ actual class TcpNetServerSocket actual constructor() : TcpServerSocket, NetSocke
         NSocket_setBlockedMode(ptr, if (value) 1 else 0)
       }
     }
-  override val native: RawSocket = data.use { ptr -> ptr.pointed.native }
+  override val native = data.use { ptr -> ptr.pointed.native }
   override val server: Boolean
     get() = true
   override var keyHash: Int

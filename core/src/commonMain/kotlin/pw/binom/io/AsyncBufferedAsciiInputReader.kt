@@ -83,17 +83,17 @@ class AsyncBufferedAsciiInputReader private constructor(
     try {
       buffer.compact()
 
-      logger.info{ "Reading from stream ${buffer.remaining} bytes... Stream: $stream" }
+      logger.info(method = "full") { "Reading from stream ${buffer.remaining} bytes... Stream: $stream" }
       val len = stream.read(buffer)
       if (len.isNotAvailable) {
-        logger.info { "Got from stream $len. mark stream as EOF. Stream: $stream" }
+        logger.info(method = "full") { "Got from stream $len. mark stream as EOF. Stream: $stream" }
         eof = true
       } else {
-        logger.info { "Was read from stream $len bytes. Stream: $stream" }
+        logger.info(method = "full") { "Was read from stream $len bytes. Stream: $stream" }
       }
       buffer.flip()
     } catch (e: Throwable) {
-      logger.info { "Can't read ${buffer.remaining} bytes from stream. Stream: $stream, e: $e" }
+      logger.info(method = "full") { "Can't read ${buffer.remaining} bytes from stream. Stream: $stream, e: $e" }
       buffer.empty()
       throw e
     }
@@ -111,10 +111,10 @@ class AsyncBufferedAsciiInputReader private constructor(
     }
     buffer.close()
     if (closeParent) {
-      logger.info { "Closing stream. Eof: $eof, Stream: $stream" }
+      logger.info(method = "asyncClose") { "Closing stream. Eof: $eof, Stream: $stream" }
       stream.asyncClose()
     } else {
-      logger.info { "Closing without close parent stream. Eof: $eof, Stream: $stream" }
+      logger.info(method = "asyncClose") { "Closing without close parent stream. Eof: $eof, Stream: $stream" }
     }
   }
 
@@ -212,7 +212,7 @@ class AsyncBufferedAsciiInputReader private constructor(
 //        return DataTransferSize.EMPTY
 //      }
       val index = buffer.indexOfFirst(condition)
-      logger.info { "readUntil index=$index buffer.remaining=${buffer.remaining}" }
+      logger.info(method = "readUntil") { "readUntil index=$index buffer.remaining=${buffer.remaining}" }
       if (index == -1) {
         readSize += dest.writeFully(buffer)
       } else {
@@ -227,7 +227,7 @@ class AsyncBufferedAsciiInputReader private constructor(
         break
       }
     }
-    logger.info { "readed = $readSize" }
+    logger.info(method = "readUntil") { "readed = $readSize" }
     return DataTransferSize.ofSize(readSize)
   }
 

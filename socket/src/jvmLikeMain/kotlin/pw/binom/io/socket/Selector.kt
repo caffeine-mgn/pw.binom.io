@@ -9,7 +9,7 @@ import kotlin.concurrent.withLock
 import kotlin.time.Duration
 import java.nio.channels.Selector as JvmSelector
 
-private val SELECTOR_LOGGER = InternalLog.file("Selector.kt")
+private val SELECTOR_LOGGER = InternalLog.file("Selector")
 
 actual class Selector : Closeable {
   private val native = JvmSelector.open()
@@ -33,13 +33,13 @@ actual class Selector : Closeable {
     }
     val existKey = socket.native.keyFor(native)
     if (existKey != null) {
-      SELECTOR_LOGGER.info { "Socket ${System.identityHashCode(socket.native)} already attached" }
+      SELECTOR_LOGGER.info(method = "attach") { "Socket ${System.identityHashCode(socket.native)} already attached" }
       return existKey.attachment() as SelectorKey
     }
     val jvmKey = socket.native.register(native, 0, null)
     val binomKey = SelectorKey(native = jvmKey, selector = this)
     jvmKey.attach(binomKey)
-    SELECTOR_LOGGER.info { "Socket ${System.identityHashCode(socket.native)} attached success" }
+    SELECTOR_LOGGER.info(method = "attach") { "Socket ${System.identityHashCode(socket.native)} attached success" }
     return binomKey
   }
 
@@ -90,21 +90,21 @@ actual class Selector : Closeable {
     eventFunc: (pw.binom.io.socket.Event) -> Unit,
   ) {
     lock.withLock {
-      SELECTOR_LOGGER.info { "Selecting...." }
+      SELECTOR_LOGGER.info(method = "select") { "Selecting...." }
       val selected =
         try {
           select(timeout = timeout)
         } catch (e: java.nio.channels.ClosedSelectorException) {
-          SELECTOR_LOGGER.info { "Can't select. Selector closed" }
+          SELECTOR_LOGGER.info(method = "select") { "Can't select. Selector closed" }
           throw ClosedException()
         }
-      SELECTOR_LOGGER.info { "Selecting completed. Events count: $selected" }
+      SELECTOR_LOGGER.info(method = "select") { "Selecting completed. Events count: $selected" }
       native.selectedKeys().forEach { nativeKey ->
         val binomKey = nativeKey.attachment() as SelectorKey
         eventImpl.internalKey = binomKey
         when {
           !nativeKey.isValid -> {
-            SELECTOR_LOGGER.info { "Error happened on ${System.identityHashCode(binomKey.native.channel())}" }
+            SELECTOR_LOGGER.info(method = "select") { "Error happened on ${System.identityHashCode(binomKey.native.channel())}" }
             binomKey.isErrorHappened = false
             eventImpl.internalFlag = ListenFlags().withError.withRead.withWrite
             binomKey.clearFlagsIfNeed()
@@ -120,10 +120,10 @@ actual class Selector : Closeable {
                 binomKey.isErrorHappened = false
                 eventImpl.internalFlag = ListenFlags.WRITE + nativeKey.toCommonReadFlag()
                 binomKey.clearFlagsIfNeed()
-                SELECTOR_LOGGER.info { "Connecting ${System.identityHashCode(binomKey.native.channel())} finished success" }
+                SELECTOR_LOGGER.info(method = "select") { "Connecting ${System.identityHashCode(binomKey.native.channel())} finished success" }
                 eventFunc(eventImpl)
               } catch (e: java.net.ConnectException) {
-                SELECTOR_LOGGER.info { "Connecting ${System.identityHashCode(binomKey.native.channel())} finished with error" }
+                SELECTOR_LOGGER.info(method = "select") { "Connecting ${System.identityHashCode(binomKey.native.channel())} finished with error" }
                 binomKey.isErrorHappened = true
                 eventImpl.internalFlag = ListenFlags.ERROR.withRead
                 binomKey.clearFlagsIfNeed()
@@ -135,8 +135,8 @@ actual class Selector : Closeable {
 
           else -> {
             eventImpl.internalFlag = nativeKey.toCommonReadFlag()
-            SELECTOR_LOGGER.info {
-              "Income event on ${System.identityHashCode(binomKey.native.channel())}: ${
+            SELECTOR_LOGGER.info(method = "select") {
+              "Income event on ${binomKey.native.channel()::class.java.name}@${System.identityHashCode(binomKey.native.channel())}: ${
                 commonFlagsToString(
                   eventImpl.internalFlag,
                 )
@@ -152,7 +152,7 @@ actual class Selector : Closeable {
   }
 
   actual fun wakeup() {
-    SELECTOR_LOGGER.info { "wakeup" }
+    SELECTOR_LOGGER.info(method = "wakeup") { "wakeup" }
     native.wakeup()
   }
 

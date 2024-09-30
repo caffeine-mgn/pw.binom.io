@@ -137,7 +137,7 @@ class ByteBufferTest {
     }
     dest.clear()
     dest.position = 2
-    assertEquals(9, dest.write(source))
+    assertEquals(DataTransferSize.ofSize(9), dest.write(source))
     println("#2------------")
     source.clear()
     dest.clear()

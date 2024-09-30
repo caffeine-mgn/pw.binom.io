@@ -31,7 +31,7 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
         override suspend fun write(data: ByteBuffer) =
           output.write(data)
 
-        override fun toString(): String = "AsyncChannel($input, $output)"
+        override fun toString(): String = "AsyncChannel(input=$input, output=$output)"
       }
     }
 

@@ -1,6 +1,7 @@
 package pw.binom.wasm.runner
 
 import pw.binom.collections.LinkedList
+import pw.binom.wasm.AbsHeapType
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.Primitive
 import pw.binom.wasm.node.*
@@ -10,6 +11,35 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private val importGlobals = module.importSection.filterIsInstance<Import.Global>()
   val importFunc = module.importSection.filterIsInstance<Import.Function>()
   private val memoryImport = module.importSection.filterIsInstance<Import.Memory>()
+  val tables: List<Table> = module.tableSection.map {
+    if (it.type.refNullAbs == AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF) {
+      Table.FuncTable(size = (it.max ?: it.min).toInt())
+    } else {
+      TODO()
+    }
+  }
+
+  init {
+    check(module.elementSection.size == tables.size)
+    module.elementSection.forEachIndexed { index, element ->
+      when (element) {
+        is Element.Type0 -> {
+          val table = tables[index] as Table.FuncTable
+          val offset = runCmd(
+            cmds = element.expressions,
+            locals = ArrayList(),
+            args = ArrayList(),
+            resultSize = 1,
+          ).single() as Int
+          check(offset >= 0)
+          table.offset = offset
+          element.functions.forEachIndexed { functionIndex, functionId ->
+            table[offset + functionIndex] = functionId
+          }
+        }
+      }
+    }
+  }
 
   private val global3 = module.globalSection.map { v ->
     when {
@@ -42,7 +72,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       )
     }.toList()
 
-  private val memory = module.importSection.asSequence()
+  private val memory = module.memorySection
+    .map { MemorySpace(1024 * 1024) } + module.importSection.asSequence()
     .filterIsInstance<Import.Memory>()
     .map { value ->
       importResolver.memory(
@@ -111,6 +142,32 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     )
   }
 
+  class Block1(val startIndex: Int, val endIndex: Int, val loop: Boolean)
+
+  private fun findEndBlock(startIndex: Int, cmds: List<Inst>): Int {
+    val it = cmds.listIterator(startIndex)
+    var depth = 1
+    var index = startIndex
+    while (it.hasNext()) {
+      val e = it.next()
+      if (e is BlockStart) {
+        depth++
+        index++
+        continue
+      }
+      if (e is EndBlock) {
+        depth--
+        if (depth == 0) {
+          return index
+        }
+        index++
+        continue
+      }
+      index++
+    }
+    TODO()
+  }
+
   private fun runCmd(
     cmds: List<Inst>,
     locals: MutableList<LocalVar>,
@@ -119,184 +176,415 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   ): List<Any?> {
     var index = 0
     val stack = Stack()
-    while (true) {
-      val cmd = cmds[index]
-      when (cmd) {
-        is I32Const -> {
-          stack.push(cmd.value)
-          index++
-        }
-
-        is LocalIndexArgument.SET -> {
-          val e = cmd.id.id.toInt()
-          if (e in args.indices) {
-            args[e] = stack.pop()
-          } else {
-            locals[e - args.size].set(stack.pop())
+    val blocks = LinkedList<Block1>()
+    try {
+      while (true) {
+        val cmd = cmds[index]
+        when (cmd) {
+          is BlockStart.BLOCK -> {
+            val endIndex = findEndBlock(startIndex = index + 1, cmds = cmds)
+            blocks += Block1(startIndex = index, endIndex = endIndex, loop = false)
+            index++
           }
-          index++
-        }
 
-        is LocalIndexArgument.TEE -> {
-          val value = stack.pop()
-          stack.push(value)
-          val e = cmd.id.id.toInt()
-          if (e in args.indices) {
-            args[e] = value
-          } else {
-            locals[e - args.size].set(value)
+          is BlockStart.LOOP -> {
+            val endIndex = findEndBlock(startIndex = index + 1, cmds = cmds)
+            blocks += Block1(startIndex = index, endIndex = endIndex, loop = true)
+            index++
           }
-          index++
-        }
 
-        is LocalIndexArgument.GET -> {
-          val e = cmd.id.id.toInt()
-          val value = if (e in args.indices) {
-            args[e]
-          } else {
-            locals[e - args.size].get()
+          is Br.BR_IF -> {
+            if (stack.popI32() != 0) {
+              var block: Block1 = blocks.removeLast()
+              var d = cmd.label.id
+              while (d > 0u) {
+                d--
+                block = blocks.removeLast()
+              }
+              if (block.loop) {
+                index = block.startIndex
+              } else {
+                index = block.endIndex + 1
+              }
+            } else {
+              index++
+            }
           }
-          stack.push(value)
-          index++
-        }
 
-        is ControlFlow.RETURN -> {
-          check(stack.size == resultSize)
-          return stack.clear()
-        }
-
-        is CallFunction -> {
-          if (cmd.id.id.toInt() in importFunc.indices) {
-            TODO("Вызов функции из import'ов")
+          is Br.BR -> {
+            var block: Block1 = blocks.removeLast()
+            var d = cmd.label.id
+            while (d > 0u) {
+              d--
+              block = blocks.removeLast()
+            }
+            if (block.loop) {
+              index = block.startIndex
+            } else {
+              index = block.endIndex + 1
+            }
           }
-          val funcForCall = (cmd.id.id.toInt() - importFunc.size)
-          val desc = module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
-          val l = LinkedList<Any?>()
-          repeat(desc.args.size) {
-            l.addLast(stack.pop())
+
+          is I32Const -> {
+            stack.push(cmd.value)
+            index++
           }
-          runFunc(cmd.id, args = l).forEach {
-            stack.push(it)
+
+          is I64Const -> {
+            stack.push(cmd.value)
+            index++
           }
-          index++
-        }
 
-        is GlobalIndexArgument.GET -> {
-          if (cmd.id.id.toInt() in importGlobals.indices) {
-//            val e = importGlobals[cmd.id.id.toInt()]
-//            val module = globals[e.module] ?: TODO("module ${e.module} not found")
-//            module[e.field] ?: TODO("Field ${e.field} not found in module ${e.module}")
-            globals2[cmd.id.id.toInt()].putInto(stack)
-          } else {
-            global3[index - importGlobals.size].putInto(stack)
-//            TODO()
-//            stack.push(module.globalSection[index - importGlobals.size])
+          is LocalIndexArgument.SET -> {
+            if (index == 31) {
+//              println()
+            }
+            try {
+              val e = cmd.id.id.toInt()
+              if (e in args.indices) {
+                args[e] = stack.pop()
+              } else {
+                locals[e - args.size].set(stack.pop())
+              }
+              index++
+            } catch (e: Throwable) {
+              throw e
+            }
           }
-          index++
-        }
 
-        is Numeric.I32_ADD -> {
-          val a = stack.popI32()
-          val b = stack.popI32()
-          stack.push(b + a)
-          index++
-        }
+          is LocalIndexArgument.TEE -> {
+            val value = stack.pop()
+            stack.push(value)
+            val e = cmd.id.id.toInt()
+            if (e in args.indices) {
+              args[e] = value
+            } else {
+              locals[e - args.size].set(value)
+            }
+            index++
+          }
 
-        is Numeric.I32_SUB -> {
-          val a = stack.popI32()
-          val b = stack.popI32()
-          stack.push(b - a)
-          index++
-        }
+          is LocalIndexArgument.GET -> {
+            val e = cmd.id.id.toInt()
+            val value = if (e in args.indices) {
+              args[e]
+            } else {
+              locals[e - args.size].get()
+            }
+            stack.push(value)
+            index++
+          }
 
-        is Numeric.I32_MUL -> {
-          val a = stack.popI32()
-          val b = stack.popI32()
-          stack.push(b * a)
-          index++
-        }
+          is ControlFlow.RETURN -> {
+            check(stack.size == resultSize)
+            return stack.clear()
+          }
 
-        is Numeric.I32_DIV_S -> {
-          val a = stack.popI32()
-          val b = stack.popI32()
-          stack.push(b / a)
-          index++
-        }
+          is CallFunction -> {
+            if (cmd.id.id.toInt() in importFunc.indices) {
+              val externalFun = importFunc[cmd.id.id.toInt()]
+              if (externalFun.module == "binom") {
+                if (externalFun.field == "print") {
+                  val size = stack.popI32()
+                  val address = stack.popI32()
+                  println()
+                }
+                if (externalFun.field == "debug") {
+                  println()
+                  index++
+                  continue
+                }
+              }
+              TODO("Вызов функции из import'ов ${cmd.id.id}")
+            }
+            val funcForCall = (cmd.id.id.toInt() - importFunc.size)
+            val desc =
+              module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
+            val l = LinkedList<Any?>()
+            repeat(desc.args.size) {
+              l.addFirst(stack.pop())
+            }
+            runFunc(cmd.id, args = l).forEach {
+              stack.push(it)
+            }
+            index++
+          }
 
-        is Numeric.I32_DIV_U -> {
-          val a = stack.popI32().toUInt()
-          val b = stack.popI32().toUInt()
-          stack.push((b / a).toInt())
-          index++
-        }
+          is CallIndirect -> {
+            val desc = module.typeSection[cmd.type.value.toInt()].single!!.single!!.type as RecType.FuncType
+            var tableIndex = stack.popI32()
+            val l = LinkedList<Any?>()
+            repeat(desc.args.size) {
+              l.addFirst(stack.pop())
+            }
+            val table = tables[cmd.table.id.toInt()] as Table.FuncTable
+            val functionId = table[tableIndex]
+              ?: TODO("Function with index $tableIndex not defined!")
 
-        is Numeric.I32_REM_S -> {
-          val a = stack.popI32()
-          val b = stack.popI32()
-          stack.push(b % a)
-          index++
-        }
+            runFunc(functionId, args = l).forEach {
+              stack.push(it)
+            }
+            index++
+          }
 
-        is Numeric.I32_REM_U -> {
-          val a = stack.popI32().toUInt()
-          val b = stack.popI32().toUInt()
-          stack.push((b % a).toInt())
-          index++
-        }
+          is GlobalIndexArgument.GET -> {
+            if (cmd.id.id.toInt() in globals2.indices) {
+              globals2[cmd.id.id.toInt()].putInto(stack)
+            } else {
+              global3[cmd.id.id.toInt() - globals2.size].putInto(stack)
+            }
+            index++
+          }
 
-        is Drop -> {
-          stack.pop()
-          index++
-        }
+          is GlobalIndexArgument.SET -> {
+            if (cmd.id.id.toInt() in globals2.indices) {
+              (globals2[cmd.id.id.toInt()] as GlobalVarMutable).setFrom(stack)
+            } else {
+              (global3[cmd.id.id.toInt() - globals2.size] as GlobalVarMutable).setFrom(stack)
+            }
+            index++
+          }
 
-        is Memory.I32_STORE -> {
-          val value = stack.popI32()
-          val address = stack.popI32()
-          val mem = memory[cmd.memoryId.raw.toInt()]
-          mem.pushI32(
-            value = value,
-            offset = address.toUInt() + cmd.offset,
-            align = cmd.align,
-          )
-          index++
-        }
+          is Compare.I32_EQZ -> {
+            val a = stack.popI32()
+            stack.push(if (a == 0) 1 else 0)
+            index++
+          }
 
-        is Memory.I64_STORE -> {
-          val value = stack.popI64()
-          val address = stack.popI32()
-          val mem = memory[cmd.memoryId.raw.toInt()]
-          mem.pushI64(
-            value = value,
-            offset = address.toUInt() + cmd.offset,
-            align = cmd.align,
-          )
-          index++
-        }
+          is Compare.I32_EQ -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(if (b == a) 1 else 0)
+            index++
+          }
 
-        is Memory.I32_LOAD -> {
-          val offset = stack.popI32()
-          val mem = memory[cmd.memoryId.raw.toInt()]
-          stack.push(
-            mem.getI32(
-              cmd.offset + offset.toUInt()
+          is Compare.I32_NE -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(if (b != a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_GT_S -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(if (b > a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_GT_U -> {
+            val a = stack.popI32().toUInt()
+            val b = stack.popI32().toUInt()
+            stack.push(if (b > a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_GE_S -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(if (b >= a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_GE_U -> {
+            val a = stack.popI32().toUInt()
+            val b = stack.popI32().toUInt()
+            stack.push(if (b >= a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_LT_S -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(if (b < a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_LT_U -> {
+            val a = stack.popI32().toUInt()
+            val b = stack.popI32().toUInt()
+            stack.push(if (b < a) 1 else 0)
+            index++
+          }
+
+
+          is Select -> {
+            val v = stack.popI32()
+            val v2 = stack.pop()!!
+            val v1 = stack.pop()!!
+            if (v1::class != v2::class) {
+              TODO()
+            }
+            stack.push(if (v != 0) v1 else v2)
+            index++
+          }
+
+          is Compare.I32_LE_S -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(if (b <= a) 1 else 0)
+            index++
+          }
+
+          is Numeric.I32_AND -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(a and b)
+            index++
+          }
+
+          is Numeric.I32_OR -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(a or b)
+            index++
+          }
+
+          is Numeric.I32_ADD -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(b + a)
+            index++
+          }
+
+          is Numeric.I32_SUB -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(b - a)
+            index++
+          }
+
+          is Numeric.I32_MUL -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(b * a)
+            index++
+          }
+
+          is Numeric.I32_DIV_S -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(b / a)
+            index++
+          }
+
+          is Numeric.I32_DIV_U -> {
+            val a = stack.popI32().toUInt()
+            val b = stack.popI32().toUInt()
+            stack.push((b / a).toInt())
+            index++
+          }
+
+          is Numeric.I32_REM_S -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(b % a)
+            index++
+          }
+
+          is Numeric.I32_REM_U -> {
+            val a = stack.popI32().toUInt()
+            val b = stack.popI32().toUInt()
+            stack.push((b % a).toInt())
+            index++
+          }
+
+          is Numeric.I32_XOR -> {
+            val a = stack.popI32()
+            val b = stack.popI32()
+            stack.push(b xor a)
+            index++
+          }
+
+          is Drop -> {
+            stack.pop()
+            index++
+          }
+
+          is Memory.I32_STORE -> {
+            val value = stack.popI32()
+            val address = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            println("Store on $address+${cmd.offset}=${address.toUInt() + cmd.offset} value $value i32")
+            mem.pushI32(
+              value = value,
+              offset = address.toUInt() + cmd.offset,
+              align = cmd.align,
             )
-          )
-          index++
-        }
+            index++
+          }
 
-        is Memory.I64_LOAD -> {
-          val offset = stack.popI32()
-          val mem = memory[cmd.memoryId.raw.toInt()]
-          stack.push(
-            mem.getI64(
-              cmd.offset + offset.toUInt()
+          is Memory.I32_STORE8 -> {
+            val value = stack.popI32()
+            val address = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            println("Store on ${address.toUInt() + cmd.offset} value $value i8")
+            mem.pushI8(
+              value = value.toByte(),
+              offset = address.toUInt() + cmd.offset,
+              align = cmd.align,
             )
-          )
-          index++
-        }
+            index++
+          }
 
-        else -> TODO("Unknown ${cmd::class}")
+          is Memory.I64_STORE -> {
+            val value = stack.popI64()
+            val address = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            mem.pushI64(
+              value = value,
+              offset = address.toUInt() + cmd.offset,
+              align = cmd.align,
+            )
+            index++
+          }
+
+          is Memory.I32_LOAD8_U -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            val address = cmd.offset + offset.toUInt()
+            val value = mem.getI8(address).toInt()
+            println("Load from ${address.toUInt() + cmd.offset} value $value i8")
+            stack.push(value)
+            index++
+          }
+
+          is Memory.I32_LOAD -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            val address = cmd.offset + offset.toUInt()
+            val value = mem.getI32(address)
+            println("Load from $address+${cmd.offset}=${address.toUInt() + cmd.offset} value $value i32")
+            stack.push(value)
+            index++
+          }
+
+          is Memory.I64_LOAD -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            stack.push(
+              mem.getI64(
+                cmd.offset + offset.toUInt()
+              )
+            )
+            index++
+          }
+
+          is EndBlock -> {
+            if (index < cmds.lastIndex) {
+              blocks.removeLast()
+            } else {
+              check(stack.size == resultSize)
+              return stack.clear()
+            }
+            index++
+          }
+
+          else -> TODO("Unknown ${cmd::class} on index $index")
+        }
       }
+    } catch (e: Throwable) {
+      throw RuntimeException("Can't execute task in index $index", e)
     }
   }
 }

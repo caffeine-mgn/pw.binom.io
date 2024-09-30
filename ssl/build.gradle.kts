@@ -21,6 +21,9 @@ kotlin {
     -"wasmJs"
     -"wasmWasi"
   }
+  linuxX64{
+    this.compilerOptions.verbose.set(true)
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {

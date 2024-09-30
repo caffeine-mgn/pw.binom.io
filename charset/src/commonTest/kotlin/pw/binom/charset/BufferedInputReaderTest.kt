@@ -3,6 +3,7 @@ package pw.binom.charset
 import pw.binom.*
 import pw.binom.io.BufferedInputReader
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -33,7 +34,7 @@ class BufferedInputReaderTest {
         val reader =
             BufferedInputReader(charset = Charsets.get("windows-1251"), input = input, pool = bufPool)
         val output = CharArray(test_data_hello_text.length)
-        assertEquals(test_data_hello_text.length, reader.read(output))
+        assertEquals(DataTransferSize.ofSize(test_data_hello_text.length), reader.read(output))
         output.forEachIndexed { index, c ->
             println("$index -> $c")
         }

@@ -23,7 +23,7 @@ actual class UdpNetSocket : UdpSocket, NetSocket {
     }
   }
 
-  override val native: RawSocket = data.use { ptr -> ptr.pointed.native }
+  override val native = data.use { ptr -> ptr.pointed.native }
 
   actual fun bind(address: InetSocketAddress): BindStatus {
     val bindResult = data.use { socketPtr ->

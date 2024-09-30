@@ -10,7 +10,7 @@ actual interface Socket : Closeable {
   @OptIn(ExperimentalForeignApi::class)
   val data:InHeap<NSocket>
   actual var blocking: Boolean
-  val native: RawSocket
+  val native: Int
   val server: Boolean
   var keyHash: Int
   actual val id: String

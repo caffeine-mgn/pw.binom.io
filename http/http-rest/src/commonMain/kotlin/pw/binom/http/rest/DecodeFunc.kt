@@ -3,6 +3,7 @@ package pw.binom.http.rest
 import kotlinx.serialization.DeserializationStrategy
 import pw.binom.io.http.HttpInput
 
+@Suppress("NOTHING_TO_INLINE")
 interface DecodeFunc<TYPE, DATA> {
   suspend fun read(input: HttpInput): DATA
   fun decode(serializer: DeserializationStrategy<TYPE>, data: DATA, input: HttpInput): TYPE

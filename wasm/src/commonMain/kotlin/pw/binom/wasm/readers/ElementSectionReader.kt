@@ -26,7 +26,6 @@ object ElementSectionReader {
             e.func(FunctionId(input.v32u()))
           }
         }
-
         else -> TODO("Unknown type: $type")
       }
     }

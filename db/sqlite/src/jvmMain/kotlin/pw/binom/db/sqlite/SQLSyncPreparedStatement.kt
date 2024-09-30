@@ -85,7 +85,7 @@ class SQLSyncPreparedStatement(override val connection: SQLiteConnector, interna
     index: Int,
     value: Date,
   ) {
-    native.setDate(index + 1, java.sql.Date(value.startOfDayMilliseconds))
+    native.setDate(index + 1, java.sql.Date(value.startOfDay.milliseconds))
   }
 
   override fun setNull(index: Int) {

@@ -10,6 +10,7 @@ interface InternalLog {
           level: Level,
           file: String?,
           line: Int?,
+          method: String?,
           text: () -> String,
         ) = Unit
       }
@@ -25,9 +26,10 @@ interface InternalLog {
       level: Level,
       file: String?,
       line: Int?,
+      method: String?,
       text: () -> String,
     ) {
-      default.log(level = level, file = file, text = text, line = line)
+      default.log(level = level, file = file, text = text, line = line, method = method)
     }
   }
 
@@ -43,48 +45,56 @@ interface InternalLog {
     level: Level,
     file: String? = null,
     line: Int? = null,
+    method: String? = null,
     text: () -> String,
   )
 
   fun info(
     file: String? = null,
     line: Int? = null,
+    method: String? = null,
     text: () -> String,
-  ) = log(level = Level.INFO, file = file, text = text, line = line)
+  ) = log(level = Level.INFO, file = file, text = text, line = line, method = method)
 
   fun warn(
     file: String? = null,
     line: Int? = null,
+    method: String? = null,
     text: () -> String,
-  ) = log(level = Level.WARNING, file = file, text = text, line = line)
+  ) = log(level = Level.WARNING, file = file, text = text, line = line, method = method)
 
   fun err(
     file: String? = null,
     line: Int? = null,
+    method: String? = null,
     text: () -> String,
-  ) = log(level = Level.ERROR, file = file, text = text, line = line)
+  ) = log(level = Level.ERROR, file = file, text = text, line = line, method = method)
 
   fun critical(
     file: String? = null,
     line: Int? = null,
+    method: String? = null,
     text: () -> String,
-  ) = log(level = Level.CRITICAL, file = file, text = text, line = line)
+  ) = log(level = Level.CRITICAL, file = file, text = text, line = line, method = method)
 
   fun fatal(
     file: String? = null,
     line: Int? = null,
+    method: String? = null,
     text: () -> String,
-  ) = log(level = Level.FATAL, file = file, text = text, line = line)
+  ) = log(level = Level.FATAL, file = file, text = text, line = line, method = method)
 
-  fun prefix(prefix: String): InternalLog =
+  fun prefix(prefix: ()->String): InternalLog =
     object : InternalLog {
+
       override fun log(
         level: Level,
         file: String?,
         line: Int?,
+        method: String?,
         text: () -> String,
       ) {
-        this@InternalLog.log(file = file, line = line, level = level) { prefix + text() }
+        this@InternalLog.log(file = file, line = line, level = level, method = method) { prefix() + text() }
       }
     }
 
@@ -95,9 +105,10 @@ interface InternalLog {
         level: Level,
         file: String?,
         line: Int?,
+        method: String?,
         text: () -> String,
       ) {
-        this@InternalLog.log(file = file ?: newFile, level = level, text = text, line = line)
+        this@InternalLog.log(file = file ?: newFile, level = level, text = text, line = line, method = method)
       }
     }
   }

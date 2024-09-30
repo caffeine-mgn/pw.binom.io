@@ -28,7 +28,6 @@ class RunTest {
         if (it !is I32Const) {
           return@forEach
         }
-        println("CONST ${it.value} -> $index")
       }
     }
     val resolver = object : ImportResolver {
@@ -42,7 +41,7 @@ class RunTest {
 
       override fun memory(module: String, field: String, inital: UInt, max: UInt?): MemorySpace =
         when {
-          module == "env" && (field == "__linear_memory" || field == "memory") -> MemorySpace(100)
+          module == "env" && (field == "__linear_memory" || field == "memory") -> MemorySpace(1024*1024)
           else -> TODO("Not yet implemented. module=$module, field=$field, inital: $inital, max: $max")
         }
 

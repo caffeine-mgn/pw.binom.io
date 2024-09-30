@@ -1,6 +1,7 @@
 package pw.binom.io.file
 
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.use
 import pw.binom.io.wrap
 import pw.binom.uuid.nextUuid
@@ -33,7 +34,8 @@ class TestWriteRead {
 
     f.openWrite().use {
       data.wrap().use { dataBuf ->
-        assertEquals(dataBuf.capacity, it.write(dataBuf))
+        assertEquals(
+          DataTransferSize.ofSize(dataBuf.capacity), it.write(dataBuf))
         assertEquals(0, dataBuf.remaining)
       }
 //            data.forEach { value ->
@@ -43,7 +45,7 @@ class TestWriteRead {
 
     f.openRead().use {
       val input = ByteBuffer(data.size * 2)
-      assertEquals(data.size, it.read(input))
+      assertEquals(DataTransferSize.ofSize(data.size), it.read(input))
       input.flip()
       for (i in 0 until data.size)
         assertEquals(data[i], input[i])

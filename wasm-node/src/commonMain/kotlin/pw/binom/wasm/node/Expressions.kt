@@ -6,7 +6,7 @@ import pw.binom.wasm.visitors.ValueVisitor
 import pw.binom.wasm.node.inst.MemoryOp
 import pw.binom.wasm.node.inst.*
 
-class Expressions : ExpressionsVisitor,MutableList<Inst> by ArrayList() {
+class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
 
   override fun start() {
     clear()

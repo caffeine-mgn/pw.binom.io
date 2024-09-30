@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 import pw.binom.asyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.clone
-import pw.binom.io.forEachIndexed
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

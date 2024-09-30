@@ -3,7 +3,6 @@ package pw.binom.charset
 import pw.binom.CharBuffer
 import pw.binom.forEachIndexed
 import pw.binom.io.ByteBuffer
-import pw.binom.io.forEachIndexed
 import pw.binom.io.wrap
 import pw.binom.toCharBuffer
 import kotlin.test.Test

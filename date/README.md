@@ -89,3 +89,28 @@ val dateStr = dp.toString(date = date, timeZoneOffset = Date.systemZoneOffset)
 //Testing
 assertEquals(inputDateStr, dateStr)
 ```
+
+```kotlin
+DateTime.now // returns current date-time
+Date.now // return current date
+Time.now // returns current time
+
+DateTime.now.date // returns date of date-time
+DateTime.now.time // returns time of date-time
+DateTime.of(
+    year = 1988,
+    month = 1,
+    dayOfMonth = 1,
+    hours = 12,
+    minutes = 30,
+) // build date-time from constants
+
+Date.of(
+    year = 1988,
+    month = 1,
+    dayOfMonth = 1,
+).withTime(Time.of(
+    hours = 12,
+    minutes = 30,
+)) // returns full dateTime
+```

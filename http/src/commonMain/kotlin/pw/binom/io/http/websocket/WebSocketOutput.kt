@@ -2,107 +2,47 @@ package pw.binom.io.http.websocket
 
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
-import kotlin.random.Random
 
 internal class WebSocketOutput(
-  val messageType: MessageType,
-  val masked: Boolean,
-  override val stream: AsyncOutput,
+  messageType: MessageType,
+  masked: Boolean,
+  stream: AsyncOutput,
   bufferSize: Int,
   val connection: WebSocketConnectionImpl,
-) : AbstractAsyncBufferedOutput() {
+) : AsyncOutput {
 
-  override val buffer: ByteBuffer = ByteBuffer(bufferSize).empty()
+  private val output = if (masked) {
+    MaskedFrameOutput(
+      messageType = messageType,
+      stream = stream,
+      bufferSize = bufferSize,
+    )
+  } else {
+    UnmaskedFrameOutput(
+      messageType = messageType,
+      stream = stream,
+      bufferSize = bufferSize,
+    )
+  }
 
-  private var first = true
-  private var closed = false
+
   private var closing = AtomicBoolean(false)
 
-  private fun checkClosed() {
-    if (closed) {
-      throw StreamClosedException()
-    }
-  }
-
-  private val opcode
-    get() = if (first) {
-      messageType.opcode
-    } else {
-      Opcode.CONTINUATION
-    }
 
   override suspend fun flush() {
-    flush(eof = false)
+    output.flush()
   }
 
-  override suspend fun write(data: ByteBuffer): DataTransferSize {
-    if (closing.getValue()) {
-      return DataTransferSize.CLOSED
-    }
-    return super.write(data)
-  }
-
-  private suspend fun internalFlush(eof: Boolean): Boolean {
-    if (!hasDataForFlush) {
-      return false
-    }
-    val length = buffer.position
-    val mask = if (masked) {
-      val mask = Random.nextInt()
-      WebSocketInput.encode(mask, buffer)
-      mask
-    } else {
-      0
-    }
-    WebSocketHeader.write(
-      output = stream,
-      opcode = opcode,
-      length = length.toLong(),
-      maskFlag = masked,
-      mask = mask,
-      finishFlag = eof,
-    )
-    first = false
-    flushWithoutCloseCheck()
-    return true
-  }
-
-  private suspend fun flush(eof: Boolean): Boolean {
-    checkClosed()
-    return internalFlush(eof)
-  }
-
-  private fun clearBuffer() {
-    buffer.close()
-  }
+  override suspend fun write(data: ByteBuffer): DataTransferSize =
+    output.write(data)
 
   override suspend fun asyncClose() {
     if (!closing.compareAndSet(false, true)) {
       return
     }
     try {
-      val finishSent = flush(eof = true)
-      val needSendEnd = !finishSent
-      if (needSendEnd) {
-        val mask = if (masked) {
-          Random.nextInt()
-        } else {
-          0
-        }
-        WebSocketHeader.write(
-          output = stream,
-          opcode = opcode,
-          length = 0,
-          maskFlag = masked,
-          mask = mask,
-          finishFlag = true,
-        )
-        stream.flush()
-      }
+      output.asyncClose()
     } finally {
-      super.asyncClose()
-      clearBuffer()
-      closed = true
       connection.writingMessageFinished()
     }
   }

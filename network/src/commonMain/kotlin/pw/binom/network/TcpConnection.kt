@@ -18,6 +18,7 @@ import pw.binom.io.socket.SelectorKey
 import pw.binom.io.socket.TcpClientSocket
 import pw.binom.io.socket.addListen
 import pw.binom.resumeOnException
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class TcpConnection(
@@ -27,9 +28,9 @@ class TcpConnection(
   private var connect: CancellableContinuation<Unit>? = null
   var description: String? = null
 
-  private val logger = InternalLog.file(currentKey.toString())
+  private val logger = InternalLog.file("TcpConnection").prefix { "TcpConnection@${hashCode()} " }
 
-  override fun toString(): String = "TcpConnection(description: $description, channel: $channel, key: $currentKey)"
+  override fun toString(): String = "TcpConnection($description)"
 
   private class IOState {
     var continuation: CancellableContinuation<DataTransferSize>? = null
@@ -67,13 +68,12 @@ class TcpConnection(
   private val sendData = IOState()
   private val readLock = SpinLock()
 
-  private fun calcListenFlags() =
-    when {
-      readData.continuation != null && (sendData.continuation != null) -> ListenFlags.READ + ListenFlags.ERROR + ListenFlags.WRITE
-      readData.continuation != null -> ListenFlags.READ + ListenFlags.ERROR
-      sendData.continuation != null -> ListenFlags.WRITE + ListenFlags.ERROR
-      else -> ListenFlags.ZERO
-    }
+  private fun calcListenFlags() = when {
+    readData.continuation != null && (sendData.continuation != null) -> ListenFlags.READ + ListenFlags.ERROR + ListenFlags.WRITE
+    readData.continuation != null -> ListenFlags.READ + ListenFlags.ERROR
+    sendData.continuation != null -> ListenFlags.WRITE + ListenFlags.ERROR
+    else -> ListenFlags.ZERO
+  }
 
   override fun readyForWrite(key: SelectorKey) {
     if (checkConnect()) {
@@ -105,32 +105,31 @@ class TcpConnection(
   }
 
   override fun readyForRead(key: SelectorKey) {
-    logger.info { "readyForRead:: Started" }
     if (checkConnect()) {
-      logger.info { "readyForRead:: not connected" }
+      logger.info(method = "readyForRead") { "not connected" }
       return
     }
     readLock.lock()
     val continuation = readData.continuation
     val data = readData.data
     if (continuation == null) {
-      logger.info { "readyForRead:: no any continuation set. Cleaning keys" }
+      logger.info(method = "readyForRead") { "no any continuation defined. Cleaning keys" }
       readLock.unlock()
       return
     }
     data ?: error("readData.data is not set")
-    val readed = channel.receive(data)
-    if (readed == -1) {
-      logger.info { "readyForRead:: during reading find that connection lost" }
+    val wasRead = channel.receive(data)
+    if (wasRead == -1) {
+      logger.info(method = "readyForRead") { "during reading find that connection lost" }
       readData.reset()
       readLock.unlock()
       close()
       continuation.resumeWithException(SocketClosedException("Read -1"))
       return
     }
-    if (readed == 0) {
+    if (wasRead == 0) {
       readLock.unlock()
-      logger.info { "readyForRead:: no data for read. Try to wait a data" }
+      logger.info(method = "readyForRead") { "readyForRead:: no data for read. Try to wait a data" }
       currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
       return
     }
@@ -138,23 +137,23 @@ class TcpConnection(
       if (data.remaining == 0) {
         readData.reset()
         readLock.unlock()
-        continuation.resume(value = DataTransferSize.ofSize(readed), onCancellation = null)
+        continuation.resume(value = DataTransferSize.ofSize(wasRead))
       } else {
         currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)
       }
     } else {
-      logger.info { "readyForRead:: data was read success. $readed bytes" }
+      logger.info(method = "readyForRead") { "suspend reading was success. Was read $wasRead bytes" }
       readData.reset()
       readLock.unlock()
-      continuation.resume(value = DataTransferSize.ofSize(readed), onCancellation = null)
+      continuation.resume(value = DataTransferSize.ofSize(wasRead))
     }
   }
 
   override fun error() {
     val connect = this.connect
-    logger.info { "error:: Happened!" }
+    logger.info(method = "error") { "Happened!" }
     if (connect != null) {
-      logger.info { "error:: Connect error" }
+      logger.info(method = "error") { "Connect error" }
       this.connect = null
       close()
       connect.resumeWithException(SocketConnectException())
@@ -163,7 +162,7 @@ class TcpConnection(
     error = true
 
     if (readData.continuation != null) {
-      logger.info { "error:: stopped reading" }
+      logger.info(method = "error") { "stopped reading" }
       val c = readLock.synchronize {
         val c = readData.continuation
         readData.reset()
@@ -172,7 +171,7 @@ class TcpConnection(
       c?.resumeWith(Result.failure(SocketClosedException()))
     }
     if (sendData.continuation != null) {
-      logger.info { "error:: stopped sending" }
+      logger.info(method = "error") { "stopped sending" }
       val c = sendData.continuation
       sendData.reset()
       c?.resumeWith(Result.failure(SocketClosedException()))
@@ -180,7 +179,7 @@ class TcpConnection(
   }
 
   override suspend fun connection() {
-    logger.info { "connection:: start connect process" }
+    logger.info(method = "connection") { "start connect process" }
     val connect = this.connect
     check(connect == null) { "Connection already try connect" }
     suspendCancellableCoroutine<Unit> {
@@ -220,14 +219,14 @@ class TcpConnection(
     val connect = this.connect
     if (connect != null) {
       this.connect = null
-      connect.resume(value = Unit, onCancellation = null)
+      connect.resume(value = Unit)
       return true
     }
     return false
   }
 
   override fun close() {
-    logger.info { "close:: closing" }
+    logger.info(method = "close") { "closing" }
     if (currentKey.isClosed) {
       return
     }
@@ -309,20 +308,19 @@ class TcpConnection(
       throw SocketClosedException()
     }
     readData.full = true
-    val readed =
-      suspendCancellableCoroutine<DataTransferSize> { continuation ->
-        continuation.invokeOnCancellation {
+    val readed = suspendCancellableCoroutine<DataTransferSize> { continuation ->
+      continuation.invokeOnCancellation {
 //          currentKey.removeListen(KeyListenFlags.READ)
-          readData.reset()
+        readData.reset()
 //          currentKey.selector.wakeup()
-        }
-        readData.set(
-          continuation = continuation,
-          data = dest,
-        )
-        currentKey.addListen(ListenFlags.READ + ListenFlags.ERROR + ListenFlags.ONCE)
-        currentKey.selector.wakeup()
       }
+      readData.set(
+        continuation = continuation,
+        data = dest,
+      )
+      currentKey.addListen(ListenFlags.READ + ListenFlags.ERROR + ListenFlags.ONCE)
+      currentKey.selector.wakeup()
+    }
     if (readed.isNotAvailable) {
       channel.closeAnyway()
       throw SocketClosedException()
@@ -332,34 +330,41 @@ class TcpConnection(
 
   override suspend fun read(dest: ByteBuffer): DataTransferSize {
     if (!dest.hasRemaining) {
+      logger.info(method = "read") { "dest buffer has no remaining" }
       return DataTransferSize.EMPTY
     }
     if (currentKey.isClosed) {
+      logger.info(method = "read") { "SelectorKey is closed. Return connection closed" }
       return DataTransferSize.CLOSED
 //      throw SocketClosedException()
     }
     if (readData.continuation != null) {
+      logger.info(method = "read") { "continuation not set. Illegal State" }
 //      readData.continuation!!.cancel(IllegalStateException("Some other thread wants to read"))
 //      readData.continuation = null
       throw IllegalStateException("Connection already have read listener")
     }
 
-    val read =
-      try {
-        channel.receive(dest)
-      } catch (e: Throwable) {
-        throw e
-      }
+    val read = try {
+      channel.receive(dest)
+    } catch (e: Throwable) {
+      logger.info(method = "read") { "optimistic read finished with exception: $e" }
+      throw e
+    }
     if (read > 0) {
+      logger.info(method = "read") { "success optimistic read. $read bytes" }
+//      println("TcpConnection.read was read $read")
       return DataTransferSize.ofSize(read)
     }
     if (read == -1) {
+      logger.info(method = "read") { "optimistic read found connection lost" }
       channel.close()
       return DataTransferSize.CLOSED
 //      throw SocketClosedException()
     }
+    logger.info(method = "read") { "optimistic read is failed. Waiting new bytes" }
     readData.full = false
-    return suspendCancellableCoroutine {
+    val wasRead = suspendCancellableCoroutine {
       it.invokeOnCancellation {
 //        currentKey.removeListen(KeyListenFlags.READ)
         readData.reset()
@@ -380,5 +385,7 @@ class TcpConnection(
         it.resumeWithException(e)
       }
     }
+//    println("TcpConnection.read was read $wasRead via suspend")
+    return wasRead
   }
 }

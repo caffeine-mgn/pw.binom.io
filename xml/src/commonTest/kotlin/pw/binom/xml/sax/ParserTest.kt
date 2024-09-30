@@ -4,6 +4,7 @@ import kotlinx.coroutines.test.runTest
 import pw.binom.io.StringReader
 import pw.binom.io.asAsync
 import pw.binom.io.asReader
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.dom.xmlTree
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +18,7 @@ class ParserTest {
     val txt = """$XML_START
 <r:dd name="KDE" title="DE"><name>df</name><b><![CDATA[TEST Hi!]]></b><test fff="sdf"/></r:dd>"""
 
-    val r = XmlRootReaderVisitor(txt.asReader().asAsync())
+    val r = XmlRootReaderVisitor(AbstractXmlLexer(),txt.asReader().asAsync())
 
     val sb = StringBuilder()
     val w = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
@@ -32,7 +33,7 @@ class ParserTest {
             |<data><title-name attr="value"/> <title2-name attr="value"></title2-name> </data>
     """.trimMargin()
 
-    val r = XmlRootReaderVisitor(txt.asReader().asAsync())
+    val r = XmlRootReaderVisitor(AbstractXmlLexer(), txt.asReader().asAsync())
     val tree = txt.asReader().asAsync().xmlTree()
     assertEquals("data", tree.tag)
     assertEquals(2, tree.childs.size)
@@ -45,7 +46,7 @@ class ParserTest {
   fun testParseComment() = runTest {
     val txt = """<r><bbb a="b"><!--Привет - мир!--></bbb><c>123456</c><t/></r>"""
 
-    val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
+    val r = AsyncXmlReaderVisitor(txt.asReader().asAsync(),AbstractXmlLexer())
 
     val sb = StringBuilder()
     val w = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
@@ -60,7 +61,7 @@ class ParserTest {
   fun test() = runTest {
     val txt = "<r><bbb a=\"b\"></bbb><c>123456</c><t/></r>"
 
-    val r = AsyncXmlReaderVisitor(txt.asReader().asAsync())
+    val r = AsyncXmlReaderVisitor(txt.asReader().asAsync(), AbstractXmlLexer())
 
     val sb = StringBuilder()
     val w = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
@@ -76,7 +77,7 @@ class ParserTest {
     val sb = StringBuilder()
     val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
     root.start()
-    XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+    XmlRootReaderVisitor(AbstractXmlLexer(),txt.asReader().asAsync()).accept(root)
     root.end()
     assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root>AA BB CC</root>""", sb.toString())
   }
@@ -114,7 +115,7 @@ class ParserTest {
     val sb = StringBuilder()
     val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
     root.start()
-    XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+    XmlRootReaderVisitor(AbstractXmlLexer(), txt.asReader().asAsync()).accept(root)
     root.end()
     assertEquals("""<?xml version="1.0" encoding="UTF-8"?><root title="Binom"/>""", sb.toString())
   }
@@ -141,7 +142,7 @@ class ParserTest {
     val sb = StringBuilder()
     val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
     root.start()
-    XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+    XmlRootReaderVisitor(AbstractXmlLexer(), txt.asReader().asAsync()).accept(root)
     root.end()
     println(sb)
   }
@@ -159,7 +160,7 @@ class ParserTest {
     val sb = StringBuilder()
     val root = AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())
     root.start()
-    XmlRootReaderVisitor(txt.asReader().asAsync()).accept(root)
+    XmlRootReaderVisitor(AbstractXmlLexer(), txt.asReader().asAsync()).accept(root)
     root.end()
     println(sb)
   }

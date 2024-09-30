@@ -90,6 +90,7 @@ object DockerUtils {
     pullTask.configure {
       it.applyUrl()
       it.image.set(image)
+//      it.enabled = false
     }
 
     val createTask =

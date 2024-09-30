@@ -5,13 +5,25 @@ import pw.binom.toByteArray
 
 class MemorySpace(val minSize: Int, maxSize: Int = Int.MAX_VALUE) {
 
-  val data = ByteArray(5000)
+  val data = ByteArray(minSize)
+
+  fun pushI8(value: Byte, offset: UInt, align: UInt) {
+    try {
+      data[offset.toInt()]=value
+    } catch (e: Throwable) {
+      throw RuntimeException("Can't put i32 $value on offset $offset. maxSize: ${data.size}", e)
+    }
+  }
 
   fun pushI32(value: Int, offset: UInt, align: UInt) {
-    value.toByteArray(
-      destination = data,
-      offset = offset.toInt(),
-    )
+    try {
+      value.toByteArray(
+        destination = data,
+        offset = offset.toInt(),
+      )
+    } catch (e: Throwable) {
+      throw RuntimeException("Can't put i32 $value on offset $offset. maxSize: ${data.size}", e)
+    }
   }
 
   fun pushI64(value: Long, offset: UInt, align: UInt) {
@@ -21,6 +33,7 @@ class MemorySpace(val minSize: Int, maxSize: Int = Int.MAX_VALUE) {
     )
   }
 
+  fun getI8(offset: UInt) = data[offset.toInt()]
   fun getI32(offset: UInt) = Int.fromBytes(source = data, offset = offset.toInt())
   fun getI64(offset: UInt) = Long.fromBytes(source = data, offset = offset.toInt())
 }

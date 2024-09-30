@@ -36,7 +36,7 @@ abstract class AbstractTcpSocket(init: Boolean) : TcpClientSocket {
       NSocket_getNoDelay(ptr) == 1
     }
 
-  override val native: RawSocket
+  override val native: Int
     get() = data.use { ptr -> ptr.pointed.native }
 
   init {

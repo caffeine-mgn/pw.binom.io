@@ -3,6 +3,7 @@ package pw.binom.http.rest
 import kotlinx.serialization.SerializationStrategy
 import pw.binom.io.http.HttpOutput
 
+@Suppress("NOTHING_TO_INLINE")
 interface EncodeFunc<OUTPUT, DATA> {
   suspend fun send(data: DATA, output: HttpOutput)
   fun encode(serializer: SerializationStrategy<OUTPUT>, value: OUTPUT, output: HttpOutput): DATA

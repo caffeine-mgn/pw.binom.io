@@ -11,7 +11,7 @@ class InfinityByteBufferTest {
         val v = InfinityByteBuffer(64)
         v.write(ByteBuffer(244))
         assertEquals(244, v.readRemaining)
-        assertEquals(200, v.read(ByteBuffer(200)))
+        assertEquals(DataTransferSize.ofSize(200), v.read(ByteBuffer(200)))
         assertEquals(44, v.readRemaining)
     }
 
@@ -25,7 +25,7 @@ class InfinityByteBufferTest {
         assertEquals(data.capacity, v.readRemaining)
 
         val out = ByteBuffer(data.capacity)
-        assertEquals(data.capacity, v.read(out))
+        assertEquals(DataTransferSize.ofSize(data.capacity), v.read(out))
         (0 until data.capacity).forEach { index ->
             assertEquals(data[index], out[index])
         }

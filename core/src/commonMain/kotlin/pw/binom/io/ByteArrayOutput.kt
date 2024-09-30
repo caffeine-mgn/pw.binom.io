@@ -10,7 +10,7 @@ import kotlin.math.ceil
 open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f) : Output {
   var data = ByteBuffer(capacity)
     private set
-  private var _wrote = 0
+  protected var _wrote = 0
   private var closed = false
   private var locked = false
 
@@ -135,11 +135,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     val needWrite = size - (this.data.remaining)
 
     if (needWrite > 0) {
-      val newSize =
-        maxOf(
-          ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
-          this.data.capacity + _wrote + needWrite,
-        )
+      val newSize = maxOf(
+        ceil(this.data.capacity.let { if (it == 0) 1 else it } * capacityFactor).toInt(),
+        this.data.capacity + _wrote + needWrite,
+      )
       val old = this.data
       val new = this.data.realloc(newSize)
       new.limit = new.capacity
@@ -222,16 +221,17 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
       unlock(oldPosition)
     }
   }
+
+  /**
+   * Removed [size] bytes from start
+   */
+  fun removeFirst(size: Int) {
+    ensureUnlocked()
+    require(size <= data.position)
+    val p = data.position
+    data.position = size
+    data.compact()
+    _wrote -= size
+    data.position = p - size
+  }
 }
-
-fun Input.readBytes() =
-  ByteArrayOutput().use { out ->
-    out.write(this)
-    out.toByteArray()
-  }
-
-suspend fun AsyncInput.readBytes() =
-  ByteArrayOutput().use { out ->
-    out.write(this)
-    out.toByteArray()
-  }

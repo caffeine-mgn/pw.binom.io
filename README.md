@@ -1,6 +1,6 @@
 # Binom IO
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Kotlin 1.9.24](https://img.shields.io/badge/Kotlin-1.9.24-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)
+[![Kotlin 2.0.20](https://img.shields.io/badge/Kotlin-2.0.20-blue.svg?style=flat&logo=kotlin)](http://kotlinlang.org)
 [![Gradle build](https://github.com/caffeine-mgn/pw.binom.io/actions/workflows/publish.yml/badge.svg) ](https://github.com/caffeine-mgn/pw.binom.io/actions/workflows/publish.yml) <br><br>
 
 ## What is Binom.IO?
@@ -94,7 +94,7 @@ buildscript {
   See [JsonWriter](json/src/commonMain/kotlin/pw/binom/json/JsonWriter.kt)
   and [JsonReader](json/src/commonMain/kotlin/pw/binom/json/JsonReader.kt)
 - [x] [ObjectPool](core/src/commonMain/kotlin/pw/binom/pool/DefaultPool.kt)
-- [x] [Date](date)
+- [x] [Date](date/README.md)
 - [x] XML Tools<br>
 - [x] Charset Support See SAX Tools:
   [XmlVisiter](xml/src/commonMain/kotlin/pw/binom/xml/sax/XmlVisiter.kt),
@@ -150,7 +150,3 @@ You can find examples [here](examples)
 We enforce the code style to match the official Kotlin [coding conventions](https://kotlinlang.org/docs/reference/coding-conventions.html). Read there on how to set those up for your IDE.
 - **Branching:**
 I use branching like described in `git-flow`.
-
-## Using Library in Projects:
-
-[Simple Lightweight Binary Repository](https://github.com/caffeine-mgn/repository)

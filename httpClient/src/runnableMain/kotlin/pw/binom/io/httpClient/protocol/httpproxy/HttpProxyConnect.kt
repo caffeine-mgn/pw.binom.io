@@ -25,11 +25,11 @@ import kotlin.time.TimeSource
 
 @OptIn(ExperimentalTime::class)
 class HttpProxyConnect(
-    val proxyUrl: SocketAddress,
-    private val networkManager: NetworkManager,
-    private var tcp: AsyncChannel?,
-    private val protocolSelector: ProtocolSelector,
-    protected val auth: HttpAuth?,
+  val proxyUrl: SocketAddress,
+  private val networkManager: NetworkManager,
+  private var tcp: AsyncChannel?,
+  private val protocolSelector: ProtocolSelector,
+  protected val auth: HttpAuth?,
 ) : HttpConnect {
   private var created = TimeSource.Monotonic.markNow()
   private var transparentChannel: HttpConnect? = null
@@ -50,7 +50,7 @@ class HttpProxyConnect(
             host = proxyUrl.host,
             port = proxyUrl.port,
           ).resolve(),
-        )
+        ).also { it.channel.setTcpNoDelay(true) }
       this.tcp = tcp
     }
     return tcp

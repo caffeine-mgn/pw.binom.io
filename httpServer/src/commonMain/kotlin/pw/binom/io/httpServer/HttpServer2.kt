@@ -43,9 +43,9 @@ class HttpServer2(
   val keepAlive: Boolean = true,
   val compressing: Boolean = true,
 ) : AsyncCloseable {
-  private val logger = InternalLog.file("HttpServer2.kt")
+  private val logger = InternalLog.file("HttpServer2")
   private val closed = AtomicBoolean(false)
-  private val listeners = defaultMutableSet<Job>()
+  private val listeners = defaultMutableSet<ListenJob>()
   private val timeoutWaiters = ArrayList<TimeoutRecord>()
   private val timeoutRecordPool = GenericObjectPool(factory = TimeoutRecord)
   private val timeoutLock = SpinLock()
@@ -100,7 +100,7 @@ class HttpServer2(
     val headers = HashHeaders2()
     withTimeout(readTimeout) {
       val line = stream.reader.readln() ?: throw EOFException()
-      logger.info{ "Header line was read. Line: \"$line\", stream.reader: ${stream.reader::class.qualifiedName}" }
+      logger.info(method = "prepareExchange") { "Header line was read. Line: \"$line\", stream.reader: ${stream.reader::class.qualifiedName}" }
       HttpServerUtils.parseHttpRequest(line) { method, path ->
         reqMethod = method
         reqPath = path
@@ -228,11 +228,11 @@ class HttpServer2(
 
   @Suppress("OPT_IN_IS_NOT_ENABLED")
   @OptIn(DelicateCoroutinesApi::class)
-  fun listen(address: InetSocketAddress): Job {
+  fun listen(address: InetSocketAddress): ListenJob {
     val server = dispatcher.bindTcp(address)
+    var currentJob: ListenJob? = null
     val job =
       GlobalScope.launch(dispatcher) {
-        val currentJob = this.coroutineContext.job
         try {
           while (isActive) {
             val newClient =
@@ -256,11 +256,13 @@ class HttpServer2(
           // Do nothing
         } finally {
           server.closeAnyway()
-          listeners -= currentJob
+          currentJob?.let { listeners -= it }
         }
       }
-    listeners += job
-    return job
+    val l = ListenJob(port = server.port, job = job)
+    currentJob = l
+    listeners += l
+    return l
   }
 
   override suspend fun asyncClose() {

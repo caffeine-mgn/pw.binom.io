@@ -10,7 +10,7 @@ import pw.binom.wasm.visitors.DataSectionVisitor
 import pw.binom.wasm.visitors.ExpressionsVisitor
 
 class DataSection : DataSectionVisitor, MutableList<Data> by ArrayList() {
-  private var memory: MemoryId? = null
+  private var memory: MemoryId = MemoryId(0u)
   private var exp: Expressions? = null
 
   override fun active(memoryId: MemoryId): ExpressionsVisitor {
@@ -21,14 +21,14 @@ class DataSection : DataSectionVisitor, MutableList<Data> by ArrayList() {
   }
 
   override fun active(): ExpressionsVisitor {
-    memory = null
+    memory = MemoryId(0u)
     val e = Expressions()
     this.exp = e
     return e
   }
 
   override fun passive() {
-    memory = null
+    memory = MemoryId(0u)
     exp = null
   }
 
@@ -49,7 +49,6 @@ class DataSection : DataSectionVisitor, MutableList<Data> by ArrayList() {
   }
 
   override fun elementEnd() {
-    memory = null
     exp = null
   }
 

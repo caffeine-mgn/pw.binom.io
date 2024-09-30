@@ -38,7 +38,7 @@ actual class Selector : Closeable {
 
   //    internal var pipeRead: Int = 0
 //    internal var pipeWrite: Int = 0
-  private val fdToKey = defaultMutableMap<RawSocket, SelectorKey>()
+  private val fdToKey = defaultMutableMap<Int, SelectorKey>()
 
   internal inline fun <T> usingEventPtr(func: (CPointer<NEvent>) -> T): T =
     eventMemLock.synchronize { func(eventMem) }

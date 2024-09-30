@@ -17,7 +17,7 @@ class JvmTcpClientSocket(
   private val logger = InternalLog.file("ClientSocket_$id")
 
   override fun close() {
-    logger.info { "Closing" }
+    logger.info(method = "close") { "Closing" }
     runCatching { native.shutdownInput() }
     runCatching { native.shutdownOutput() }
     native.close()
@@ -76,10 +76,10 @@ class JvmTcpClientSocket(
     try {
       val r = data.remaining
       val s = native.write(data.native) ?: throw IllegalStateException()
-      logger.info { "Success send $s/$r bytes" }
+      logger.info(method = "send") { "Success send $s/$r bytes" }
       s
     } catch (e: IOException) {
-      logger.info { "Can't send $e" }
+      logger.info(method = "send") { "Can't send $e" }
 //        throw RuntimeException("Can't write ${data.remaining}", e)
       -1
     }
@@ -88,10 +88,10 @@ class JvmTcpClientSocket(
     try {
       val r = data.remaining
       val s = native.read(data.native)
-      logger.info { "Received $s/$r bytes" }
+      logger.info(method = "receive") { "Received $s/$r bytes" }
       return s
     } catch (e: java.net.SocketException) {
-      logger.info { "Can't receive: $e" }
+      logger.info(method = "receive") { "Can't receive: $e" }
       return -1
     }
   }
@@ -106,7 +106,7 @@ class JvmTcpClientSocket(
   override var blocking: Boolean = false
     set(value) {
       field = value
-      logger.info { "set blocking to $value" }
+      logger.info(method = "blocking") { "set blocking to $value" }
       native.configureBlocking(value)
     }
   override val tcpNoDelay: Boolean
@@ -120,10 +120,10 @@ class JvmTcpClientSocket(
   override fun setTcpNoDelay(value: Boolean): Boolean =
     try {
       native.socket().tcpNoDelay = value
-      logger.info { "set TcpNoDelay to $value" }
+      logger.info(method = "setTcpNoDelay") { "set TcpNoDelay to $value" }
       true
     } catch (e: SocketException) {
-      logger.info { "set TcpNoDelay to $value" }
+      logger.info(method = "setTcpNoDelay") { "set TcpNoDelay to $value" }
       false
     }
 }

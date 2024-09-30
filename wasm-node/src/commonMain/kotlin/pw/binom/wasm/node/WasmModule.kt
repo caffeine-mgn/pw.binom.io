@@ -38,6 +38,12 @@ class WasmModule : WasmVisitor {
   @JsName("typeSectionF")
   var typeSection = TypeSection()
 
+  @JsName("tableSectionF")
+  var tableSection = TableSection()
+
+  @JsName("elementSectionF")
+  var elementSection = ElementSection()
+
   override fun dataSection() = dataSection
 
   override fun dataCountSection(): DataCountSectionVisitor {
@@ -50,15 +56,11 @@ class WasmModule : WasmVisitor {
 
   override fun globalSection() = globalSection
 
-  override fun elementSection(): ElementSectionVisitor {
-    return super.elementSection()
-  }
+  override fun elementSection() = elementSection
 
   override fun memorySection() = memorySection
 
-  override fun tableSection(): TableSectionVisitor {
-    return super.tableSection()
-  }
+  override fun tableSection() = tableSection
 
   override fun startSection(function: FunctionId) {
     startFunctionId = function
@@ -93,6 +95,7 @@ class WasmModule : WasmVisitor {
     importSection.clear()
     memorySection.clear()
     typeSection.clear()
+    elementSection.clear()
   }
 
   fun accept(visitor: WasmVisitor) {
@@ -134,7 +137,13 @@ class WasmModule : WasmVisitor {
     if (typeSection.isNotEmpty()) {
       typeSection.accept(visitor.typeSection())
     }
-    if (customSection.isNotEmpty()){
+    if (tableSection.isNotEmpty()) {
+      tableSection.accept(visitor.tableSection())
+    }
+    if (elementSection.isNotEmpty()) {
+      elementSection.accept(visitor.elementSection())
+    }
+    if (customSection.isNotEmpty()) {
       customSection.accept(visitor)
     }
     visitor.end()

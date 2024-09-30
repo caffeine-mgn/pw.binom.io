@@ -10,14 +10,20 @@ import kotlin.jvm.JvmName
 import kotlin.test.Test
 
 fun Map<String, Any?>.toDataBinder() = object : DataProvider {
-    override fun get(key: String): Any? = this@toDataBinder[key]
+  override val keys: Collection<String>
+    get() = this@toDataBinder.keys
+
+  override fun get(key: String): Any? = this@toDataBinder[key]
 
     override fun contains(key: String): Boolean = this@toDataBinder.containsKey(key)
 }
 
 @JvmName("toMutableDataBinder")
 fun MutableMap<String, Any?>.toMutableDataBinder() = object : DataBinder {
-    override fun get(key: String): Any? = this@toMutableDataBinder[key]
+  override val keys: Collection<String>
+    get() = this@toMutableDataBinder.keys
+
+  override fun get(key: String): Any? = this@toMutableDataBinder[key]
 
     override fun contains(key: String): Boolean = this@toMutableDataBinder.containsKey(key)
     override fun set(key: String, value: Any?, useQuotes: Boolean) {

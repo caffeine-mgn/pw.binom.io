@@ -8,6 +8,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 
+@OptIn(ExperimentalSerializationApi::class)
 class StringEncoder(override val serializersModule: SerializersModule = EmptySerializersModule()) : Encoder {
     var value = ""
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {

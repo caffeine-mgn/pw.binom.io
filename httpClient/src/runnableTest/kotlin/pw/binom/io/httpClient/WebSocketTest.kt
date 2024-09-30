@@ -6,13 +6,12 @@ import pw.binom.io.*
 import pw.binom.io.http.websocket.MessageCoder
 import pw.binom.io.http.websocket.MessageType
 import pw.binom.io.http.websocket.WebSocketClosedException
+import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.network.MultiFixedSizeThreadNetworkDispatcher
-import pw.binom.testing.Testing
-import pw.binom.testing.shouldBeFalse
-import pw.binom.testing.shouldBeTrue
-import pw.binom.testing.shouldEquals
+import pw.binom.testing.*
 import pw.binom.url.toURL
 import pw.binom.uuid.nextUuid
+import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.time.Duration
@@ -20,40 +19,26 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
+@OptIn(DelicateCoroutinesApi::class)
 class WebSocketTest {
   @Test
   fun simpleEchoTest() = Testing.async {
-    MultiFixedSizeThreadNetworkDispatcher(4).use { nd ->
-      val testText = Random.nextUuid().toString()
-      HttpClient.create(nd).use { client ->
-        client.connectWebSocket(
-          uri = HTTP_WS_URL,
-        ).start().useAsync { ws ->
-          ws.write(MessageType.TEXT).bufferedWriter().useAsync { msg ->
-            msg.append(testText)
-          }
-          ws.read().useAsync { msg ->
-            val txt = msg.readBytes().decodeToString()
-            txt shouldEquals testText
-          }
+    ws { ws ->
+      val bufferSize = 10
+      test("one shot message") {
+        ws.echoText(Random.nextUuid().toString())
+      }
+      test("long message") {
+        ws.echoBytes((bufferSize * 2.7).roundToInt())
+      }
+      test("Several message in one connect") {
+        repeat(10) {
+          ws.echoBytes((bufferSize * 2.7).roundToInt())
         }
       }
     }
   }
 
-  private suspend fun ws(func: suspend (SuccessWebSocketConnection) -> Unit) {
-    MultiFixedSizeThreadNetworkDispatcher(4).use { nd ->
-      HttpClient.create(nd).use { client ->
-        client.connectWebSocket(
-          uri = HTTP_WS_URL,
-        ).start().useAsync { ws ->
-          func(ws)
-        }
-      }
-    }
-  }
-
-  @OptIn(DelicateCoroutinesApi::class)
   @Test
   fun tryParallelWriteTest() = Testing.async {
     ws { ws ->

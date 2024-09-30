@@ -28,21 +28,21 @@ class ComposeReaderTest {
         r.addLast(StringReader("5678"))
 
         val v = CharArray(3)
-        assertEquals(3, r.read(v))
+        assertEquals(DataTransferSize.ofSize(3), r.read(v))
         assertEquals('1', v[0])
         assertEquals('2', v[1])
         assertEquals('3', v[2])
 
-        assertEquals(3, r.read(v))
+        assertEquals(DataTransferSize.ofSize(3), r.read(v))
         assertEquals('4', v[0])
         assertEquals('5', v[1])
         assertEquals('6', v[2])
 
-        assertEquals(2, r.read(v))
+        assertEquals(DataTransferSize.ofSize(2), r.read(v))
         assertEquals('7', v[0])
         assertEquals('8', v[1])
 
-        assertEquals(0, r.read(v))
+        assertEquals(DataTransferSize.EMPTY, r.read(v))
     }
 
     @OptIn(ExperimentalTime::class)
@@ -83,7 +83,7 @@ class ComposeReaderTest {
             r.addLast(StringReader(str))
 
             while (true) {
-                if (r.read(c) <= 0) {
+                if (r.read(c).isNotAvailable) {
                     break
                 }
             }

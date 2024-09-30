@@ -12,28 +12,31 @@ import kotlin.math.absoluteValue
 actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpClientSocket, NetSocket {
   actual constructor() : this(SocketChannel.open())
 
-  private val logger = InternalLog.file("TcpClientNetSocket")
+  private val logger = InternalLog
+    .file("TcpClientNetSocket")
+    .prefix { "this=${hashCode()} " }
+
   actual fun connect(address: InetSocketAddress): ConnectStatus {
     return try {
-      logger.info { "Start connecting to $address" }
+      logger.info(method = "connect") { "Start connecting to $address" }
       if (native.connect(address.native)) {
-        logger.info { "Connected success" }
+        logger.info(method = "connect") { "Connected success" }
         ConnectStatus.OK
       } else {
-        logger.info { "Connection in process" }
+        logger.info(method = "connect") { "Connection in process" }
         ConnectStatus.IN_PROGRESS
       }
     } catch (e: AlreadyConnectedException) {
-      logger.info { "Already connected" }
+      logger.info(method = "connect") { "Already connected" }
       ConnectStatus.ALREADY_CONNECTED
     } catch (e: ConnectException) {
-      logger.info { "Can't connect: connection_refused" }
+      logger.info(method = "connect") { "Can't connect: connection_refused" }
       ConnectStatus.CONNECTION_REFUSED
     }
   }
 
   actual override fun close() {
-    logger.info { "Closing" }
+    logger.info(method = "close") { "Closing" }
     runCatching { native.shutdownInput() }
     runCatching { native.shutdownOutput() }
     native.close()
@@ -41,31 +44,41 @@ actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpCl
 
   actual override fun send(data: ByteBuffer): Int =
     try {
-      val r = data.remaining
-      val s = native.write(data.native) ?: throw IllegalStateException()
-      logger.info { "Success send $s/$r bytes" }
-      s
+      if (data.hasRemaining) {
+        val r = data.remaining
+        val s = native.write(data.native)
+        logger.info(method = "send") { "Success send $s/$r bytes" }
+        s
+      } else {
+        logger.info(method = "send") { "No remaining for sending" }
+        0
+      }
     } catch (e: IOException) {
-      logger.info { "Can't send $e" }
+      logger.info(method = "send") { "Can't send $e" }
 //        throw RuntimeException("Can't write ${data.remaining}", e)
       -1
     }
 
   actual override fun receive(data: ByteBuffer): Int =
     try {
-      val r = data.remaining
-      val s = native.read(data.native)
-      logger.info { "Received $s/$r bytes" }
-      s
+      if (data.hasRemaining) {
+        val r = data.remaining
+        val s = native.read(data.native)
+        logger.info(method = "receive") { "Received $s/$r bytes" }
+        s
+      } else {
+        logger.info(method = "receive") { "No remaining for receiving" }
+        0
+      }
     } catch (e: java.net.SocketException) {
-      logger.info { "Can't receive: $e" }
+      logger.info(method = "receive") { "Can't receive: $e" }
       -1
     }
 
   actual override var blocking: Boolean = false
     set(value) {
       field = value
-      logger.info { "set blocking to $value" }
+      logger.info(method = "blocking") { "set blocking to $value" }
       native.configureBlocking(value)
     }
   actual override val id: String
@@ -81,10 +94,10 @@ actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpCl
   actual override fun setTcpNoDelay(value: Boolean): Boolean =
     try {
       native.socket().tcpNoDelay = value
-      logger.info { "set TcpNoDelay to $value" }
+      logger.info(method = "setTcpNoDelay") { "set TcpNoDelay to $value" }
       true
     } catch (e: SocketException) {
-      logger.info { "set TcpNoDelay to $value" }
+      logger.info(method = "setTcpNoDelay") { "set TcpNoDelay to $value" }
       false
     }
 

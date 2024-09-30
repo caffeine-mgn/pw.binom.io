@@ -62,6 +62,12 @@ expect open class ByteBuffer :
   fun forEach(func: (Byte) -> Unit)
   fun forEachIndexed(func: (index: Int, value: Byte) -> Unit)
   fun indexOfFirst(predicate: (Byte) -> Boolean): Int
+
+  /**
+   * На всем промежутке между [position] и [limit] вызывает функцию [func].
+   * В качестве аргумента отдаёт текущий байт на данной позиции. В результате
+   * ожидает байт, которым нужно заменить
+   */
   fun replaceEach(func: (Int, Byte) -> Byte)
 
   operator fun set(index: Int, value: Byte)

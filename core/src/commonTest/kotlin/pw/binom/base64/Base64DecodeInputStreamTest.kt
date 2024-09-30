@@ -1,9 +1,6 @@
 package pw.binom.base64
 
-import pw.binom.io.ByteBuffer
-import pw.binom.io.StringReader
-import pw.binom.io.nextBytes
-import pw.binom.io.use
+import pw.binom.io.*
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,18 +23,18 @@ class Base64DecodeInputStreamTest {
     data.clear()
     val sb = StringBuilder()
     Base64EncodeOutput(sb, padding = true).use { out ->
-      if (data.capacity != out.write(data)) {
+      if (DataTransferSize.ofSize(data.capacity) != out.write(data)) {
         fail()
       }
     }
     val reader = Base64DecodeInput(StringReader(sb.toString()))
     val readedData = ByteBuffer(data.capacity)
-    assertEquals(data.capacity, reader.read(readedData))
+    assertEquals(DataTransferSize.ofSize(data.capacity), reader.read(readedData))
     data.clear()
     readedData.clear()
     (data.position until data.limit).forEach {
       assertEquals(data[it], readedData[it])
     }
-    assertEquals(0, reader.read(readedData))
+    assertEquals(DataTransferSize.EMPTY, reader.read(readedData))
   }
 }

@@ -8,6 +8,7 @@ import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 object SelectExecutor {
+  private val logger = InternalLog.file("SelectExecutor")
   fun startSelecting(
     selector: Selector,
     isSelectorClosed: () -> Boolean,
@@ -44,7 +45,7 @@ object SelectExecutor {
           )
         }
       }
-      InternalLog.info { "Select finished in ${now.elapsedNow()}" }
+      logger.info(method = "startSelecting") { "Select finished in ${now.elapsedNow()}" }
     }
   }
 }

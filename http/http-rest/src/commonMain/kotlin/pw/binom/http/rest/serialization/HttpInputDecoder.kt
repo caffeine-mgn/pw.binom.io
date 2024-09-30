@@ -12,6 +12,7 @@ import pw.binom.http.rest.EndpointDescription
 import pw.binom.io.http.HttpInput
 import pw.binom.url.PathMask
 
+@OptIn(ExperimentalSerializationApi::class)
 @Suppress("UNCHECKED_CAST")
 class HttpInputDecoder : Decoder, CompositeDecoder {
   override var serializersModule: SerializersModule = EmptySerializersModule()

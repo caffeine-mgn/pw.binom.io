@@ -31,7 +31,7 @@ val okHandler =
 class KeepAliveTest {
 
   object LOG : InternalLog {
-    override fun log(level: InternalLog.Level, file: String?, line: Int?, text: () -> String) {
+    override fun log(level: InternalLog.Level, file: String?, line: Int?, method: String?, text: () -> String) {
       val text = text()
       try {
         print("$level $text ($file:$line)")
@@ -70,10 +70,10 @@ class KeepAliveTest {
                 .append("\r\n")
               writer.flush()
 
-              assertEquals("HTTP/1.1 200 OK",reader.readln())
-              assertEquals("content-length: 0",reader.readln())
-              assertEquals("Connection: keep-alive",reader.readln())
-              assertEquals("",reader.readln())
+              assertEquals("HTTP/1.1 200 OK", reader.readln())
+              assertEquals("content-length: 0", reader.readln())
+              assertEquals("Connection: keep-alive", reader.readln())
+              assertEquals("", reader.readln())
 
               delay(1.seconds)
               writer.append("GET / HTTP/1.1\r\n")
@@ -83,10 +83,10 @@ class KeepAliveTest {
                 .append("\r\n")
               writer.flush()
 
-              assertEquals("HTTP/1.1 200 OK",reader.readln())
-              assertEquals("content-length: 0",reader.readln())
-              assertEquals("Connection: keep-alive",reader.readln())
-              assertEquals("",reader.readln())
+              assertEquals("HTTP/1.1 200 OK", reader.readln())
+              assertEquals("content-length: 0", reader.readln())
+              assertEquals("Connection: keep-alive", reader.readln())
+              assertEquals("", reader.readln())
             }
           }
         }

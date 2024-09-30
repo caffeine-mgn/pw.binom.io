@@ -34,7 +34,7 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
     return count
   }
 
-  fun add(socket: RawSocket, data: CValuesRef<NativeEvent>?): EpollResult {
+  fun add(socket: Int, data: CValuesRef<NativeEvent>?): EpollResult {
 //        val ret = epoll_ctl(raw, sEPOLL_CTL_ADD, socket.convert(), data)
     val ret = NSelector_registryKey(raw, socket, data)
 //        if (ret == 0) {
@@ -56,7 +56,7 @@ value class Epoll(val raw: CPointer<NativeSelector>) {
     return EpollResult.OK
   }
 
-  fun delete(fd: RawSocket): EpollResult {
+  fun delete(fd: Int): EpollResult {
     val ret = NSelector_removeKey(raw, fd)
     if (ret != 1) {
 //            println("Can't remove event. fd: $fd, errno: $errno, operation: $operation")

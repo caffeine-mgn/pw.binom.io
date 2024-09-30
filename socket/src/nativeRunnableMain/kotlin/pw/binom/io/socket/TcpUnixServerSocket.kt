@@ -24,7 +24,7 @@ actual class TcpUnixServerSocket(init: Boolean) : TcpServerSocket {
     }
   }
 
-  override val native: RawSocket = data.use { ptr -> ptr.pointed.native }
+  override val native = data.use { ptr -> ptr.pointed.native }
 
   actual fun accept(): TcpClientUnixSocket? {
     val newSocket = data.use { NSocket_acceptInetSocketAddress(it, null) }

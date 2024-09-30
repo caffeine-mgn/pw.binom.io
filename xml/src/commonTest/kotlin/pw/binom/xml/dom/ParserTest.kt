@@ -3,6 +3,7 @@ package pw.binom.xml.dom
 import kotlinx.coroutines.test.runTest
 import pw.binom.io.asAsync
 import pw.binom.io.asReader
+import pw.binom.xml.AbstractXmlLexer
 import pw.binom.xml.sax.XmlRootReaderVisitor
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +15,7 @@ class ParserTest {
     val txt =
       """<?xml version="1.0" encoding="UTF-8"?><ns1:Response ns1:name="Anton" xmlns:ns1="http://binom.pw"><value><ns1:TestData ns1:value="OLOLO"/></value></ns1:Response>"""
     val r = AsyncXmlDomReader()
-    XmlRootReaderVisitor(txt.asReader().asAsync()).accept(r)
+    XmlRootReaderVisitor(AbstractXmlLexer(), txt.asReader().asAsync()).accept(r)
     val node = r.rootNode
 
     assertEquals("", node.tag)

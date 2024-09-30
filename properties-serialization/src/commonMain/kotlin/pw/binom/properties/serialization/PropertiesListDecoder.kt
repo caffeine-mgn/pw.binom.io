@@ -8,6 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.properties.PropertyValue
 
+@OptIn(ExperimentalSerializationApi::class)
 class PropertiesListDecoder(
   val root: PropertyValue.Enumerate,
   override val serializersModule: SerializersModule,

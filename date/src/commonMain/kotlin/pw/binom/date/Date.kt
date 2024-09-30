@@ -25,23 +25,32 @@ value class Date(val epochDay: Long) {
         throwInvalidDate()
       }
       return of(
-          year = items[0].toIntOrNull() ?: throwInvalidDate(),
-          monthNumber = items[1].toIntOrNull() ?: throwInvalidDate(),
-          dayOfMonth = items[2].toIntOrNull() ?: throwInvalidDate(),
+        year = items[0].toIntOrNull() ?: throwInvalidDate(),
+        monthNumber = items[1].toIntOrNull() ?: throwInvalidDate(),
+        dayOfMonth = items[2].toIntOrNull() ?: throwInvalidDate(),
       )
     }
   }
 
-  val startOfDayMilliseconds
-    get() = epochDay * MILLISECONDS_IN_DAY
+  /**
+   * Returns first DateTime of current date
+   */
+  val startOfDay
+    get() = DateTime(epochDay * MILLISECONDS_IN_DAY)
 
-  fun withTime(time: Time) = DateTime(startOfDayMilliseconds + time.milliseconds)
+  /**
+   * returns last DateTime of current date
+   */
+  val endOfDay
+    get() = DateTime(epochDay * MILLISECONDS_IN_DAY + (MILLISECONDS_IN_DAY - 1))
+
+  fun withTime(time: Time) = DateTime(startOfDay.milliseconds + time.milliseconds)
 
   val year: Int
     get() {
       val year: Int
       extractDateItems(
-        utc = startOfDayMilliseconds,
+        utc = startOfDay.milliseconds,
         offset = Duration.ZERO,
         year = { year = it },
       )
@@ -52,7 +61,7 @@ value class Date(val epochDay: Long) {
     get() {
       val month: Int
       extractDateItems(
-        utc = startOfDayMilliseconds,
+        utc = startOfDay.milliseconds,
         offset = Duration.ZERO,
         month = { month = it },
       )
@@ -62,7 +71,7 @@ value class Date(val epochDay: Long) {
     get() {
       val dayOfMonth: Int
       extractDateItems(
-        utc = startOfDayMilliseconds,
+        utc = startOfDay.milliseconds,
         offset = Duration.ZERO,
         dayOfMonth = { dayOfMonth = it },
       )
@@ -74,7 +83,7 @@ value class Date(val epochDay: Long) {
     val month: Int
     val dayOfMonth: Int
     extractDateItems(
-      utc = startOfDayMilliseconds,
+      utc = startOfDay.milliseconds,
       offset = Duration.ZERO,
       year = { year = it },
       dayOfMonth = { dayOfMonth = it },

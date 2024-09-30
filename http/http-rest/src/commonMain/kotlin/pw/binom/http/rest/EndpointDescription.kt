@@ -2,12 +2,14 @@
 
 package pw.binom.http.rest
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 
 import pw.binom.bitarray.BitArray64
 import pw.binom.http.rest.annotations.*
 
+@OptIn(ExperimentalSerializationApi::class)
 class EndpointDescription<T> private constructor(
 //  val method: String,
 //  val path: PathMask,

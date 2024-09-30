@@ -8,6 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 
+@OptIn(ExperimentalSerializationApi::class)
 class StringDecoder(override val serializersModule: SerializersModule = EmptySerializersModule()) : Decoder {
 
     var value: String = ""
@@ -36,7 +37,7 @@ class StringDecoder(override val serializersModule: SerializersModule = EmptySer
         value.toFloatOrNull() ?: throw SerializationException("Can't parse \"$value\" to Float")
 
     @ExperimentalSerializationApi
-    override fun decodeInline(inlineDescriptor: SerialDescriptor): Decoder = this
+    override fun decodeInline(descriptor: SerialDescriptor): Decoder = this
 
     override fun decodeInt(): Int =
         value.toIntOrNull() ?: throw SerializationException("Can't parse \"$value\" to Int")

@@ -34,7 +34,7 @@ actual class MulticastUdpSocket actual constructor(
     }
   }
 
-  override val native: RawSocket = data.use { ptr -> ptr.pointed.native }
+  override val native = data.use { ptr -> ptr.pointed.native }
 
   actual fun send(data: ByteBuffer, address: InetSocketAddress): Int {
     if (!data.isReferenceAccessAvailable()) {

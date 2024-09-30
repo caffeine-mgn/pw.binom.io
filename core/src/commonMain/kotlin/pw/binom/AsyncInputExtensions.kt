@@ -255,6 +255,13 @@ suspend fun AsyncInput.readByteArray(size: Int, pool: ByteBufferPool): ByteArray
   readByteArray(size = size, buffer = buffer)
 }
 
+suspend fun AsyncInput.readByteArray(
+  size: Int,
+  bufferSize: Int = DEFAULT_BUFFER_SIZE,
+) = ByteBuffer(bufferSize).use { buffer ->
+  readByteArray(size = size, buffer = buffer)
+}
+
 suspend fun AsyncInput.readByteArray(size: Int, buffer: ByteBuffer): ByteArray {
   require(size >= 0) { "size should be more or equals 0" }
   val array = ByteArray(size)
@@ -271,6 +278,10 @@ suspend fun AsyncInput.readByteArray(dest: ByteArray, pool: ByteBufferPool) {
   }
 }
 
+/**
+ * Coping from `this` to [dest] using [buffer] as  temporal storage
+ * @throws EOFException throws when can't read all data of size [dest]
+ */
 suspend fun AsyncInput.readByteArray(dest: ByteArray, buffer: ByteBuffer) {
   if (dest.isEmpty()) {
     return

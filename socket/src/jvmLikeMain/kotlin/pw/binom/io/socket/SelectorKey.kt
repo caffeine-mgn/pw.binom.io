@@ -9,7 +9,7 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
   private val logger = InternalLog.file("SelectorKey")
 
   actual override fun close() {
-    logger.info { "Closing" }
+    logger.info(method = "close") { "Closing" }
     closed = true
     native.cancel()
   }
@@ -40,16 +40,16 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     internalListenFlags = ListenFlags.ZERO
     try {
       native.interestOps(0)
-      logger.info { "Cleared listener flags" }
+      logger.info(method = "clearNativeListenFlags") { "Cleared listener flags ${native.channel()::class.java.name}@${native.channel().hashCode()}" }
     } catch (e: java.nio.channels.CancelledKeyException) {
-      logger.info { "Can't clear listener flags" }
+      logger.info(method = "clearNativeListenFlags") { "Can't clear listener flags ${native.channel()::class.java.name}@${native.channel().hashCode()}" }
       closed = true
     }
   }
 
   actual fun updateListenFlags(listenFlags: ListenFlags): Boolean {
     if (closed) {
-      logger.info { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
+      logger.info(method = "updateListenFlags") { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
       return false
     }
     val old = internalListenFlags
@@ -64,18 +64,36 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
       r = r or SelectionKey.OP_WRITE or SelectionKey.OP_CONNECT
     }
     return try {
-      native.interestOps(r and native.channel().validOps())
-      logger.info {
-        "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}"
+      val result = r and native.channel().validOps()
+      native.interestOps(result)
+      logger.info(method = "updateListenFlags") {
+        "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)} = ${javaFlagsToString(result)}"
       }
       true
     } catch (e: java.nio.channels.CancelledKeyException) {
-      logger.info {
+      logger.info(method = "updateListenFlags") {
         "Can't update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}: Locks like socket closed. Set state to close"
       }
       closed = true
       false
     }
+  }
+
+  private fun javaFlagsToString(flags: Int): String {
+    val result = StringBuilder()
+    if (flags and SelectionKey.OP_READ != 0) {
+      result.append(" OP_READ")
+    }
+    if (flags and SelectionKey.OP_WRITE != 0) {
+      result.append(" OP_WRITE")
+    }
+    if (flags and SelectionKey.OP_CONNECT != 0) {
+      result.append(" OP_CONNECT")
+    }
+    if (flags and SelectionKey.OP_ACCEPT != 0) {
+      result.append(" OP_ACCEPT")
+    }
+    return result.toString()
   }
 
   private var internalListenFlags = ListenFlags.ZERO

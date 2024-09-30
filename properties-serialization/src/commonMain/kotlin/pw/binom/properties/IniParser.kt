@@ -1,5 +1,6 @@
 package pw.binom.properties
 
+@Suppress("UNCHECKED_CAST")
 object IniParser {
   private data class Obj(val map: Map<String, PropertyValue?>) : PropertyValue.Object {
     override val names: Iterable<String>

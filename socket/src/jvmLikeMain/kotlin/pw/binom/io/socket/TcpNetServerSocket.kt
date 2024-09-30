@@ -8,32 +8,32 @@ actual class TcpNetServerSocket (override val native: ServerSocketChannel): TcpS
   actual constructor():this(ServerSocketChannel.open())
   private val logger = InternalLog.file("TcpNetServerSocket")
   actual fun accept(address: MutableInetAddress?): TcpClientNetSocket? {
-    logger.info { "Accepting..." }
+    logger.info(method = "accept") { "Accepting..." }
     val client = native.accept()
     if (client == null) {
-      logger.info { "No socket for accept" }
+      logger.info(method = "accept") { "No socket for accept" }
       return null
     }
     if (address != null) {
       address.native = client.socket().localAddress
     }
-    logger.info { "Socket ${System.identityHashCode(client)} accepted" }
+    logger.info(method = "accept") { "Socket ${System.identityHashCode(client)} accepted" }
     return TcpClientNetSocket(client)
   }
 
   actual fun bind(address: InetSocketAddress): BindStatus {
     try {
-      logger.info { "Binding to $address" }
+      logger.info(method = "bind") { "Binding to $address" }
       native.socket().reuseAddress = true
       native.bind(address.native)
     } catch (e: AlreadyBoundException) {
-      logger.info { "Bind ALREADY_BINDED" }
+      logger.info(method = "bind") { "Bind ALREADY_BINDED" }
       return BindStatus.ALREADY_BINDED
     } catch (e: java.net.BindException) {
-      logger.info { "Bind ADDRESS_ALREADY_IN_USE" }
+      logger.info(method = "bind") { "Bind ADDRESS_ALREADY_IN_USE" }
       return BindStatus.ADDRESS_ALREADY_IN_USE
     }
-    logger.info { "Bind OK" }
+    logger.info(method = "bind") { "Bind OK" }
     return BindStatus.OK
   }
 

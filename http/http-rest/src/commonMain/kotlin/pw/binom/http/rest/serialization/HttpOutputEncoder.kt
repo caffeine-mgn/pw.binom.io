@@ -11,6 +11,7 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.http.rest.EndpointDescription
 import pw.binom.io.http.HashHeaders2
 
+@OptIn(ExperimentalSerializationApi::class)
 @Suppress("UNCHECKED_CAST")
 class HttpOutputEncoder(
   override val serializersModule: SerializersModule = EmptySerializersModule(),
