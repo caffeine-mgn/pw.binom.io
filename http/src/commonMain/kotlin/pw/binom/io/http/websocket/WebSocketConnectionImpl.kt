@@ -82,7 +82,9 @@ class WebSocketConnectionImpl(
     }
     try {
       logger.info(method = "read") { "Try lock for reading" }
-      readChannelLock.lock()
+      if (!readChannelLock.tryLock()) {
+        throw IllegalStateException("Previous message not closed")
+      }
       logger.info(method = "read") { "Lock for reading done. Try to read message header" }
       message.startMessage()
       val type = message.type
