@@ -41,8 +41,31 @@ class RunTest {
 
       override fun memory(module: String, field: String, inital: UInt, max: UInt?): MemorySpace =
         when {
-          module == "env" && (field == "__linear_memory" || field == "memory") -> MemorySpace(1024*1024)
+          module == "env" && (field == "__linear_memory" || field == "memory") -> MemorySpace(1024 * 1024)
           else -> TODO("Not yet implemented. module=$module, field=$field, inital: $inital, max: $max")
+        }
+
+      override fun func(module: String, field: String): (ExecuteContext) -> Unit =
+        when (module) {
+          "binom" -> when (field) {
+            "print" -> { e ->
+              val address = e.args[0] as Int
+              val size = e.args[1] as Int
+              val bytesForPrint = e.runner.memory[0].data.copyOfRange(address, address + size)
+              print(bytesForPrint.decodeToString())
+            }
+
+            else -> TODO("Unknown $field for module $module")
+          }
+
+          "wasi_snapshot_preview1" -> when (field) {
+            "args_get" -> { e -> }
+            "args_sizes_get" -> { e -> }
+            "proc_exit" -> { e -> }
+            else -> TODO("Unknown $field for module $module")
+          }
+
+          else -> TODO("Unknown $module")
         }
 
     }
@@ -56,11 +79,6 @@ class RunTest {
 
     val code = module.codeSection[fff.id.id.toInt()]
 
-    println("module.typeSection.size=${module.typeSection.size}")
-    println("module.functionSection.size=${module.functionSection.size}")
-    println("module.codeSection.size=${module.codeSection.size}")
-
-    println("fff=$fff")
     val result = runner.runFunc("fff", args = listOf())
     println("result: $result")
 //    println("start: ${module.startFunctionId}")

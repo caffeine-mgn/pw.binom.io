@@ -162,15 +162,9 @@ fun WasmInput.readBlockType(visitor: ExpressionsVisitor.BlockStartVisitor) {
   val firstByte1 = v33u()
   val firstByte = firstByte1.toUByte()
   if (firstByte == 0x40u.toUByte()) {
-    if (readOpCount == 6) {
-      println("IF -> empty")
-    }
     visitor.withoutType()
   } else {
     if (isValueType(firstByte)) {
-      if (readOpCount == 6) {
-        println("IF -> some value type")
-      }
       readValueType(byte = firstByte, visitor = visitor.valueType())
     } else {
       TODO()

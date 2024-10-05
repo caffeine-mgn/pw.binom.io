@@ -63,7 +63,6 @@ internal object ImportSectionReader {
 
   fun readImportSection(input: WasmInput, visitor: ImportSectionVisitor) {
     input as StreamReader
-    println("START IMPORT ON 0x${input.globalCursor.toString(16)}")
     visitor.start()
     input.readVec {
       val module = input.string()

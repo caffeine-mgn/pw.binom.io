@@ -13,7 +13,6 @@ object GlobalSectionReader {
   fun read(input: WasmInput, visitor: GlobalSectionVisitor) {
     visitor.start()
     input as StreamReader
-    println("GlobalSection position: 0x${input.globalCursor.toString(16)}")
     input.readVec { // 177
       input.readValueType(visitor = visitor.type())
       val mutable = input.v1u()

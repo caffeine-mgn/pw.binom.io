@@ -33,11 +33,6 @@ object WasmReader {
       val section = Sections.byIndex(sectionId)
       val sectionLen = input.v32u()
       input as StreamReader
-      println(
-        "---------READING $section 0x${
-          input.globalCursor.toUInt().toString(16)
-        } (#$sectionId) on ${input.globalCursor} with len $sectionLen---------"
-      )
       input.withLimit(sectionLen).use { sectionInput ->
         when (section) {
           Sections.CUSTOM_SECTION -> {

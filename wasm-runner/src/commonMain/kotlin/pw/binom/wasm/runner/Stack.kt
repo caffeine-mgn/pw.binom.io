@@ -3,11 +3,11 @@ package pw.binom.wasm.runner
 import pw.binom.collections.LinkedList
 
 class Stack {
-  private val l = LinkedList<Any?>()
+  private val l = LinkedList<Any>()
   val size
     get() = l.size
 
-  fun push(value: Any?) {
+  fun push(value: Any) {
     if (value == null) {
       TODO("value is null")
     }
@@ -38,8 +38,8 @@ class Stack {
   }
   fun pop() = l.removeLast()
 
-  fun clear(): List<Any?> {
-    val out = ArrayList<Any?>()
+  fun clear(): List<Any> {
+    val out = ArrayList<Any>()
     while (l.isNotEmpty()) {
       out += l.removeFirst()
     }
