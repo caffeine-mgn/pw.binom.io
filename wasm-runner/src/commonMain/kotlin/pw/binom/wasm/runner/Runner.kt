@@ -28,7 +28,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   }
 
   val memory = module.memorySection
-    .map { MemorySpaceByteArray(1024 * 1024) } + module.importSection.asSequence()
+    .map { MemorySpaceByteBuffer(1024 * 1024) } + module.importSection.asSequence()
     .filterIsInstance<Import.Memory>()
     .map { value ->
       importResolver.memory(

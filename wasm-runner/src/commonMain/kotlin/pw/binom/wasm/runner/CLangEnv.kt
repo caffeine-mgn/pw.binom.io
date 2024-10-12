@@ -11,9 +11,9 @@ class CLangEnv:ImportResolver {
       else -> TODO()
     }
 
-  override fun memory(module: String, field: String, inital: UInt, max: UInt?): MemorySpaceByteArray =
+  override fun memory(module: String, field: String, inital: UInt, max: UInt?): MemorySpace =
     when {
-      module == "env" && (field == "__linear_memory" || field == "memory") -> MemorySpaceByteArray(1024 * 1024)
+      module == "env" && (field == "__linear_memory" || field == "memory") -> MemorySpaceByteBuffer(1024 * 1024)
       else -> TODO("Not yet implemented. module=$module, field=$field, inital: $inital, max: $max")
     }
 }
