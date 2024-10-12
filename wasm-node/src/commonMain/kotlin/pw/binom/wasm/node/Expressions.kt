@@ -8,56 +8,81 @@ import pw.binom.wasm.node.inst.*
 
 class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
 
+  var first: Inst? = null
+  var last: Inst? = null
+
+  private fun <T : Inst> T.add(): T {
+    if (first == null) {
+      first = this
+      last = this
+    } else {
+      last!!.next = this
+      last = this
+    }
+    this@Expressions.add(this)
+    return this
+  }
+
   override fun start() {
     clear()
   }
 
   override fun end() {
+    var cmd = first
+    val l = ArrayList<Inst>()
+    while (cmd != null) {
+      l += cmd
+      cmd = cmd.next
+    }
+    if (l.size != size) TODO()
+    forEachIndexed { index, inst ->
+      if (l[index] !== inst) TODO()
+    }
     super.end()
   }
 
   override fun const(value: Float) {
-    this += F32Const(value)
+    F32Const(value).add()
   }
 
   override fun const(value: Double) {
-    this += F64Const(value)
+    F64Const(value).add()
   }
 
   override fun const(value: Int) {
-    this += I32Const(value)
+    I32Const(value).add()
   }
 
   override fun const(value: Long) {
-    this += I64Const(value)
+    I64Const(value).add()
   }
 
   override fun controlFlow(opcode: UByte) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.UNREACHABLE -> ControlFlow.UNREACHABLE()
       Opcodes.NOP -> ControlFlow.NOP()
       Opcodes.ELSE -> ControlFlow.ELSE()
       Opcodes.RETURN -> ControlFlow.RETURN()
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun br(opcode: UByte, label: LabelId) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.BR -> Br.BR(label)
       Opcodes.BR_IF -> Br.BR_IF(label)
       Opcodes.BR_ON_NULL -> Br.BR_ON_NULL(label)
       Opcodes.BR_ON_NON_NULL -> Br.BR_ON_NON_NULL(label)
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun endBlock() {
-    this += EndBlock()
+    EndBlock().add()
   }
 
   override fun memory(opcode: UByte, align: UInt, offset: UInt, memoryId: MemoryId) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.I32_LOAD -> Memory.I32_LOAD(align = align, offset = offset, memoryId = memoryId)
       Opcodes.I64_LOAD -> Memory.I64_LOAD(align = align, offset = offset, memoryId = memoryId)
       Opcodes.F32_LOAD -> Memory.F32_LOAD(align = align, offset = offset, memoryId = memoryId)
@@ -83,11 +108,11 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.I64_STORE32 -> Memory.I64_STORE32(align = align, offset = offset, memoryId = memoryId)
 
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun numeric(opcode: UByte) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.I32_CLZ -> Numeric.I32_CLZ()
       Opcodes.I32_CTZ -> Numeric.I32_CTZ()
       Opcodes.I32_POPCNT -> Numeric.I32_POPCNT()
@@ -154,11 +179,11 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.F64_COPYSIGN -> Numeric.F64_COPYSIGN()
 
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun compare(opcode: UByte) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.I32_EQZ -> Compare.I32_EQZ()
       Opcodes.I32_EQ -> Compare.I32_EQ()
       Opcodes.I32_NE -> Compare.I32_NE()
@@ -195,11 +220,11 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.F64_GE -> Compare.F64_GE()
       Opcodes.REF_EQ -> Compare.REF_EQ()
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun convert(opcode: UByte) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.I32_WRAP_I64 -> Convert.I32_WRAP_I64()
       Opcodes.I32_TRUNC_S_F32 -> Convert.I32_TRUNC_S_F32()
       Opcodes.I32_TRUNC_U_F32 -> Convert.I32_TRUNC_U_F32()
@@ -222,75 +247,74 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.F64_CONVERT_U_I64 -> Convert.F64_CONVERT_U_I64()
       Opcodes.F64_PROMOTE_F32 -> Convert.F64_PROMOTE_F32()
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun structOp(gcOpcode: UByte, type: TypeId, field: FieldId) {
-    this += when (gcOpcode) {
+    when (gcOpcode) {
       Opcodes.GC_STRUCT_SET -> StructOp.GC_STRUCT_SET(type = type, field = field)
       Opcodes.GC_STRUCT_GET -> StructOp.GC_STRUCT_GET(type = type, field = field)
       Opcodes.GC_STRUCT_GET_S -> StructOp.GC_STRUCT_GET_S(type = type, field = field)
       Opcodes.GC_STRUCT_GET_U -> StructOp.GC_STRUCT_GET_U(type = type, field = field)
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun refNull(): ValueVisitor.HeapVisitor {
     val e = Ref.NULL()
-    this += e
+    e.add()
     return e.heap
   }
 
   override fun call(function: FunctionId) {
-    this += CallFunction(function)
+    CallFunction(function).add()
   }
 
   override fun callIndirect(type: TypeId, table: TableId) {
-    this += CallIndirect(type = type, table = table)
+    CallIndirect(type = type, table = table).add()
   }
 
   override fun call(typeRef: TypeId) {
-    this += CallType(typeRef)
+    CallType(typeRef).add()
   }
 
   override fun indexArgument(opcode: UByte, value: LocalId) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.GET_LOCAL -> LocalIndexArgument.GET(value)
       Opcodes.SET_LOCAL -> LocalIndexArgument.SET(value)
       Opcodes.TEE_LOCAL -> LocalIndexArgument.TEE(value)
 
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun indexArgument(opcode: UByte, label: GlobalId) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.GET_GLOBAL -> GlobalIndexArgument.GET(label)
       Opcodes.SET_GLOBAL -> GlobalIndexArgument.SET(label)
 
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun reinterpret(opcode: UByte) {
-    this += when (opcode) {
+    when (opcode) {
       Opcodes.I32_REINTERPRET_F32 -> Reinterpret.I32ToF32()
       Opcodes.I64_REINTERPRET_F64 -> Reinterpret.I64ToF64()
       Opcodes.F32_REINTERPRET_I32 -> Reinterpret.F32ToI32()
       Opcodes.F64_REINTERPRET_I64 -> Reinterpret.F64ToI64()
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun arrayOp(gcOpcode: UByte, type: TypeId) {
-    this += when (gcOpcode) {
+    when (gcOpcode) {
       Opcodes.GC_ARRAY_GET -> ArrayOp.Get(type)
       Opcodes.GC_ARRAY_SET -> ArrayOp.Set(type)
       Opcodes.GC_ARRAY_GET_S -> ArrayOp.GetS(type)
       Opcodes.GC_ARRAY_GET_U -> ArrayOp.GetU(type)
       else -> throw IllegalArgumentException()
-    }
-    super.arrayOp(gcOpcode, type)
+    }.add()
   }
 
   override fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor {
@@ -301,70 +325,70 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.GC_REF_CAST_NULL -> Ref.GC_REF_CAST_NULL()
       else -> throw IllegalArgumentException()
     }
-    this += e
+    e.add()
     return e.heap
   }
 
   override fun structNew(type: TypeId) {
-    this += StructNew(type)
+    StructNew(type)
   }
 
   override fun arrayCopy(from: TypeId, to: TypeId) {
-    this += ArrayCopy(from = from, to = to)
+    ArrayCopy(from = from, to = to).add()
   }
 
   override fun newArray(type: TypeId, size: UInt) {
-    this += NewArray.Size(id = type, size = size)
+    NewArray.Size(id = type, size = size).add()
   }
 
   override fun newArray(type: TypeId, data: DataId) {
-    this += NewArray.Data(id = type, data = data)
+    NewArray.Data(id = type, data = data).add()
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {
     val e = BrOnCastFail(flags = flags, labelId = label)
-    this += e
+    e.add()
     return e
   }
 
   override fun arrayFull(type: TypeId) {
-    this += ArrayFull(type)
+    ArrayFull(type).add()
   }
 
   override fun newArrayDefault(type: TypeId) {
-    this += NewArrayDefault(type)
+    NewArrayDefault(type).add()
   }
 
   override fun arrayLen() {
-    this += ArrayLen()
+    ArrayLen().add()
   }
 
   override fun ref(function: FunctionId) {
-    this += RefFunction(function)
+    RefFunction(function).add()
   }
 
   override fun drop() {
-    this += Drop()
+    Drop().add()
   }
 
   override fun brTable(): ExpressionsVisitor.BrTableVisitor {
     val e = BrTable()
-    this += e
+    e.add()
     return e
   }
 
   override fun select() {
-    this += Select()
+    Select().add()
   }
 
   override fun selectWithType(): ExpressionsVisitor.SelectVisitor {
     val e = SelectWithType()
-    this += e
+    e.add()
     return e
   }
 
   override fun throwOp(tag: TagId) {
-    this += ThrowTag(tag)
+    ThrowTag(tag).add()
   }
 
   override fun startBlock(opcode: UByte): ExpressionsVisitor.BlockStartVisitor {
@@ -375,44 +399,44 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.IF -> BlockStart.IF()
       else -> throw IllegalArgumentException()
     }
-    this += e
+    e.add()
     return e
   }
 
   override fun refIsNull() {
-    this += RefIsNull()
+    RefIsNull().add()
   }
 
   override fun refAsNonNull() {
-    this += RefAsNonNull()
+    RefAsNonNull().add()
   }
 
   override fun throwRef() {
-    this += ThrowRef()
+    ThrowRef().add()
   }
 
   override fun catchAll() {
-    this += CatchAll()
+    CatchAll().add()
   }
 
   override fun memorySize(id: MemoryId) {
-    this += MemoryOp.Size(id)
+    MemoryOp.Size(id).add()
   }
 
   override fun memoryGrow(id: MemoryId) {
-    this += MemoryOp.Grow(id)
+    MemoryOp.Grow(id).add()
   }
 
   override fun rethrow(v32u: UInt) {
-    this += Rethrow(v32u)
+    Rethrow(v32u).add()
   }
 
   override fun catch(v32u: UInt) {
-    this += Catch(v32u)
+    Catch(v32u).add()
   }
 
   override fun convertNumeric(numOpcode: UByte) {
-    this += when (numOpcode) {
+    when (numOpcode) {
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F32 -> Convert.NUMERIC_I32S_CONVERT_SAT_F32()
       Opcodes.NUMERIC_I32U_CONVERT_SAT_F32 -> Convert.NUMERIC_I32U_CONVERT_SAT_F32()
       Opcodes.NUMERIC_I32S_CONVERT_SAT_F64 -> Convert.NUMERIC_I32S_CONVERT_SAT_F64()
@@ -423,20 +447,20 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.NUMERIC_I64U_CONVERT_SAT_F64 -> Convert.NUMERIC_I64U_CONVERT_SAT_F64()
 
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun gcConvert(gcOpcode: UByte) {
-    this += when (gcOpcode) {
+    when (gcOpcode) {
       Opcodes.GC_ANY_CONVERT_EXTERN -> Convert.GC_ANY_CONVERT_EXTERN()
       Opcodes.GC_EXTERN_CONVERT_ANY -> Convert.GC_EXTERN_CONVERT_ANY()
 
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   override fun bulkOperator(numberOpcode: UByte) {
-    this += when (numberOpcode) {
+    when (numberOpcode) {
       Opcodes.NUMERIC_MEMORY_INIT -> BulkOperator.MemoryInit()
       Opcodes.NUMERIC_DATA_DROP -> BulkOperator.DataDrop()
       Opcodes.NUMERIC_MEMORY_COPY -> BulkOperator.MemoryCopy()
@@ -446,7 +470,7 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       Opcodes.NUMERIC_TABLE_COPY -> BulkOperator.TableCopy()
       Opcodes.NUMERIC_TABLE_SIZE -> BulkOperator.TableSize()
       else -> throw IllegalArgumentException()
-    }
+    }.add()
   }
 
   fun accept(visitor: ExpressionsVisitor) {
