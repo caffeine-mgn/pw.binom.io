@@ -25,6 +25,7 @@ sealed interface BlockStart : Inst, ExpressionsVisitor.BlockStartVisitor {
 
   class BLOCK : BlockStart {
     override var valueType: ValueType? = null
+    override fun toString(): String = "BLOCK(valueType=$valueType)"
     override fun accept(visitor: ExpressionsVisitor) {
       val v = visitor.startBlock(Opcodes.BLOCK)
       v.start()

@@ -8,9 +8,6 @@ class Stack {
     get() = l.size
 
   fun push(value: Any) {
-    if (value == null) {
-      TODO("value is null")
-    }
     l.addLast(value)
   }
 
@@ -22,6 +19,13 @@ class Stack {
     l.addLast(value)
   }
 
+  fun popI16():Short{
+    val value = l.removeLast()
+    if (value !is Short){
+      TODO("$value is not short")
+    }
+    return value
+  }
   fun popI32():Int{
     val value = l.removeLast()
     if (value !is Int){
@@ -37,6 +41,7 @@ class Stack {
     return value
   }
   fun pop() = l.removeLast()
+  fun peek() = l.peekLast()!!
 
   fun clear(): List<Any> {
     val out = ArrayList<Any>()

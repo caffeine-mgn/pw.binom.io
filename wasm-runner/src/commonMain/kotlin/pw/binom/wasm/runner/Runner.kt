@@ -15,7 +15,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     importResolver.func(
       module = it.module,
       field = it.field
-    )
+    ) ?: TODO()
   }
 
   private val memoryImport = module.importSection.filterIsInstance<Import.Memory>()
@@ -28,7 +28,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   }
 
   val memory = module.memorySection
-    .map { MemorySpace(1024 * 1024) } + module.importSection.asSequence()
+    .map { MemorySpaceByteArray(1024 * 1024) } + module.importSection.asSequence()
     .filterIsInstance<Import.Memory>()
     .map { value ->
       importResolver.memory(
@@ -36,7 +36,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
         field = value.field,
         inital = value.initial,
         max = (value as? Import.Memory2)?.maximum
-      )
+      ) ?: TODO()
     }
     .toList()
 
@@ -51,6 +51,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             locals = ArrayList(),
             args = ArrayList(),
             resultSize = 1,
+            functionId = FunctionId(0u),
           ).single() as Int
           check(offset >= 0)
           table.offset = offset
@@ -68,12 +69,13 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           locals = ArrayList(),
           args = ArrayList(),
           resultSize = 1,
+          functionId = FunctionId(0u),
         ).single() as Int
       } ?: 0
       val memIndex = (data.memoryId?.raw ?: 0u).toInt()
       val mem = memory[memIndex]
       data.data.forEachIndexed { index, byte ->
-        mem.data[index + offset] = byte
+        mem.pushI8(value = byte, offset = (index + offset).toUInt(), align = 1u)
       }
     }
   }
@@ -106,7 +108,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
         field = value.field,
         type = value.type,
         mutable = value.mutable,
-      )
+      ) ?: TODO()
     }.toList()
 
 //  private val functionDesc = run {
@@ -163,6 +165,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       locals = locals,
       args = args.toMutableList(),
       resultSize = desc.results.size,
+      functionId = id,
     )
   }
 
@@ -192,17 +195,69 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     TODO()
   }
 
+  private var stopped = false
+  private fun callFunction(
+    functionId: FunctionId,
+    stack: Stack,
+  ) {
+    if (functionId.id.toInt() in importFunc.indices) {
+      val externalFun = importFunc[functionId.id.toInt()]
+      val functionType = module.typeSection[externalFun.index].single!!.single!!.type as RecType.FuncType
+      val l = LinkedList<Any>()
+      repeat(functionType.args.size) {
+        l.addFirst(stack.pop())
+      }
+      val impl = importFuncImpl[functionId.id.toInt()]
+      impl(object : ExecuteContext {
+        override val runner: Runner
+          get() = this@Runner
+        override val args: List<Any>
+          get() = l
+
+        override fun stop() {
+          stopped = true
+        }
+
+        override fun pushResult(value: Any) {
+          stack.push(value)
+        }
+      })
+      return
+    }
+    val funcForCall = (functionId.id.toInt() - importFunc.size)
+    val desc =
+      module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
+    val l = LinkedList<Any>()
+    repeat(desc.args.size) {
+      l.addFirst(stack.pop())
+    }
+    runFunc(functionId, args = l).forEach {
+      stack.push(it)
+    }
+  }
+
   private fun runCmd(
+    functionId: FunctionId,
     cmds: List<Inst>,
     locals: MutableList<LocalVar>,
     args: MutableList<Any>,
     resultSize: Int,
   ): List<Any> {
+    val funcName = module.exportSection.filterIsInstance<Export.Function>().find {
+      it.id == functionId
+    }?.name
+    if (funcName != null) {
+//      println("Call function \"$funcName\"")
+    }
+//    val badFunction = funcName == "__fwritex"
+//    if (funcName == "__fwritex") {
+//      println("call bad function __fwritex")
+//    }
     var index = 0
     val stack = Stack()
     val blocks = LinkedList<Block1>()
     try {
-      while (true) {
+      while (!stopped) {
         val cmd = cmds[index]
         when (cmd) {
           is BlockStart.BLOCK -> {
@@ -249,6 +304,19 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             }
           }
 
+          is BrTable -> {
+            val branch = stack.popI32()
+            val label = cmd.targets.getOrNull(branch) ?: cmd.default ?: TODO()
+
+            var block: Block1 = blocks.removeLast()
+            var d = label.id
+            while (d > 0u) {
+              d--
+              block = blocks.removeLast()
+            }
+            index = block.endIndex + 1
+          }
+
           is I32Const -> {
             stack.push(cmd.value)
             index++
@@ -274,8 +342,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           }
 
           is LocalIndexArgument.TEE -> {
-            val value = stack.pop()
-            stack.push(value)
+            val value = stack.peek()
             val e = cmd.id.id.toInt()
             if (e in args.indices) {
               args[e] = value
@@ -301,55 +368,21 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             return stack.clear()
           }
 
-          is CallFunction -> {
-            if (cmd.id.id.toInt() in importFunc.indices) {
-              val externalFun = importFunc[cmd.id.id.toInt()]
-              val functionType = module.typeSection[externalFun.index].single!!.single!!.type as RecType.FuncType
-              val l = LinkedList<Any>()
-              repeat(functionType.args.size) {
-                l.addFirst(stack.pop())
-              }
-              val impl = importFuncImpl[cmd.id.id.toInt()]
-              impl(object : ExecuteContext {
-                override val runner: Runner
-                  get() = this@Runner
-                override val args: List<Any>
-                  get() = l
+          is ControlFlow.UNREACHABLE -> {
+            TODO("UNREACHABLE")
+          }
 
-                override fun pushResult(value: Any) {
-                  stack.push(value)
-                }
-              })
-              index++
-              continue
-            }
-            val funcForCall = (cmd.id.id.toInt() - importFunc.size)
-            val desc =
-              module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
-            val l = LinkedList<Any>()
-            repeat(desc.args.size) {
-              l.addFirst(stack.pop())
-            }
-            runFunc(cmd.id, args = l).forEach {
-              stack.push(it)
-            }
+          is CallFunction -> {
+            callFunction(cmd.id, stack)
             index++
           }
 
           is CallIndirect -> {
-            val desc = module.typeSection[cmd.type.value.toInt()].single!!.single!!.type as RecType.FuncType
-            var tableIndex = stack.popI32()
-            val l = LinkedList<Any>()
-            repeat(desc.args.size) {
-              l.addFirst(stack.pop())
-            }
+            val tableIndex = stack.popI32()
             val table = tables[cmd.table.id.toInt()] as Table.FuncTable
             val functionId = table[tableIndex]
               ?: TODO("Function with index $tableIndex not defined!")
-
-            runFunc(functionId, args = l).forEach {
-              stack.push(it)
-            }
+            callFunction(functionId, stack)
             index++
           }
 
@@ -377,6 +410,12 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             index++
           }
 
+          is Compare.I64_EQZ -> {
+            val a = stack.popI64()
+            stack.push(if (a == 0L) 1 else 0)
+            index++
+          }
+
           is Compare.I32_EQ -> {
             val a = stack.popI32()
             val b = stack.popI32()
@@ -388,6 +427,20 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             val a = stack.popI32()
             val b = stack.popI32()
             stack.push(if (b != a) 1 else 0)
+            index++
+          }
+
+          is Compare.I64_NE -> {
+            val a = stack.popI64()
+            val b = stack.popI64()
+            stack.push(if (b != a) 1 else 0)
+            index++
+          }
+
+          is Compare.I64_GT_S -> {
+            val a = stack.popI64()
+            val b = stack.popI64()
+            stack.push(if (b > a) 1 else 0)
             index++
           }
 
@@ -408,6 +461,30 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           is Compare.I32_GE_S -> {
             val a = stack.popI32()
             val b = stack.popI32()
+            stack.push(if (b >= a) 1 else 0)
+            index++
+          }
+
+          is Compare.I64_GE_S -> {
+            val a = stack.popI64()
+            val b = stack.popI64()
+            stack.push(if (b >= a) 1 else 0)
+            index++
+          }
+
+          is Convert.I32_WRAP_I64 -> {
+            stack.push(stack.popI64().toInt())
+            index++
+          }
+
+          is Convert.I64_EXTEND_U_I32 -> {
+            stack.push(stack.popI32().toUInt().toULong().toLong())
+            index++
+          }
+
+          is Compare.I64_GE_U -> {
+            val a = stack.popI64().toULong()
+            val b = stack.popI64().toULong()
             stack.push(if (b >= a) 1 else 0)
             index++
           }
@@ -449,6 +526,33 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             val a = stack.popI32()
             val b = stack.popI32()
             stack.push(if (b <= a) 1 else 0)
+            index++
+          }
+
+          is Compare.I32_LE_U -> {
+            val a = stack.popI32().toUInt()
+            val b = stack.popI32().toUInt()
+            stack.push(if (b <= a) 1 else 0)
+            index++
+          }
+
+          is Numeric.I32_ROTL -> {
+            val a = stack.popI32()
+            val distance = stack.popI32()
+            val result = (a shl distance) or (a ushr -distance)
+            stack.push(result)
+            index++
+          }
+
+          is Numeric.I32_CLZ -> {
+            val value = stack.popI32()
+            stack.push(value.countLeadingZeroBits())
+            index++
+          }
+
+          is Numeric.I32_CTZ -> {
+            val value = stack.popI32()
+            stack.push(value.countTrailingZeroBits())
             index++
           }
 
@@ -504,6 +608,13 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           is Numeric.I32_MUL -> {
             val a = stack.popI32()
             val b = stack.popI32()
+            stack.push(b * a)
+            index++
+          }
+
+          is Numeric.I64_MUL -> {
+            val a = stack.popI64()
+            val b = stack.popI64()
             stack.push(b * a)
             index++
           }
@@ -572,6 +683,18 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             index++
           }
 
+          is Memory.I32_STORE16 -> {
+            val value = stack.popI32()
+            val address = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            mem.pushI16(
+              value = value.toShort(),
+              offset = address.toUInt() + cmd.offset,
+              align = cmd.align,
+            )
+            index++
+          }
+
           is Memory.I64_STORE -> {
             val value = stack.popI64()
             val address = stack.popI32()
@@ -584,11 +707,61 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             index++
           }
 
+          is Memory.I64_LOAD32_S -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            val address = cmd.offset + offset.toUInt()
+            val value = mem.getI32(address).toLong()
+            stack.push(value)
+            index++
+          }
+
+          is MemoryOp.Size -> {
+            val mem = memory[cmd.id.raw.toInt()]
+            stack.push(mem.limit / MemorySpaceByteArray.PAGE_SIZE)
+            index++
+          }
+
+          is MemoryOp.Grow -> {
+            val size = stack.pop() as Int
+            val mem = memory[cmd.id.raw.toInt()]
+            val r = mem.grow(size.toUInt()) ?: TODO()
+            stack.push(r.toInt())
+            index++
+          }
+
+          is Memory.I64_LOAD32_U -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            val address = cmd.offset + offset.toUInt()
+            val value = mem.getI32(address).toUInt().toLong()
+            stack.push(value)
+            index++
+          }
+
           is Memory.I32_LOAD8_U -> {
             val offset = stack.popI32()
             val mem = memory[cmd.memoryId.raw.toInt()]
             val address = cmd.offset + offset.toUInt()
             val value = mem.getI8(address).toInt()
+            stack.push(value)
+            index++
+          }
+
+          is Memory.I32_LOAD8_S -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            val address = cmd.offset + offset.toUInt()
+            val value = mem.getI8(address).toInt()
+            stack.push(value)
+            index++
+          }
+
+          is Memory.I32_LOAD16_U -> {
+            val offset = stack.popI32()
+            val mem = memory[cmd.memoryId.raw.toInt()]
+            val address = cmd.offset + offset.toUInt()
+            val value = mem.getI16(address).toInt()
             stack.push(value)
             index++
           }
@@ -629,5 +802,6 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     } catch (e: Throwable) {
       throw RuntimeException("Can't execute task in index $index", e)
     }
+    return stack.clear()
   }
 }
