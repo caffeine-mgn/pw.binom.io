@@ -3,7 +3,7 @@ package pw.binom.wasm.node.inst
 import pw.binom.wasm.LabelId
 import pw.binom.wasm.visitors.ExpressionsVisitor
 
-class BrTable : ExpressionsVisitor.BrTableVisitor, Inst {
+class BrTable : ExpressionsVisitor.BrTableVisitor, Inst() {
   override fun accept(visitor: ExpressionsVisitor) {
     val default = default
     check(default != null) { "Br table does not have a default branch" }

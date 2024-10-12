@@ -34,11 +34,11 @@ class RecType : RecTypeVisitor {
     }
   }
 
-  sealed interface Composite {
-    fun accept(visitor: TypeSectionVisitor.CompositeTypeVisitor)
+  sealed class Composite {
+    abstract fun accept(visitor: TypeSectionVisitor.CompositeTypeVisitor)
   }
 
-  class ArrayType : TypeSectionVisitor.ArrayVisitor, Composite {
+  class ArrayType : TypeSectionVisitor.ArrayVisitor, Composite() {
 
     var mutable = false
     var shared = false
@@ -78,7 +78,7 @@ class RecType : RecTypeVisitor {
 
   class Field(val type: StorageType, val mutable: Boolean)
 
-  class StructType : TypeSectionVisitor.StructTypeVisitor, Composite {
+  class StructType : TypeSectionVisitor.StructTypeVisitor, Composite() {
     var shared = false
     val fields = ArrayList<Field>()
     private var fieldType: StorageType? = null
@@ -118,7 +118,7 @@ class RecType : RecTypeVisitor {
     }
   }
 
-  class FuncType : TypeSectionVisitor.FuncTypeVisitor, Composite {
+  class FuncType : TypeSectionVisitor.FuncTypeVisitor, Composite() {
     var args = ArrayList<ValueType>()
     var results = ArrayList<ValueType>()
     var shared = false
@@ -126,10 +126,6 @@ class RecType : RecTypeVisitor {
       this.shared = shared
       args.clear()
       results.clear()
-    }
-
-    override fun end() {
-      super.end()
     }
 
     override fun arg(): ValueVisitor {

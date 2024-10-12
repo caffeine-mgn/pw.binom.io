@@ -4,11 +4,11 @@ import pw.binom.wasm.MemoryId
 import pw.binom.wasm.Opcodes
 import pw.binom.wasm.visitors.ExpressionsVisitor
 
-sealed interface Memory : Inst {
-  val align: UInt
-  val offset: UInt
-  val memoryId: MemoryId
-  val opcode: UByte
+sealed class Memory : Inst() {
+  abstract val align: UInt
+  abstract val offset: UInt
+  abstract val memoryId: MemoryId
+  abstract val opcode: UByte
 
   override fun accept(visitor: ExpressionsVisitor) {
     visitor.memory(
@@ -23,7 +23,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_LOAD
   }
@@ -32,7 +32,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD
   }
@@ -41,7 +41,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.F32_LOAD
   }
@@ -50,7 +50,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.F64_LOAD
   }
@@ -59,7 +59,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_LOAD8_S
   }
@@ -68,7 +68,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_LOAD8_U
   }
@@ -77,7 +77,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_LOAD16_S
   }
@@ -86,7 +86,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_LOAD16_U
   }
@@ -95,7 +95,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD8_S
   }
@@ -104,7 +104,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD8_U
   }
@@ -113,7 +113,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD16_S
   }
@@ -122,7 +122,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD16_U
   }
@@ -131,7 +131,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD32_S
   }
@@ -140,7 +140,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_LOAD32_U
   }
@@ -149,7 +149,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_STORE
   }
@@ -158,7 +158,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_STORE
   }
@@ -167,7 +167,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.F32_STORE
   }
@@ -176,7 +176,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.F64_STORE
   }
@@ -185,7 +185,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_STORE8
   }
@@ -194,7 +194,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I32_STORE16
   }
@@ -203,7 +203,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_STORE8
   }
@@ -212,7 +212,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_STORE16
   }
@@ -221,7 +221,7 @@ sealed interface Memory : Inst {
     override val align: UInt,
     override val offset: UInt,
     override val memoryId: MemoryId,
-  ) : Memory {
+  ) : Memory() {
     override val opcode: UByte
       get() = Opcodes.I64_STORE32
   }

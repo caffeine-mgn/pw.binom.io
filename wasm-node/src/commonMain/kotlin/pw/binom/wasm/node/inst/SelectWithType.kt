@@ -4,7 +4,7 @@ import pw.binom.wasm.node.ValueType
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 
-class SelectWithType : Inst, ExpressionsVisitor.SelectVisitor {
+class SelectWithType : Inst(), ExpressionsVisitor.SelectVisitor {
   val types = ArrayList<ValueType>()
   override fun start() {
     types.clear()

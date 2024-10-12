@@ -7,30 +7,30 @@ import pw.binom.wasm.visitors.TableVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 import kotlin.js.JsName
 
-sealed interface Import {
-  var module: String
-  var field: String
-  fun accept(visitor: ImportSectionVisitor)
+sealed class Import {
+  abstract var module: String
+  abstract var field: String
+  abstract fun accept(visitor: ImportSectionVisitor)
 
   class Function(
     override var module: String,
     override var field: String,
     var index: TypeId,
-  ) : Import {
+  ) : Import() {
     override fun accept(visitor: ImportSectionVisitor) {
       visitor.function(module = module, field = field, index = index)
     }
   }
 
-  interface Memory:Import{
-    var initial: UInt
+  sealed class Memory:Import(){
+    abstract var initial: UInt
   }
 
   class Memory1(
     override var module: String,
     override var field: String,
     override var initial: UInt,
-  ) : Memory {
+  ) : Memory() {
     override fun accept(visitor: ImportSectionVisitor) {
       visitor.memory(module = module, field = field, initial = initial)
     }
@@ -41,7 +41,7 @@ sealed interface Import {
     override var field: String,
     override var initial: UInt,
     var maximum: UInt,
-  ) : Memory {
+  ) : Memory() {
     override fun accept(visitor: ImportSectionVisitor) {
       visitor.memory(module = module, field = field, initial = initial, maximum = maximum)
     }
@@ -51,7 +51,7 @@ sealed interface Import {
       override var module: String,
       override var field: String,
       val table: pw.binom.wasm.node.Table,
-  ) : Import, TableVisitor {
+  ) : Import(), TableVisitor {
 
     override fun range(min: UInt, max: UInt) {
       table.min = min
@@ -86,7 +86,7 @@ sealed interface Import {
   class Global(
     override var module: String,
     override var field: String,
-  ) : ImportSectionVisitor.GlobalVisitor, Import {
+  ) : ImportSectionVisitor.GlobalVisitor, Import() {
     @JsName("typeF")
     var type = ValueType()
     var mutable = false

@@ -5,11 +5,11 @@ import pw.binom.wasm.node.ValueType
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import kotlin.js.JsName
 
-sealed interface BlockStart : Inst, ExpressionsVisitor.BlockStartVisitor {
+sealed class BlockStart : Inst(), ExpressionsVisitor.BlockStartVisitor {
   @JsName("valueTypeF")
-  var valueType: ValueType?
+  abstract var valueType: ValueType?
 
-  class LOOP : BlockStart {
+  class LOOP : BlockStart() {
     override var valueType: ValueType? = null
     override fun accept(visitor: ExpressionsVisitor) {
       val v = visitor.startBlock(Opcodes.LOOP)
@@ -23,7 +23,7 @@ sealed interface BlockStart : Inst, ExpressionsVisitor.BlockStartVisitor {
     }
   }
 
-  class BLOCK : BlockStart {
+  class BLOCK : BlockStart() {
     override var valueType: ValueType? = null
     override fun toString(): String = "BLOCK(valueType=$valueType)"
     override fun accept(visitor: ExpressionsVisitor) {
@@ -38,7 +38,7 @@ sealed interface BlockStart : Inst, ExpressionsVisitor.BlockStartVisitor {
     }
   }
 
-  class TRY : BlockStart {
+  class TRY : BlockStart() {
     override var valueType: ValueType? = null
     override fun accept(visitor: ExpressionsVisitor) {
       val v = visitor.startBlock(Opcodes.TRY)
@@ -52,7 +52,7 @@ sealed interface BlockStart : Inst, ExpressionsVisitor.BlockStartVisitor {
     }
   }
 
-  class IF : BlockStart {
+  class IF : BlockStart() {
     override var valueType: ValueType? = null
     override fun accept(visitor: ExpressionsVisitor) {
       val v = visitor.startBlock(Opcodes.IF)

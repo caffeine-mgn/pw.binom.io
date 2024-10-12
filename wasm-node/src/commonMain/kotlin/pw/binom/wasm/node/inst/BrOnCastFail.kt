@@ -8,7 +8,7 @@ import pw.binom.wasm.visitors.ValueVisitor
 class BrOnCastFail(
   var flags: UByte,
   var labelId: LabelId,
-) : Inst, ExpressionsVisitor.BrOnCastFailVisitor {
+) : Inst(), ExpressionsVisitor.BrOnCastFailVisitor {
   var sourceImm = HeapType()
   var targetImm = HeapType()
 
