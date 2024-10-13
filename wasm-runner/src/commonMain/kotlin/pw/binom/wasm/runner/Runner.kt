@@ -148,7 +148,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     val code = module.codeSection[functionIndex]
     val locals = ArrayList<Variable>()
     code.locals.forEach {
-      repeat(it.count.toInt()) {_->
+      repeat(it.count.toInt()) { _ ->
         locals += Variable.create(it.type)
       }
     }
@@ -218,9 +218,10 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     val desc =
       module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
     val l = LinkedList<Any>()
-    repeat(desc.args.size) {
+    desc.args.forEach { _ ->
       l.addFirst(stack.pop())
     }
+//    val l = desc.args.map { stack.pop() }
     runFunc(functionId, args = l).forEach {
       stack.push(it)
     }
