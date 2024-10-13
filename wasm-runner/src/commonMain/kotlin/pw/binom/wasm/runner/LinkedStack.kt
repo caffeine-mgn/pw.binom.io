@@ -1,6 +1,7 @@
 package pw.binom.wasm.runner
 
 import pw.binom.collections.LinkedList
+import pw.binom.wasm.node.ValueType
 
 interface Stack {
   fun pushI32(value: Int)
@@ -10,6 +11,12 @@ interface Stack {
   fun pushI64(value: Long)
   fun popI64(): Long
   fun peekI64(): Long
+
+  fun pop(type: ValueType): Variable {
+    val v = Variable.create(type)
+    v.popFromStack(this)
+    return v
+  }
 }
 
 class LinkedStack {

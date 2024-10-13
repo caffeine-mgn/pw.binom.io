@@ -1,9 +1,20 @@
 package pw.binom.wasm.runner
 
+import pw.binom.wasm.Primitive
+import pw.binom.wasm.node.ValueType
+
 sealed interface Variable {
   fun popFromStack(stack: Stack)
   fun pushToStack(stack: Stack)
   fun peekToStack(stack: Stack)
+
+  companion object {
+    fun create(type: ValueType) = when {
+      type.number?.type == Primitive.I32 -> I32(0)
+      type.number?.type == Primitive.I64 -> I32(0)
+      else -> TODO()
+    }
+  }
 
   val asI32
     get() = this as I32

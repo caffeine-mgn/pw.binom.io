@@ -8,8 +8,7 @@ import pw.binom.wasm.node.*
 import pw.binom.wasm.node.inst.*
 
 class Runner(private val module: WasmModule, importResolver: ImportResolver) {
-  private val importGlobals = module.importSection.filterIsInstance<Import.Global>()
-  val importFunc = module.importSection.filterIsInstance<Import.Function>()
+  private val importFunc = module.importSection.filterIsInstance<Import.Function>()
 
   private val importFuncImpl = importFunc.map {
     importResolver.func(
@@ -18,8 +17,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     ) ?: TODO()
   }
 
-  private val memoryImport = module.importSection.filterIsInstance<Import.Memory>()
-  val tables: List<Table> = module.tableSection.map {
+  private val tables: List<Table> = module.tableSection.map {
     if (it.type.refNullAbs == AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF) {
       Table.FuncTable(size = (it.max ?: it.min).toInt())
     } else {
@@ -143,12 +141,6 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   }
 
   fun runFunc(id: FunctionId, args: List<Any>): List<Any> {
-//    val desc = module
-//      .typeSection
-//      .types[module.functionSection.elements.indexOf(id)]
-//      .single!!
-//      .single!!
-//      .type as RecType.FuncType
     val functionIndex = id.id.toInt() - importFunc.size
     val typeIndex = module.functionSection[functionIndex]
     val desc = module.typeSection[typeIndex].single!!.single!!.type as RecType.FuncType
