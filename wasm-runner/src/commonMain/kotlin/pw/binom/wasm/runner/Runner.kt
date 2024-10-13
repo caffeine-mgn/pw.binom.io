@@ -237,19 +237,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     args: MutableList<Variable>,
     results: List<ValueType>,
   ): List<Variable> {
-    val funcName = module.exportSection.filterIsInstance<Export.Function>().find {
-      it.id == functionId
-    }?.name
-    if (funcName != null) {
-//      println("Call function \"$funcName\"")
-    }
-//    val badFunction = funcName == "__fwritex"
-//    if (funcName == "__fwritex") {
-//      println("call bad function __fwritex")
-//    }
-//    val stack: Stack = ArrayStack()
-    val stack: Stack = LinkedStack()
-    val blocks = LinkedList<Block1>()
+    val stack = ArrayStack()
+    val blocks = ArrayList<Block1>()
     try {
       var cmd: Inst? = cmds
       while (!stopped && cmd != null) {

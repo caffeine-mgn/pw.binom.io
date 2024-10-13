@@ -51,12 +51,14 @@ actual object Console {
   private class StdOutput(val stream: CPointer<FILE>?) : Appendable {
     override fun append(value: Char): Appendable {
       fprintf(stream, value.toString())
+      fflush(stream)
       return this
     }
 
     override fun append(value: CharSequence?): Appendable {
       value ?: return this
       fprintf(stream, if (value is String) value else value.toString())
+      fflush(stream)
       return this
     }
 
@@ -67,6 +69,7 @@ actual object Console {
     ): Appendable {
       value ?: return this
       fprintf(stream, value.substring(startIndex, endIndex))
+      fflush(stream)
       return this
     }
   }

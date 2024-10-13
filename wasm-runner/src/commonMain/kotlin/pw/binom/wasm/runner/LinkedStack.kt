@@ -118,11 +118,11 @@ class ArrayStack(initSize: Int = 30) : Stack {
     popInt()
   }
 
-  private fun peekInt(): Int {
-    if (dataSize <= 0) {
+  private fun peekInt(back: Int = 0): Int {
+    if (dataSize <= back) {
       TODO()
     }
-    return data[dataSize - 1]
+    return data[dataSize - (1 + back)]
   }
 
   private fun peekLong(): Long {
@@ -130,9 +130,9 @@ class ArrayStack(initSize: Int = 30) : Stack {
       TODO()
     }
 
-    val left = data[dataSize - 1].toUInt().toLong()
-    val right = data[dataSize - 2].toUInt().toLong()
-    return right shl 16 or left
+    val left = peekInt(0)
+    val right = peekInt(1)
+    return Long.fromComponent(left, right)
   }
 
   private fun pushInt(value: Int) {
@@ -171,17 +171,21 @@ class ArrayStack(initSize: Int = 30) : Stack {
   }
 
   private fun pushLong(value: Long) {
-    val left = (value ushr 16).toULong().toInt()
-    val right = (value and 0xFFFFFFFFL).toULong().toInt()
-    pushInt(right)
-    pushInt(left)
+    pushInt(value.right)
+    pushInt(value.left)
   }
 
   private fun popLong(): Long {
-    val left = popInt().toUInt().toLong()
-    val right = popInt().toUInt().toLong()
-    return right shl 16 or left
+    val left = popInt()
+    val right = popInt()
+    return Long.fromComponent(left, right)
   }
+
+  private fun Long.Companion.fromComponent(a: Int, b: Int): Long = a.toLong() shl 32 or b.toLong()
+  private val Long.left
+    get() = ushr(32).toInt()
+  private val Long.right
+    get() = (this and UInt.MAX_VALUE.toLong()).toInt()
 }
 
 interface Stack {
