@@ -19,7 +19,7 @@ interface Stack {
   }
 }
 
-class LinkedStack {
+class LinkedStack : Stack {
   private val l = LinkedList<Any>()
   val size
     get() = l.size
@@ -28,23 +28,18 @@ class LinkedStack {
     l.addLast(value)
   }
 
-  fun push(value: Int) {
+  override fun pushI32(value: Int) {
     l.addLast(value)
   }
 
-  fun push(value: Long) {
+  override fun pushI64(value: Long) {
     l.addLast(value)
   }
 
-  fun popI16(): Short {
-    val value = l.removeLast()
-    if (value !is Short) {
-      TODO("$value is not short")
-    }
-    return value
-  }
+  override fun peekI32(): Int = peek() as Int
+  override fun peekI64(): Long = peek() as Long
 
-  fun popI32(): Int {
+  override fun popI32(): Int {
     val value = l.removeLast()
     if (value !is Int) {
       TODO("$value is not int")
@@ -52,7 +47,7 @@ class LinkedStack {
     return value
   }
 
-  fun popI64(): Long {
+  override fun popI64(): Long {
     val value = l.removeLast()
     if (value !is Long) {
       TODO("$value is not int")

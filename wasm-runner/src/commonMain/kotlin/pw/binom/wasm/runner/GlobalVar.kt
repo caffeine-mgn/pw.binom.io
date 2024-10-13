@@ -43,7 +43,7 @@ interface GlobalVarMutable : GlobalVar {
     override var s32: Int = value
 
     override fun putInto(stack: LinkedStack) {
-      stack.push(s32)
+      stack.pushI32(s32)
     }
 
     override fun setFrom(stack: LinkedStack) {
@@ -55,7 +55,7 @@ interface GlobalVarMutable : GlobalVar {
     override var s64: Long = value
 
     override fun putInto(stack: LinkedStack) {
-      stack.push(s64)
+      stack.pushI64(s64)
     }
 
     override fun setFrom(stack: LinkedStack) {
