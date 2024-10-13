@@ -146,10 +146,10 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     val desc = module.typeSection[typeIndex].single!!.single!!.type as RecType.FuncType
     check(desc.args.size == args.size) { "desc.args.size=${desc.args.size}, args.size=${args.size}" }
     val code = module.codeSection[functionIndex]
-    val locals = ArrayList<LocalVar>()
+    val locals = ArrayList<Variable>()
     code.locals.forEach {
-      repeat(it.count.toInt()) {
-        locals += LocalVar()
+      repeat(it.count.toInt()) {_->
+        locals += Variable.create(it.type)
       }
     }
     return runCmd(
@@ -229,7 +229,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private fun runCmd(
     functionId: FunctionId,
     cmds: Inst,
-    locals: MutableList<LocalVar>,
+    locals: MutableList<Variable>,
     args: MutableList<Any>,
     resultSize: Int,
   ): List<Any> {
@@ -322,7 +322,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
               if (e in args.indices) {
                 args[e] = stack.pop()
               } else {
-                locals[e - args.size].set(stack.pop())
+                locals[e - args.size].popFromStack(stack)
               }
               cmd = cmd.next
             } catch (e: Throwable) {
@@ -336,23 +336,24 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             if (e in args.indices) {
               args[e] = value
             } else {
-              locals[e - args.size].set(value)
+              locals[e - args.size].peekToStack(stack)
             }
             cmd = cmd.next
           }
 
           is LocalIndexArgument.GET -> {
             val e = cmd.id.id.toInt()
-            val value = if (e in args.indices) {
-              args[e]
+            if (e in args.indices) {
+              val value = args[e]
+              when (value) {
+                is Int -> stack.pushI32(value)
+                is Long -> stack.pushI64(value)
+                else -> TODO()
+              }
             } else {
-              locals[e - args.size].get()!!
+              locals[e - args.size].pushToStack(stack)
             }
-            when (value) {
-              is Int -> stack.pushI32(value)
-              is Long -> stack.pushI64(value)
-              else -> TODO()
-            }
+
 //            stack.push(value)
             cmd = cmd.next
           }

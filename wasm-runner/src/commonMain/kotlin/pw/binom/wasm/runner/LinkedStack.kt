@@ -12,6 +12,14 @@ interface Stack {
   fun popI64(): Long
   fun peekI64(): Long
 
+  fun pushF32(value: Float)
+  fun popF32(): Float
+  fun peekF32(): Float
+
+  fun pushF64(value: Double)
+  fun popF64(): Double
+  fun peekF64(): Double
+
   fun pop(type: ValueType): Variable {
     val v = Variable.create(type)
     v.popFromStack(this)
@@ -36,7 +44,26 @@ class LinkedStack : Stack {
     l.addLast(value)
   }
 
-  override fun peekI32(): Int = peek() as Int
+  override fun pushF32(value: Float) {
+    push(value)
+  }
+
+  override fun popF32(): Float = pop() as Float
+  override fun peekF32(): Float = peek() as Float
+
+  override fun pushF64(value: Double) {
+    push(value)
+  }
+
+  override fun popF64(): Double = pop() as Double
+  override fun peekF64(): Double = peek() as Double
+
+  override fun peekI32(): Int = when (val v = peek()) {
+    is Int -> v
+    is Long -> v.toInt()
+    else -> TODO()
+  }
+
   override fun peekI64(): Long = peek() as Long
 
   override fun popI32(): Int {
