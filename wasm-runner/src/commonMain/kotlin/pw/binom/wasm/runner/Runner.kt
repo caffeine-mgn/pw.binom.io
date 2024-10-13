@@ -134,13 +134,13 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   fun findFunction(name: String) =
     module.exportSection.find { it.name == name && it is Export.Function } as Export.Function?
 
-  fun runFunc(name: String, args: List<Any>): List<Any?> {
+  fun runFunc(name: String, args: List<Variable>): List<Any?> {
     val func = findFunction(name = name)
       ?: TODO("Function \"$name\" not found")
     return runFunc(id = func.id, args = args)
   }
 
-  fun runFunc(id: FunctionId, args: List<Any>): List<Any> {
+  fun runFunc(id: FunctionId, args: List<Variable>): List<Any> {
     val functionIndex = id.id.toInt() - importFunc.size
     val typeIndex = module.functionSection[functionIndex]
     val desc = module.typeSection[typeIndex].single!!.single!!.type as RecType.FuncType
@@ -219,9 +219,11 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     val funcForCall = (functionId.id.toInt() - importFunc.size)
     val desc =
       module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
-    val l = LinkedList<Any>()
-    desc.args.forEach { _ ->
-      l.addFirst(stack.pop())
+    val l = LinkedList<Variable>()
+    desc.args.forEach { type ->
+      val e = Variable.create(type)
+      e.popFromStack(stack)
+      l.addFirst(e)
     }
 //    val l = desc.args.map { stack.pop() }
     runFunc(functionId, args = l).forEach {
@@ -233,7 +235,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     functionId: FunctionId,
     cmds: Inst,
     locals: MutableList<Variable>,
-    args: MutableList<Any>,
+    args: MutableList<Variable>,
     resultSize: Int,
   ): List<Any> {
     val funcName = module.exportSection.filterIsInstance<Export.Function>().find {
@@ -323,7 +325,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             try {
               val e = cmd.id.id.toInt()
               if (e in args.indices) {
-                args[e] = stack.pop()
+                args[e].popFromStack(stack)
               } else {
                 locals[e - args.size].popFromStack(stack)
               }
@@ -334,10 +336,9 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           }
 
           is LocalIndexArgument.TEE -> {
-            val value = stack.peek()
             val e = cmd.id.id.toInt()
             if (e in args.indices) {
-              args[e] = value
+              args[e].peekToStack(stack)
             } else {
               locals[e - args.size].peekToStack(stack)
             }
@@ -347,12 +348,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           is LocalIndexArgument.GET -> {
             val e = cmd.id.id.toInt()
             if (e in args.indices) {
-              val value = args[e]
-              when (value) {
-                is Int -> stack.pushI32(value)
-                is Long -> stack.pushI64(value)
-                else -> TODO()
-              }
+              args[e].pushToStack(stack)
             } else {
               locals[e - args.size].pushToStack(stack)
             }
