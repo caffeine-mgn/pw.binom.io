@@ -48,9 +48,9 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             cmds = element.expressions.first!!,
             locals = ArrayList(),
             args = ArrayList(),
-            resultSize = 1,
+            results = listOf(ValueType().also { it.number=NumberType(Primitive.I32) }),
             functionId = FunctionId(0u),
-          ).single() as Int
+          ).single().asI32.value
           check(offset >= 0)
           table.offset = offset
           element.functions.forEachIndexed { functionIndex, functionId ->
@@ -66,9 +66,9 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           cmds = expressions.first!!,
           locals = ArrayList(),
           args = ArrayList(),
-          resultSize = 1,
+          results = listOf(ValueType().also { it.number=NumberType(Primitive.I32) }),
           functionId = FunctionId(0u),
-        ).single() as Int
+        ).single().asI32.value
       } ?: 0
       val memIndex = (data.memoryId?.raw ?: 0u).toInt()
       val mem = memory[memIndex]
@@ -140,7 +140,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     return runFunc(id = func.id, args = args)
   }
 
-  fun runFunc(id: FunctionId, args: List<Variable>): List<Any> {
+  fun runFunc(id: FunctionId, args: List<Variable>): List<Variable> {
     val functionIndex = id.id.toInt() - importFunc.size
     val typeIndex = module.functionSection[functionIndex]
     val desc = module.typeSection[typeIndex].single!!.single!!.type as RecType.FuncType
@@ -156,7 +156,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       cmds = code.code.first!!,
       locals = locals,
       args = args.toMutableList(),
-      resultSize = desc.results.size,
+      results = desc.results,
       functionId = id,
     )
   }
@@ -225,9 +225,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       e.popFromStack(stack)
       l.addFirst(e)
     }
-//    val l = desc.args.map { stack.pop() }
     runFunc(functionId, args = l).forEach {
-      stack.push(it)
+      it.pushToStack(stack)
     }
   }
 
@@ -236,8 +235,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     cmds: Inst,
     locals: MutableList<Variable>,
     args: MutableList<Variable>,
-    resultSize: Int,
-  ): List<Any> {
+    results: List<ValueType>,
+  ): List<Variable> {
     val funcName = module.exportSection.filterIsInstance<Export.Function>().find {
       it.id == functionId
     }?.name
@@ -358,8 +357,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           }
 
           is ControlFlow.RETURN -> {
-            check(stack.size == resultSize)
-            return stack.clear()
+            check(stack.size == results.size)
+            break
           }
 
           is ControlFlow.UNREACHABLE -> {
@@ -784,8 +783,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             if (cmd.next != null) {
               blocks.removeLast()
             } else {
-              check(stack.size == resultSize) { "Invalid stack and result. resultSize=$resultSize, stack.size=${stack.size}" }
-              return stack.clear()
+              check(stack.size == results.size) { "Invalid stack and result. resultSize=${results.size}, stack.size=${stack.size}" }
+              break
             }
             cmd = cmd.next
           }
@@ -796,6 +795,10 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     } catch (e: Throwable) {
       throw RuntimeException("Can't execute task", e)
     }
-    return stack.clear()
+    return results.map {
+      val v = Variable.create(it)
+      v.popFromStack(stack)
+      v
+    }
   }
 }
