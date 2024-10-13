@@ -14,7 +14,7 @@ interface GlobalVar {
   val f64: Double
     get() = TODO()
 
-  fun putInto(stack: LinkedStack)
+  fun putInto(stack: Stack)
 }
 
 interface GlobalVarMutable : GlobalVar {
@@ -37,16 +37,16 @@ interface GlobalVarMutable : GlobalVar {
     get() = TODO()
     set(value) = TODO()
 
-  fun setFrom(stack: LinkedStack)
+  fun setFrom(stack: Stack)
 
   class S32(value: Int = 0) : GlobalVarMutable {
     override var s32: Int = value
 
-    override fun putInto(stack: LinkedStack) {
+    override fun putInto(stack: Stack) {
       stack.pushI32(s32)
     }
 
-    override fun setFrom(stack: LinkedStack) {
+    override fun setFrom(stack: Stack) {
       s32 = stack.popI32()
     }
   }
@@ -54,11 +54,11 @@ interface GlobalVarMutable : GlobalVar {
   class S64(value: Long = 0L) : GlobalVarMutable {
     override var s64: Long = value
 
-    override fun putInto(stack: LinkedStack) {
+    override fun putInto(stack: Stack) {
       stack.pushI64(s64)
     }
 
-    override fun setFrom(stack: LinkedStack) {
+    override fun setFrom(stack: Stack) {
       s64 = stack.popI64()
     }
   }

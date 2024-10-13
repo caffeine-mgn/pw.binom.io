@@ -48,7 +48,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             cmds = element.expressions.first!!,
             locals = ArrayList(),
             args = ArrayList(),
-            results = listOf(ValueType().also { it.number=NumberType(Primitive.I32) }),
+            results = listOf(ValueType().also { it.number = NumberType(Primitive.I32) }),
             functionId = FunctionId(0u),
           ).single().asI32.value
           check(offset >= 0)
@@ -66,7 +66,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           cmds = expressions.first!!,
           locals = ArrayList(),
           args = ArrayList(),
-          results = listOf(ValueType().also { it.number=NumberType(Primitive.I32) }),
+          results = listOf(ValueType().also { it.number = NumberType(Primitive.I32) }),
           functionId = FunctionId(0u),
         ).single().asI32.value
       } ?: 0
@@ -188,7 +188,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private var stopped = false
   private fun callFunction(
     functionId: FunctionId,
-    stack: LinkedStack,
+    stack: Stack,
   ) {
     if (functionId.id.toInt() in importFunc.indices) {
       val externalFun = importFunc[functionId.id.toInt()]
@@ -247,7 +247,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 //    if (funcName == "__fwritex") {
 //      println("call bad function __fwritex")
 //    }
-    val stack = LinkedStack()
+    val stack: Stack = LinkedStack()
     val blocks = LinkedList<Block1>()
     try {
       var cmd: Inst? = cmds

@@ -4,6 +4,7 @@ import pw.binom.collections.LinkedList
 import pw.binom.wasm.node.ValueType
 
 interface Stack {
+  val size:Int
   fun pushI32(value: Int)
   fun popI32(): Int
   fun peekI32(): Int
@@ -19,6 +20,8 @@ interface Stack {
   fun pushF64(value: Double)
   fun popF64(): Double
   fun peekF64(): Double
+  fun select()
+  fun drop()
 
   fun pop(type: ValueType): Variable {
     val v = Variable.create(type)
@@ -37,7 +40,7 @@ class LinkedStack : Stack {
 
   private val q = LinkedList<Any>()
   private val types = LinkedList<Type>()
-  val size
+  override val size
     get() = q.size
 
   private fun push(value: Any) {
@@ -50,7 +53,7 @@ class LinkedStack : Stack {
     }
   }
 
-  fun select() {
+  override fun select() {
     val v = popI32()
     val v2 = pop()
     val v1 = pop()
@@ -99,24 +102,18 @@ class LinkedStack : Stack {
     check(types.removeLast() == Type.F64)
     return q.removeLast() as Double
   }
-  override fun peekI32(): Int = when (val v = peek()) {
-    is Int -> v
-    is Long -> v.toInt()
-    else -> TODO()
-  }
-  override fun peekI64(): Long = peek() as Long
-  override fun peekF32(): Float = peek() as Float
+  override fun peekI32(): Int = q.peekLast()!! as Int
+  override fun peekI64(): Long = q.peekLast()!! as Long
+  override fun peekF32(): Float = q.peekLast()!! as Float
 
-  override fun peekF64(): Double = peek() as Double
-
-
+  override fun peekF64(): Double = q.peekLast()!! as Double
 
   private fun pop(): Any {
     types.removeLast()
     return q.removeLast()
   }
 
-  fun drop(){
+  override fun drop(){
     types.removeLast()
     q.removeLast()
   }
