@@ -51,8 +51,7 @@ class RunTest {
     StreamReader(File(filePath).openRead()).use {
       WasmReader.read(it, module)
     }
-    var exitProcessCode = 0
-    val wasiModule = WasiModule(listOf("project.wasm", "9", "3", "4", "5"))
+    val wasiModule = WasiModule(listOf("project.wasm", "9"))
     val resolver = object : ImportResolver {
       override fun func(module: String, field: String): ((ExecuteContext) -> Unit)? =
         when (module) {
@@ -74,7 +73,7 @@ class RunTest {
     val startFuncName = "_start"
     val result = runner.runFunc(startFuncName, args = listOf())
     println("result: $result")
-    println("Exist code: $exitProcessCode")
+    println("Exist code: ${wasiModule.exitCode}")
 //    println("start: ${module.startFunctionId}")
   }
 }

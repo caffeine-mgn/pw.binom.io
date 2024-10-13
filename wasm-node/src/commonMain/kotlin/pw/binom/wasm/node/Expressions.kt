@@ -6,7 +6,7 @@ import pw.binom.wasm.visitors.ValueVisitor
 import pw.binom.wasm.node.inst.MemoryOp
 import pw.binom.wasm.node.inst.*
 
-class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
+class Expressions : ExpressionsVisitor {
 
   var first: Inst? = null
   var last: Inst? = null
@@ -19,26 +19,16 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
       last!!.next = this
       last = this
     }
-    this@Expressions.add(this)
     return this
+  }
+
+  fun clear() {
+    first = null
+    last = null
   }
 
   override fun start() {
     clear()
-  }
-
-  override fun end() {
-    var cmd = first
-    val l = ArrayList<Inst>()
-    while (cmd != null) {
-      l += cmd
-      cmd = cmd.next
-    }
-    if (l.size != size) TODO()
-    forEachIndexed { index, inst ->
-      if (l[index] !== inst) TODO()
-    }
-    super.end()
   }
 
   override fun const(value: Float) {
@@ -475,10 +465,12 @@ class Expressions : ExpressionsVisitor, MutableList<Inst> by ArrayList() {
 
   fun accept(visitor: ExpressionsVisitor) {
     visitor.start()
-    forEach {
+    var cmd = first
+    while (cmd != null) {
       visitor.beforeOperation()
-      it.accept(visitor)
+      cmd.accept(visitor)
       visitor.afterOperation()
+      cmd = cmd.next
     }
     visitor.end()
   }

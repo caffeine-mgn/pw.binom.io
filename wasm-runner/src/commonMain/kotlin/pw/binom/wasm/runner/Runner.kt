@@ -47,7 +47,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
         is Element.Type0 -> {
           val table = tables[index] as Table.FuncTable
           val offset = runCmd(
-            cmds = element.expressions,
+            cmds = element.expressions.first!!,
             locals = ArrayList(),
             args = ArrayList(),
             resultSize = 1,
@@ -65,7 +65,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     module.dataSection.forEach { data ->
       val offset = data.expressions?.let { expressions ->
         runCmd(
-          cmds = expressions,
+          cmds = expressions.first!!,
           locals = ArrayList(),
           args = ArrayList(),
           resultSize = 1,
@@ -85,9 +85,9 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       v.type.number != null -> {
         when (v.type.number!!.type) {
           Primitive.I32 -> {
-            check(v.expressions.size == 2)
-            check(v.expressions.last() is EndBlock)
-            val ex = v.expressions.first()
+//            check(v.expressions.size == 2)
+//            check(v.expressions.last() is EndBlock)
+            val ex = v.expressions.first
             check(ex is I32Const)
             GlobalVarMutable.S32(ex.value)
           }
@@ -161,7 +161,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       }
     }
     return runCmd(
-      cmds = code.code,
+      cmds = code.code.first!!,
       locals = locals,
       args = args.toMutableList(),
       resultSize = desc.results.size,
@@ -196,7 +196,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private var stopped = false
   private fun callFunction(
     functionId: FunctionId,
-    stack: Stack,
+    stack: LinkedStack,
   ) {
     if (functionId.id.toInt() in importFunc.indices) {
       val externalFun = importFunc[functionId.id.toInt()]
@@ -236,7 +236,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 
   private fun runCmd(
     functionId: FunctionId,
-    cmds: List<Inst>,
+    cmds: Inst,
     locals: MutableList<LocalVar>,
     args: MutableList<Any>,
     resultSize: Int,
@@ -251,10 +251,10 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 //    if (funcName == "__fwritex") {
 //      println("call bad function __fwritex")
 //    }
-    val stack = Stack()
+    val stack = LinkedStack()
     val blocks = LinkedList<Block1>()
     try {
-      var cmd = cmds.firstOrNull()
+      var cmd: Inst? = cmds
       while (!stopped && cmd != null) {
         when (cmd) {
           is BlockStart.BLOCK -> {
@@ -356,7 +356,12 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             } else {
               locals[e - args.size].get()!!
             }
-            stack.push(value)
+            when (value) {
+              is Int -> stack.push(value)
+              is Long -> stack.push(value)
+              else -> TODO()
+            }
+//            stack.push(value)
             cmd = cmd.next
           }
 
@@ -787,7 +792,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             if (cmd.next != null) {
               blocks.removeLast()
             } else {
-              check(stack.size == resultSize)
+              check(stack.size == resultSize) { "Invalid stack and result. resultSize=$resultSize, stack.size=${stack.size}" }
               return stack.clear()
             }
             cmd = cmd.next
