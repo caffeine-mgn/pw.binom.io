@@ -247,6 +247,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 //    if (funcName == "__fwritex") {
 //      println("call bad function __fwritex")
 //    }
+//    val stack: Stack = ArrayStack()
     val stack: Stack = LinkedStack()
     val blocks = LinkedList<Block1>()
     try {

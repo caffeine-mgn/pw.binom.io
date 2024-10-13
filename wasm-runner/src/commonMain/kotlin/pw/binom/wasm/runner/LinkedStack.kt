@@ -3,8 +3,189 @@ package pw.binom.wasm.runner
 import pw.binom.collections.LinkedList
 import pw.binom.wasm.node.ValueType
 
+class ArrayStack(initSize: Int = 30) : Stack {
+  companion object {
+    const val I32: Byte = 0
+    const val I64: Byte = 1
+    const val F32: Byte = 2
+    const val F64: Byte = 3
+  }
+
+  private var dataSize = 0
+  private var typeSize = 0
+  private val data = IntArray(initSize)
+  private val types = ByteArray(initSize)
+
+  override val size: Int
+    get() = typeSize
+
+  override fun pushI32(value: Int) {
+    pushInt(value)
+    pushType(I32)
+  }
+
+  override fun pushI64(value: Long) {
+    pushLong(value)
+    pushType(I64)
+  }
+
+  override fun pushF32(value: Float) {
+    pushInt(value.toRawBits())
+    pushType(F32)
+  }
+
+  override fun pushF64(value: Double) {
+    pushLong(value.toRawBits())
+    pushType(F64)
+  }
+
+  override fun popI32(): Int {
+    check(popType() == I32)
+    return popInt()
+  }
+
+  override fun popI64(): Long {
+    check(popType() == I64)
+    return popLong()
+  }
+
+  override fun popF32(): Float {
+    check(popType() == F32)
+    return Float.fromBits(popInt())
+  }
+
+  override fun popF64(): Double {
+    check(popType() == F64)
+    return Double.fromBits(popLong())
+  }
+
+  override fun peekI32(): Int {
+    check(peekType() == I32)
+    return peekInt()
+  }
+
+  override fun peekI64(): Long {
+    check(peekType() == I64)
+    return peekLong()
+  }
+
+  override fun peekF32(): Float {
+    check(peekType() == F32)
+    return Float.fromBits(peekInt())
+  }
+
+  override fun peekF64(): Double {
+    check(peekType() == F64)
+    return Double.fromBits(peekLong())
+  }
+
+  private fun pop(): Any {
+    val type = peekType()
+    return when (type) {
+      I32 -> popI32()
+      I64 -> popI64()
+      F32 -> popF32()
+      F64 -> popF64()
+      else -> TODO()
+    }
+  }
+
+  private fun push(value: Any) {
+    when (value) {
+      is Int -> pushI32(value)
+      is Long -> pushI64(value)
+      is Float -> pushF32(value)
+      is Double -> pushF64(value)
+      else -> TODO()
+    }
+  }
+
+  override fun select() {
+    val v = popI32()
+    val v2 = pop()
+    val v1 = pop()
+    if (v1::class != v2::class) {
+      TODO()
+    }
+    push(if (v != 0) v1 else v2)
+  }
+
+  override fun drop() {
+    when (popType()) {
+      F64 -> popInt()
+      I64 -> popInt()
+    }
+    popInt()
+  }
+
+  private fun peekInt(): Int {
+    if (dataSize <= 0) {
+      TODO()
+    }
+    return data[dataSize - 1]
+  }
+
+  private fun peekLong(): Long {
+    if (dataSize <= 1) {
+      TODO()
+    }
+
+    val left = data[dataSize - 1].toUInt().toLong()
+    val right = data[dataSize - 2].toUInt().toLong()
+    return right shl 16 or left
+  }
+
+  private fun pushInt(value: Int) {
+    if (dataSize + 1 > data.size) {
+      TODO()
+    }
+    data[dataSize++] = value
+  }
+
+  private fun popInt(): Int {
+    if (dataSize - 1 < 0) {
+      TODO()
+    }
+    return data[--dataSize]
+  }
+
+  private fun pushType(type: Byte) {
+    if (typeSize + 1 > types.size) {
+      TODO()
+    }
+    types[typeSize++] = type
+  }
+
+  private fun popType(): Byte {
+    if (typeSize - 1 < 0) {
+      TODO()
+    }
+    return types[--typeSize]
+  }
+
+  private fun peekType(): Byte {
+    if (typeSize <= 0) {
+      TODO()
+    }
+    return types[typeSize - 1]
+  }
+
+  private fun pushLong(value: Long) {
+    val left = (value ushr 16).toULong().toInt()
+    val right = (value and 0xFFFFFFFFL).toULong().toInt()
+    pushInt(right)
+    pushInt(left)
+  }
+
+  private fun popLong(): Long {
+    val left = popInt().toUInt().toLong()
+    val right = popInt().toUInt().toLong()
+    return right shl 16 or left
+  }
+}
+
 interface Stack {
-  val size:Int
+  val size: Int
   fun pushI32(value: Int)
   fun popI32(): Int
   fun peekI32(): Int
@@ -102,6 +283,7 @@ class LinkedStack : Stack {
     check(types.removeLast() == Type.F64)
     return q.removeLast() as Double
   }
+
   override fun peekI32(): Int = q.peekLast()!! as Int
   override fun peekI64(): Long = q.peekLast()!! as Long
   override fun peekF32(): Float = q.peekLast()!! as Float
@@ -113,7 +295,7 @@ class LinkedStack : Stack {
     return q.removeLast()
   }
 
-  override fun drop(){
+  override fun drop() {
     types.removeLast()
     q.removeLast()
   }
