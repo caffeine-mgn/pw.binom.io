@@ -19,8 +19,8 @@ class WasiModule(val args: List<String>) : ImportResolver {
     }
     return when (field) {
       "args_get" -> { e ->
-        val arrPtrPtr = e.args[0] as Int
-        val bufferLenPtr = e.args[1] as Int
+        val arrPtrPtr = e.args[0].asI32.value
+        val bufferLenPtr = e.args[1].asI32.value
         var cursor = bufferLenPtr.toUInt()
         var cursor2 = arrPtrPtr
         args.forEach {
@@ -39,21 +39,21 @@ class WasiModule(val args: List<String>) : ImportResolver {
         }
 //              arrPtrPtr
 //              println()
-        e.pushResult(ESUCCESS)
+        e.pushResult(Variable.I32(ESUCCESS))
 //              TODO()
       }
 
       "args_sizes_get" -> { e ->
-        val countPtr = e.args[0] as Int
-        val bufferLenPtr = e.args[1] as Int
+        val countPtr = e.args[0].asI32.value
+        val bufferLenPtr = e.args[1].asI32.value
         val bufferLen = args.map { it.encodeToByteArray().size + 1 }.sum()
         e.runner.memory[0].pushI32(value = args.size, offset = countPtr.toUInt(), align = 0u)
         e.runner.memory[0].pushI32(value = bufferLen, offset = bufferLenPtr.toUInt(), align = 0u)
-        e.pushResult(ESUCCESS)
+        e.pushResult(Variable.I32(ESUCCESS))
       }
 
       "proc_exit" -> { e ->
-        exitCode = e.args[0] as Int
+        exitCode = e.args[0].asI32.value
         e.stop()
 //              println()
 //              TODO()
@@ -65,12 +65,12 @@ class WasiModule(val args: List<String>) : ImportResolver {
       }
 
       "fd_fdstat_get" -> FUNC@{ env ->
-        val fd = env.args[0] as Int // reading __wasi_fd_t
+        val fd = env.args[0].asI32.value // reading __wasi_fd_t
         if (fd != 1 && fd != 2) {
-          env.pushResult(__WASI_EBADF)
+          env.pushResult(Variable.I32(__WASI_EBADF))
           return@FUNC
         }
-        val resultPtr = env.args[1] as Int
+        val resultPtr = env.args[1].asI32.value
         // writing struct __wasi_fdstat_t
         env.runner.memory[0].pushI64(
           value = __WASI_FILETYPE_CHARACTER_DEVICE.toLong(),
@@ -87,7 +87,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
           offset = (resultPtr + Long.SIZE_BYTES * 2).toUInt(),
           align = 0u
         )
-        env.pushResult(0)
+        env.pushResult(Variable.I32(0))
       }
 
       "fd_seek" -> { e ->
@@ -96,9 +96,9 @@ class WasiModule(val args: List<String>) : ImportResolver {
 
       "fd_write" -> { e ->
         // The file descriptor
-        val fd = e.args[0] as Int
+        val fd = e.args[0].asI32.value
         if (fd != 1 && fd != 2) {
-          e.pushResult(__WASI_EBADF)
+          e.pushResult(Variable.I32(__WASI_EBADF))
         } else {
           val channel = when (fd) {
             1 -> Console.std
@@ -107,11 +107,11 @@ class WasiModule(val args: List<String>) : ImportResolver {
           }
 //                Console.stdChannel.write()
           // The address of the scatter vector
-          val iovs = e.args[1] as Int
+          val iovs = e.args[1].asI32.value
           // The length of the scatter vector
-          val iovsLen = e.args[2] as Int
+          val iovsLen = e.args[2].asI32.value
           //The number of items written
-          val nwritten = e.args[3] as Int
+          val nwritten = e.args[3].asI32.value
           val len = Int.SIZE_BYTES * 2
           var written = 0
           repeat(iovsLen) { count ->
@@ -129,7 +129,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
             offset = nwritten.toUInt(),
             align = 0u,
           )
-          e.pushResult(ESUCCESS)
+          e.pushResult(Variable.I32(ESUCCESS))
         }
 
       }

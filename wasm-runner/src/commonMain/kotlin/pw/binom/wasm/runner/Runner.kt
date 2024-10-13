@@ -193,23 +193,25 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     if (functionId.id.toInt() in importFunc.indices) {
       val externalFun = importFunc[functionId.id.toInt()]
       val functionType = module.typeSection[externalFun.index].single!!.single!!.type as RecType.FuncType
-      val l = LinkedList<Any>()
-      repeat(functionType.args.size) {
-        l.addFirst(stack.pop())
+      val l = LinkedList<Variable>()
+      functionType.args.forEach {
+        val v = Variable.create(it)
+        v.popFromStack(stack)
+        l.addFirst(v)
       }
       val impl = importFuncImpl[functionId.id.toInt()]
       impl(object : ExecuteContext {
         override val runner: Runner
           get() = this@Runner
-        override val args: List<Any>
+        override val args: List<Variable>
           get() = l
 
         override fun stop() {
           stopped = true
         }
 
-        override fun pushResult(value: Any) {
-          stack.push(value)
+        override fun pushResult(value: Variable) {
+          value.pushToStack(stack)
         }
       })
       return
