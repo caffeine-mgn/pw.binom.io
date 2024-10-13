@@ -505,13 +505,14 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 
 
           is Select -> {
-            val v = stack.popI32()
-            val v2 = stack.pop()
-            val v1 = stack.pop()
-            if (v1::class != v2::class) {
-              TODO()
-            }
-            stack.push(if (v != 0) v1 else v2)
+            stack.select()
+//            val v = stack.popI32()
+//            val v2 = stack.pop()
+//            val v1 = stack.pop()
+//            if (v1::class != v2::class) {
+//              TODO()
+//            }
+//            stack.push(if (v != 0) v1 else v2)
             cmd = cmd.next
           }
 
@@ -648,7 +649,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           }
 
           is Drop -> {
-            stack.pop()
+            stack.drop()
             cmd = cmd.next
           }
 
@@ -711,12 +712,12 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 
           is MemoryOp.Size -> {
             val mem = memory[cmd.id.raw.toInt()]
-            stack.push(mem.limit / MemorySpaceByteArray.PAGE_SIZE)
+            stack.pushI32((mem.limit / MemorySpaceByteArray.PAGE_SIZE).toInt())
             cmd = cmd.next
           }
 
           is MemoryOp.Grow -> {
-            val size = stack.pop() as Int
+            val size = stack.popI32()
             val mem = memory[cmd.id.raw.toInt()]
             val r = mem.grow(size.toUInt()) ?: TODO()
             stack.pushI32(r.toInt())

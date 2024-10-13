@@ -28,67 +28,106 @@ interface Stack {
 }
 
 class LinkedStack : Stack {
-  private val l = LinkedList<Any>()
-  val size
-    get() = l.size
+  private enum class Type {
+    I32,
+    I64,
+    F32,
+    F64,
+  }
 
-  fun push(value: Any) {
-    l.addLast(value)
+  private val q = LinkedList<Any>()
+  private val types = LinkedList<Type>()
+  val size
+    get() = q.size
+
+  private fun push(value: Any) {
+    when (value) {
+      is Int -> pushI32(value)
+      is Long -> pushI64(value)
+      is Float -> pushF32(value)
+      is Double -> pushF64(value)
+      else -> TODO()
+    }
+  }
+
+  fun select() {
+    val v = popI32()
+    val v2 = pop()
+    val v1 = pop()
+    if (v1::class != v2::class) {
+      TODO()
+    }
+    push(if (v != 0) v1 else v2)
   }
 
   override fun pushI32(value: Int) {
-    l.addLast(value)
+    q.addLast(value)
+    types.addLast(Type.I32)
   }
 
   override fun pushI64(value: Long) {
-    l.addLast(value)
+    q.addLast(value)
+    types.addLast(Type.I64)
   }
 
   override fun pushF32(value: Float) {
-    push(value)
+    q.addLast(value)
+    types.addLast(Type.F32)
   }
-
-  override fun popF32(): Float = pop() as Float
-  override fun peekF32(): Float = peek() as Float
 
   override fun pushF64(value: Double) {
-    push(value)
+    q.addLast(value)
+    types.addLast(Type.F64)
   }
 
-  override fun popF64(): Double = pop() as Double
-  override fun peekF64(): Double = peek() as Double
+  override fun popI32(): Int {
+    check(types.removeLast() == Type.I32)
+    return q.removeLast() as Int
+  }
 
+  override fun popI64(): Long {
+    check(types.removeLast() == Type.I64)
+    return q.removeLast() as Long
+  }
+
+  override fun popF32(): Float {
+    check(types.removeLast() == Type.F32)
+    return q.removeLast() as Float
+  }
+
+  override fun popF64(): Double {
+    check(types.removeLast() == Type.F64)
+    return q.removeLast() as Double
+  }
   override fun peekI32(): Int = when (val v = peek()) {
     is Int -> v
     is Long -> v.toInt()
     else -> TODO()
   }
-
   override fun peekI64(): Long = peek() as Long
+  override fun peekF32(): Float = peek() as Float
 
-  override fun popI32(): Int {
-    val value = l.removeLast()
-    if (value !is Int) {
-      TODO("$value is not int")
-    }
-    return value
+  override fun peekF64(): Double = peek() as Double
+
+
+
+  private fun pop(): Any {
+    types.removeLast()
+    return q.removeLast()
   }
 
-  override fun popI64(): Long {
-    val value = l.removeLast()
-    if (value !is Long) {
-      TODO("$value is not int")
-    }
-    return value
+  fun drop(){
+    types.removeLast()
+    q.removeLast()
   }
 
-  fun pop() = l.removeLast()
-  fun peek() = l.peekLast()!!
+  fun peek() = q.peekLast()!!
 
   fun clear(): List<Any> {
     val out = ArrayList<Any>()
-    while (l.isNotEmpty()) {
-      out += l.removeFirst()
+    while (q.isNotEmpty()) {
+      types.removeFirst()
+      out += q.removeFirst()
     }
     return out
   }
