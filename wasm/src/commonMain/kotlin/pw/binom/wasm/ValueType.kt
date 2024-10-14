@@ -52,6 +52,7 @@ fun isValueType(byte: UByte) =
     Types.TYPE_REF,
     Types.TYPE_REF_ABS_HEAP_NONE,
     Types.TYPE_REF_ABS_HEAP_ANY,
+    Types.TYPE_REF_ABS_HEAP_STRUCT,
       -> true
 
     else -> false

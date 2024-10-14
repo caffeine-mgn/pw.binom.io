@@ -123,6 +123,7 @@ fun WasmInput.readValueType(byte: UByte = i8u(), visitor: ValueVisitor) =
     Types.TYPE_REF_EXTERN_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN)
     Types.TYPE_REF_ABS_HEAP_NONE -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_NONE)
     Types.TYPE_REF_ABS_HEAP_ANY -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_ANY)
+    Types.TYPE_REF_ABS_HEAP_STRUCT -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT)
 
     Types.TYPE_REF_NULL -> readHeapType(visitor = visitor.refType().refNull())
     Types.TYPE_REF -> readHeapType(visitor = visitor.refType().ref())

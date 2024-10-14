@@ -78,6 +78,7 @@ interface ExpressionsVisitor {
   fun arrayOp(gcOpcode: UByte, type: TypeId) {}
   fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor = ValueVisitor.HeapVisitor.SKIP
   fun structNew(type: TypeId) {}
+  fun structNewDefault(type: TypeId) {}
   fun arrayCopy(from: TypeId, to: TypeId) {}
   fun newArray(type: TypeId, size: UInt) {}
   fun newArray(type: TypeId, data: DataId) {}

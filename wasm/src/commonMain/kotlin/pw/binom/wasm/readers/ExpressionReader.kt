@@ -336,6 +336,11 @@ object ExpressionReader {
       Opcodes.F64_CONVERT_S_I64,
       Opcodes.F64_CONVERT_U_I64,
       Opcodes.F64_PROMOTE_F32,
+      Opcodes.I32_EXTEND8_S,
+      Opcodes.I32_EXTEND16_S,
+      Opcodes.I64_EXTEND8_S,
+      Opcodes.I64_EXTEND16_S,
+      Opcodes.I64_EXTEND32_S,
         -> visitor.convert(opcode)
 
       Opcodes.REF_FUNC -> visitor.ref(FunctionId(input.v32u()))
@@ -435,6 +440,7 @@ object ExpressionReader {
 //    println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
     when (opcode) {
       Opcodes.GC_STRUCT_NEW -> visitor.structNew(type = TypeId(input.v32u()))
+      Opcodes.GC_STRUCT_NEW_DEFAULT -> visitor.structNewDefault(type = TypeId(input.v32u()))
 
       Opcodes.GC_STRUCT_SET,
       Opcodes.GC_STRUCT_GET,

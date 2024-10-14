@@ -47,7 +47,8 @@ class RunTest {
     val module = WasmModule()
 //    val filePath = "/home/subochev/tmp/wasm-test/c/dot.wasm"
 //    val filePath = "/home/subochev/tmp/wasm-test/c/dot-wasi.wasm"
-    val filePath = "/home/subochev/tmp/wasm-test/c/binary-trees.wasm"
+//    val filePath = "/home/subochev/tmp/wasm-test/c/binary-trees.wasm"
+    val filePath = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/kotlin/www-wasm-wasi.wasm"
     StreamReader(File(filePath).openRead()).use {
       WasmReader.read(it, module)
     }

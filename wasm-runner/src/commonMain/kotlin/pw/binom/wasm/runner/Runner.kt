@@ -93,7 +93,6 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           else -> TODO()
         }
       }
-
       else -> TODO()
     }
   }

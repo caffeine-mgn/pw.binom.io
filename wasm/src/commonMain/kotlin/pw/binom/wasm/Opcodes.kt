@@ -196,6 +196,12 @@ object Opcodes {
   const val F32_REINTERPRET_I32: UByte = 0xbeu // f32.reinterpret/i32
   const val F64_REINTERPRET_I64: UByte = 0xbfu // f64.reinterpret/i64
 
+  const val I32_EXTEND8_S: UByte = 0xC0u // i32.extend8_s
+  const val I32_EXTEND16_S: UByte = 0xC1u // i32.extend16_s
+  const val I64_EXTEND8_S: UByte = 0xC2u // i64.extend8_s
+  const val I64_EXTEND16_S: UByte = 0xC3u // i64.extend16_s
+  const val I64_EXTEND32_S: UByte = 0xC4u // i64.extend32_s
+
   const val REF_IS_NULL: UByte = 0xd1u// ref.is_null
   const val REF_NULL: UByte = 0xd0u // ref.null
   const val REF_FUNC: UByte = 0xd2u // ref.func

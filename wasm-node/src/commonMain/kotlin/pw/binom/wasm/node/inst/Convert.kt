@@ -130,6 +130,32 @@ sealed class Convert : Inst() {
     }
   }
 
+  class I32_EXTEND8_S : Convert() {
+    override fun accept(visitor: ExpressionsVisitor) {
+      visitor.convert(Opcodes.I32_EXTEND8_S)
+    }
+  }
+  class I32_EXTEND16_S : Convert() {
+    override fun accept(visitor: ExpressionsVisitor) {
+      visitor.convert(Opcodes.I32_EXTEND16_S)
+    }
+  }
+  class I64_EXTEND8_S : Convert() {
+    override fun accept(visitor: ExpressionsVisitor) {
+      visitor.convert(Opcodes.I64_EXTEND8_S)
+    }
+  }
+  class I64_EXTEND16_S : Convert() {
+    override fun accept(visitor: ExpressionsVisitor) {
+      visitor.convert(Opcodes.I64_EXTEND16_S)
+    }
+  }
+  class I64_EXTEND32_S : Convert() {
+    override fun accept(visitor: ExpressionsVisitor) {
+      visitor.convert(Opcodes.I64_EXTEND32_S)
+    }
+  }
+
   class GC_ANY_CONVERT_EXTERN : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.gcConvert(Opcodes.GC_ANY_CONVERT_EXTERN)

@@ -1,6 +1,7 @@
 package pw.binom.wasm.runner
 
 import pw.binom.Console
+import kotlin.random.Random
 
 class WasiModule(val args: List<String>) : ImportResolver {
   companion object {
@@ -92,6 +93,12 @@ class WasiModule(val args: List<String>) : ImportResolver {
 
       "fd_seek" -> { e ->
         println()
+      }
+
+      "random_get" -> { e ->
+        val a = e.args[0].asI32.value
+        val b = e.args[1].asI32.value
+        e.pushResult(Variable.I32(Random.nextInt()))
       }
 
       "fd_write" -> { e ->

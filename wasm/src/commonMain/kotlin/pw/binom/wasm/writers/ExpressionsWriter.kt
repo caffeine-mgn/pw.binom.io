@@ -414,6 +414,11 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
       Opcodes.F64_CONVERT_S_I64,
       Opcodes.F64_CONVERT_U_I64,
       Opcodes.F64_PROMOTE_F32,
+      Opcodes.I32_EXTEND8_S,
+      Opcodes.I32_EXTEND16_S,
+      Opcodes.I64_EXTEND8_S,
+      Opcodes.I64_EXTEND16_S,
+      Opcodes.I64_EXTEND32_S,
         -> out.i8u(opcode)
 
       else -> throw IllegalArgumentException()
@@ -477,6 +482,12 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
   override fun structNew(type: TypeId) {
     out.i8u(Opcodes.GC_PREFIX)
     out.i8u(Opcodes.GC_STRUCT_NEW)
+    out.v32u(type.value)
+  }
+
+  override fun structNewDefault(type: TypeId) {
+    out.i8u(Opcodes.GC_PREFIX)
+    out.i8u(Opcodes.GC_STRUCT_NEW_DEFAULT)
     out.v32u(type.value)
   }
 

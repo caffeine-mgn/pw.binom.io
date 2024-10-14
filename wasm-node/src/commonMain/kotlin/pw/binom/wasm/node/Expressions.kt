@@ -236,6 +236,11 @@ class Expressions : ExpressionsVisitor {
       Opcodes.F64_CONVERT_S_I64 -> Convert.F64_CONVERT_S_I64()
       Opcodes.F64_CONVERT_U_I64 -> Convert.F64_CONVERT_U_I64()
       Opcodes.F64_PROMOTE_F32 -> Convert.F64_PROMOTE_F32()
+      Opcodes.I32_EXTEND8_S -> Convert.I32_EXTEND8_S()
+      Opcodes.I32_EXTEND16_S -> Convert.I32_EXTEND16_S()
+      Opcodes.I64_EXTEND8_S -> Convert.I64_EXTEND8_S()
+      Opcodes.I64_EXTEND16_S -> Convert.I64_EXTEND16_S()
+      Opcodes.I64_EXTEND32_S -> Convert.I64_EXTEND32_S()
       else -> throw IllegalArgumentException()
     }.add()
   }
@@ -320,7 +325,11 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun structNew(type: TypeId) {
-    StructNew(type)
+    StructNew(type).add()
+  }
+
+  override fun structNewDefault(type: TypeId) {
+    StructNewDefault(type).add()
   }
 
   override fun arrayCopy(from: TypeId, to: TypeId) {
