@@ -1,0 +1,72 @@
+---
+void internal_memset(const signed char*ptr, long long int size, signed char value){
+    memset(ptr, value, size);
+}
+
+signed char* internal_alloc(long long int size){
+    return malloc(size);
+}
+
+void internal_free(signed char* ptr){
+    free(ptr);
+}
+
+void internal_copy(signed char* src,signed char* dest, long long int size){
+    memcpy(dest, src, size);
+}
+
+int internal_strlen(signed char* ptr){
+    return strlen(ptr);
+}
+
+long long int bswap_64(long long int input) {
+    long long int rval;
+    signed char *data = (signed char *)&rval;
+
+    data[0] = input >> 56;
+    data[1] = input >> 48;
+    data[2] = input >> 40;
+    data[3] = input >> 32;
+    data[4] = input >> 24;
+    data[5] = input >> 16;
+    data[6] = input >> 8;
+    data[7] = input >> 0;
+
+    return rval;
+}
+
+short int internal_getShort(signed char* ptr){
+    short int value = *((short int*)ptr);
+    return ntohs(value);
+}
+
+void internal_setShort(signed char* ptr, short int value) {
+    (*(short int*)ptr) = htons(value);
+}
+
+int internal_getInt(signed char* ptr){
+    int value = *((int*)ptr);
+    return ntohl(value);
+}
+
+void internal_setInt(signed char* ptr, int value) {
+    (*(int*)ptr) = htonl(value);
+}
+
+long long int internal_getLong(signed char* ptr){
+    long long int value = *((long long int*)ptr);
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    return bswap_64(value);
+#else
+    return value;
+#endif
+}
+
+void internal_setLong(signed char* ptr, long long int value){
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    (*(long long int*)ptr) = bswap_64(value);
+    long long int t = value;
+#else
+    (*(long long int*)ptr) = value;
+#endif
+}
