@@ -51,7 +51,7 @@ class HttpSSLConnect(
           host = url.domain,
           port = url.port ?: url.getPort(),
         ).resolve(),
-      ).also { it.channel.setTcpNoDelay(true) }
+      )//.also { it.channel.setTcpNoDelay(true) }
       this.channel = channel
     }
     val sslSession = sslContext.clientSession(host = url.domain, port = url.port ?: url.getPort())

@@ -8,7 +8,7 @@ interface MutableHeaders : Headers {
   operator fun set(key: String, value: String?): MutableHeaders
   fun add(key: String, value: List<String>): MutableHeaders
   fun add(key: String, value: String): MutableHeaders
-  fun add(headers: Headers): MutableHeaders
+  fun addAll(headers: Headers): MutableHeaders
   fun addAll(headers: SimpleHeaders) {
     headers.forEach { key, value ->
       add(
@@ -16,6 +16,14 @@ interface MutableHeaders : Headers {
         value = value,
       )
     }
+  }
+
+  operator fun plusAssign(other: Headers) {
+    addAll(other)
+  }
+
+  operator fun plusAssign(other: SimpleHeaders) {
+    addAll(other)
   }
 
   fun remove(key: String): MutableHeaders

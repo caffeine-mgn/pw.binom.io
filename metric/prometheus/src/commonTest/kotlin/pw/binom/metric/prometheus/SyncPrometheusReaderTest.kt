@@ -1,5 +1,6 @@
 package pw.binom.metric.prometheus
 
+import pw.binom.metric.MetricType
 import pw.binom.testing.shouldBeTrue
 import pw.binom.testing.shouldEquals
 import kotlin.test.Test
@@ -8,15 +9,15 @@ class SyncPrometheusReaderTest {
   @Test
   fun withoutFieldsTest() {
     val list = """
-      # HELP my-description
-      # TYPE my-type
+      # HELP jdbc_connections_idle my-description
+      # TYPE jdbc_connections_idle my-type
       jdbc_connections_idle 10.0""".trimIndent().parse()
     list.size shouldEquals 1
     list[0].also {
       it.fields.isEmpty().shouldBeTrue()
       it.name shouldEquals "jdbc_connections_idle"
       it.help shouldEquals "my-description"
-      it.type shouldEquals "my-type"
+      (it.type as MetricType.Custom).name shouldEquals "my-type"
       it.value shouldEquals "10.0"
     }
   }
@@ -24,8 +25,8 @@ class SyncPrometheusReaderTest {
   @Test
   fun withFieldsTest() {
     val list = """
-      # HELP my-description
-      # TYPE my-type
+      # HELP jdbc_connections_idle my-description
+      # TYPE jdbc_connections_idle my-type
       jdbc_connections_idle{name="dataSource",id="123123"} 10.0""".trimIndent().parse()
     println(list)
     list.size shouldEquals 1
@@ -35,7 +36,7 @@ class SyncPrometheusReaderTest {
       it.fields["id"] shouldEquals "123123"
       it.name shouldEquals "jdbc_connections_idle"
       it.help shouldEquals "my-description"
-      it.type shouldEquals "my-type"
+      (it.type as MetricType.Custom).name shouldEquals "my-type"
       it.value shouldEquals "10.0"
     }
   }

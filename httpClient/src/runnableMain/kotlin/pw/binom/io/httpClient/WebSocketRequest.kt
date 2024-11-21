@@ -66,6 +66,6 @@ fun HttpClient.connectWebSocket(
   wsRequest.headers[Headers.CONNECTION] = Headers.UPGRADE
   wsRequest.headers[Headers.UPGRADE] = Headers.WEBSOCKET
   wsRequest.headers[Headers.SEC_WEBSOCKET_VERSION] = "13"
-  wsRequest.headers.add(headers)
+  wsRequest.headers.addAll(headers)
   return wsRequest
 }

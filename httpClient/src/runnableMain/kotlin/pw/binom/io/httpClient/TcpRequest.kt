@@ -39,6 +39,6 @@ fun HttpClient.connectTcp(
     req.headers[Headers.CONNECTION] = Headers.UPGRADE
     req.headers[Headers.UPGRADE] = Headers.TCP
     req.headers[Headers.HOST] = uri.host.toString()
-    req.headers.add(headers)
+    req.headers.addAll(headers)
     return req
 }

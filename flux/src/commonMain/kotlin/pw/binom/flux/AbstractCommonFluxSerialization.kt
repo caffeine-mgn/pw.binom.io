@@ -156,7 +156,7 @@ abstract class AbstractCommonFluxSerialization : FluxSerialization {
         headersOf(Headers.CONTENT_TYPE to resultMemType)
       } else {
         val newHeaders = HashHeaders2()
-        newHeaders.add(headers)
+        newHeaders.addAll(headers)
         newHeaders[Headers.CONTENT_TYPE] = resultMemType
         newHeaders
       }

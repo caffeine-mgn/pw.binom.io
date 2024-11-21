@@ -39,7 +39,7 @@ interface ConnectionFactory {
         port = port,
       ).resolve(),
     )
-    channel.channel.setTcpNoDelay(true)
+//    channel.channel.setTcpNoDelay(true)
 
     return connect(
       channel = channel,

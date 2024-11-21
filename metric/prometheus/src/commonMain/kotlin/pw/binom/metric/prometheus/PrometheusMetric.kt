@@ -1,9 +1,12 @@
 package pw.binom.metric.prometheus
 
+import pw.binom.metric.MetricType
+import pw.binom.metric.MetricVisitor
+
 data class PrometheusMetric(
   val name: String,
   val help: String?,
-  val type: String?,
+  val type: MetricType?,
   val value: String,
   val fields: Map<String, String>,
 ) {
@@ -13,18 +16,18 @@ data class PrometheusMetric(
       private var name: String = ""
       private var value: String = ""
       private var lastHelp: String? = null
-      private var lastType: String? = null
+      private var lastType: MetricType? = null
 
       override fun start(name: String) {
         this.name = name
       }
 
-      override fun help(text: String) {
+      override fun help(name: String, text: String) {
         lastHelp = text
       }
 
-      override fun type(text: String) {
-        lastType = text
+      override fun type(name: String, type: MetricType) {
+        lastType = type
       }
 
       override fun field(name: String, value: String) {

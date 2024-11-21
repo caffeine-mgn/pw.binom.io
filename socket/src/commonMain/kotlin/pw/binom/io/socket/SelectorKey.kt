@@ -9,6 +9,7 @@ expect class SelectorKey : Closeable {
   val readFlags: ListenFlags
   val isClosed: Boolean
   val selector: Selector
+  var watching: Boolean
   fun updateListenFlags(listenFlags: ListenFlags): Boolean
   override fun close()
 }

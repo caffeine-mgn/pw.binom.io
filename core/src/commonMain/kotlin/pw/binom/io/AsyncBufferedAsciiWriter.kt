@@ -1,8 +1,14 @@
 package pw.binom.io
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.InternalLog
 import pw.binom.atomic.AtomicBoolean
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 abstract class AbstractAsyncBufferedAsciiWriter(
   val closeParent: Boolean,
@@ -126,10 +132,15 @@ abstract class AbstractAsyncBufferedAsciiWriter(
 
   private suspend fun internalFlush() {
     if (buffer.position > 0) {
+
       buffer.flip()
-      output.writeFully(buffer)
+      CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::internalFlush #0 output=${output::class} $output") {
+        output.writeFully(buffer)
+      }
       buffer.clear()
-      output.flush()
+      CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::internalFlush #1 output=${output::class} $output") {
+        output.flush()
+      }
     }
   }
 
@@ -142,10 +153,16 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     if (!closed.compareAndSet(false, true)) {
       return
     }
-    internalFlush()
-    buffer.close()
-    if (closeParent) {
-      output.asyncClose()
+    CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::asyncClose #0") {
+      internalFlush()
+    }
+    CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::asyncClose #1") {
+      buffer.close()
+    }
+    CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::asyncClose #2") {
+      if (closeParent) {
+        output.asyncClose()
+      }
     }
   }
 }
@@ -191,3 +208,21 @@ fun AsyncOutput.bufferedAsciiWriter(
   bufferSize = bufferSize,
   closeParent = closeParent,
 )
+
+inline fun <T> CoreDetectSlow(msg: String, duration: Duration = 1.seconds, func: () -> T): T {
+  val stackTrace = Throwable()
+  val finished = AtomicBoolean(false)
+  GlobalScope.launch {
+    delay(duration)
+    if (!finished.getValue()) {
+      InternalLog.warn(file = "Core") { "Slow: $msg\n${stackTrace.stackTraceToString()}" }
+      println("Core---->Slow: $msg\n${stackTrace.stackTraceToString()}")
+    }
+  }
+
+  return try {
+    func()
+  } finally {
+    finished.setValue(true)
+  }
+}

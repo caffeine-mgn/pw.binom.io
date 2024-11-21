@@ -62,11 +62,18 @@ interface AsyncInput : AsyncCloseable {
   suspend fun read(dest: ByteBuffer): DataTransferSize
   suspend fun readFully(dest: ByteBuffer): Int {
     val length = dest.remaining
+    var wasRead = 0
     while (dest.remaining > 0) {
       val read = read(dest)
       if (read.isNotAvailable && dest.remaining > 0) {
-        throw EOFException("Full message $length bytes, can't read ${dest.remaining} bytes")
+        val msg = "Full message $length bytes, can't read ${dest.remaining} bytes"
+        if (wasRead > 0) {
+          throw PackageBreakException("$msg. Was read $wasRead bytes")
+        } else {
+          throw EOFException(msg)
+        }
       }
+      wasRead += read.length
     }
     return length
   }

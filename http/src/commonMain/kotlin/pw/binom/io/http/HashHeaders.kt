@@ -45,7 +45,7 @@ class HashHeaders : MutableHeaders, Map<String, List<String>> {
         return this
     }
 
-    override fun add(headers: Headers): MutableHeaders {
+    override fun addAll(headers: Headers): MutableHeaders {
         headers.forEach { e ->
             e.value.forEach {
                 add(e.key, it)

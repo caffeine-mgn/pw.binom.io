@@ -111,7 +111,7 @@ open class LinkedList<T>() : MutableList<T> {
     return -1
   }
 
-  protected fun linkLast(e: T) {
+  protected fun linkLast(e: T): Node<T> {
     val l = last
     val newNode = NodeImpl(l, e, null)
     last = newNode
@@ -122,6 +122,7 @@ open class LinkedList<T>() : MutableList<T> {
     }
     _size++
     modCount++
+    return newNode
   }
 
   override fun add(element: T): Boolean {
@@ -371,9 +372,7 @@ open class LinkedList<T>() : MutableList<T> {
    * Inserts the specified element at the beginning of this list.
    * @param e the element to add
    */
-  fun addFirst(e: T) {
-    linkFirst(e)
-  }
+  fun addFirst(e: T) = linkFirst(e)
 
   /**
    * Returns the last element in this list.
@@ -390,9 +389,7 @@ open class LinkedList<T>() : MutableList<T> {
    * This method is equivalent to [add].
    * @param e the element to add
    */
-  fun addLast(e: T) {
-    linkLast(e)
-  }
+  fun addLast(e: T) = linkLast(e)
 
   /**
    * Unlinks non-null first node f.
@@ -443,7 +440,7 @@ open class LinkedList<T>() : MutableList<T> {
   /**
    * Links e as first element.
    */
-  private fun linkFirst(e: T) {
+  private fun linkFirst(e: T): Node<T> {
     val f = first
     val newNode = NodeImpl(null, e, f)
     first = newNode
@@ -454,6 +451,7 @@ open class LinkedList<T>() : MutableList<T> {
     }
     _size++
     modCount++
+    return newNode
   }
 
   /**

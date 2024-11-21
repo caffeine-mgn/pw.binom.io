@@ -38,6 +38,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":metric"))
       api(project(":memory"))
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
     val nonJvmMain by getting
 //    val commonWasmMain by getting {

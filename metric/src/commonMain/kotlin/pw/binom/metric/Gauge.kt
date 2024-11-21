@@ -1,3 +1,3 @@
 package pw.binom.metric
 
-sealed interface Gauge : MetricUnit
+sealed interface Gauge<T : Any> : MetricUnit

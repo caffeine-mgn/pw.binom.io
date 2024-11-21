@@ -75,8 +75,9 @@ class JvmTcpClientSocket(
   override fun send(data: ByteBuffer): Int =
     try {
       val r = data.remaining
-      val s = native.write(data.native) ?: throw IllegalStateException()
-      logger.info(method = "send") { "Success send $s/$r bytes" }
+      logger.info(method = "send") { "Try to send $r bytes" }
+      val s = native.write(data.native)
+      logger.info(method = "send") { "Success sent $s/$r bytes" }
       s
     } catch (e: IOException) {
       logger.info(method = "send") { "Can't send $e" }

@@ -66,6 +66,8 @@ actual class File actual constructor(path: String) {
       get() = '/'
     actual val temporalDirectory: File?
       get() = File("/tmp").takeIfDirection()
+
+    actual val listRoots: List<File> = listOf(File("/"))
   }
 
   actual fun delete(): Boolean {

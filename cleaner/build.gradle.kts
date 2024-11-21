@@ -12,6 +12,8 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets{
     config()
+    -"wasmJs"
+    -"wasmWasi"
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {

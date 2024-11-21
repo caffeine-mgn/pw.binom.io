@@ -28,6 +28,7 @@ expect class File(path: String) {
   companion object {
     val SEPARATOR: Char
     val temporalDirectory: File?
+    val listRoots: List<File>
   }
 
   override fun equals(other: Any?): Boolean

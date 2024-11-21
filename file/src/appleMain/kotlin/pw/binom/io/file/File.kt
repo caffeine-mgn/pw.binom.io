@@ -7,6 +7,7 @@ import pw.binom.Environment
 import pw.binom.collections.defaultMutableList
 import pw.binom.getEnv
 import pw.binom.io.*
+import kotlin.collections.listOf
 import kotlin.native.concurrent.freeze
 
 private fun timespec.toMillis(): Long {
@@ -57,6 +58,8 @@ actual class File actual constructor(path: String) {
                 val tmpDir = Environment.getEnv("TMPDIR") ?: return null
                 return File(tmpDir.removeSuffix("/")).takeIfDirection()
             }
+
+      actual val listRoots: List<File> = listOf(File("/"))
     }
 
     actual fun delete(): Boolean {

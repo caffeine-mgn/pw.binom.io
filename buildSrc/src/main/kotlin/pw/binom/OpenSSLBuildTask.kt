@@ -48,18 +48,23 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     buildDirectory.set(
       target.map { t ->
         RegularFile {
-          project.buildDir.resolve("openssl/${t.name}/build")
+          project.layout.buildDirectory.file("openssl/${t.name}/build").get().asFile
         }
       },
     )
     staticLib.set(
       target.map { t ->
         RegularFile {
-          project.buildDir.resolve("openssl/${t.name}/libopenssl.a")
+          project.layout.buildDirectory.file("openssl/${t.name}/libopenssl.a").get().asFile
         }
       },
     )
-    tempDirForObjectFiles.set(target.map { t -> RegularFile { project.buildDir.resolve("openssl/${t.name}/static") } })
+    tempDirForObjectFiles.set(target.map { t ->
+
+      RegularFile {
+        project.layout.buildDirectory.file("openssl/${t.name}/static").get().asFile
+      }
+    })
   }
 
   @TaskAction
@@ -93,7 +98,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         KonanTarget.ANDROID_X64,
         KonanTarget.LINUX_X64,
         KonanTarget.LINUX_ARM64,
-        -> "linux-x86_64-clang"
+          -> "linux-x86_64-clang"
 
         else -> TODO("Not supported yet")
       }

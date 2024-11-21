@@ -1,6 +1,5 @@
 package pw.binom.io
 
-import pw.binom.io.AsyncOutput.Companion.NullAsyncOutput.write
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.using
 
@@ -36,7 +35,11 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     while (data.remaining > 0) {
       val wrote = write(data)
       if (wrote.isNotAvailable) {
-        throw IOException("Can't write data")
+        if (writeSize==0) {
+          throw IOException("Can't write data")
+        } else {
+          throw PackageBreakException("Can't write data. $writeSize bytes was sent")
+        }
       }
       writeSize += wrote.length
     }

@@ -1,20 +1,22 @@
 package pw.binom.metric.prometheus
 
-import pw.binom.io.AsyncWriter
+import pw.binom.io.AsyncAppendable
+import pw.binom.metric.AsyncMetricVisitor
+import pw.binom.metric.MetricType
 
-class AsyncMetricWriter(val writer: AsyncWriter) : AsyncMetricVisitor {
+class AsyncMetricWriter(val writer: AsyncAppendable) : AsyncMetricVisitor {
   private val w = InternalPrometheusWriter()
 
   override suspend fun start(name: String) {
     w.start(name) { writer.append(it) }
   }
 
-  override suspend fun help(text: String) {
-    w.help(text) { writer.append(it) }
+  override suspend fun help(metricName: String, text: String) {
+    w.help(metricName, text) { writer.append(it) }
   }
 
-  override suspend fun type(text: String) {
-    w.type(text) { writer.append(it) }
+  override suspend fun type(metricName: String, type: MetricType) {
+    w.type(metricName, type) { writer.append(it) }
   }
 
   override suspend fun field(name: String, value: String) {

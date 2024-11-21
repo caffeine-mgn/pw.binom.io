@@ -3,12 +3,15 @@ package pw.binom.metric.prometheus
 import pw.binom.io.AsyncReader
 import pw.binom.io.Reader
 import pw.binom.io.asReader
+import pw.binom.metric.AsyncMetricVisitor
+import pw.binom.metric.MetricType
+import pw.binom.metric.MetricVisitor
 
 object PrometheusReader {
 
   private inline fun commonRead(
-    help: (String) -> Unit,
-    type: (String) -> Unit,
+    help: (String, String) -> Unit,
+    type: (String, MetricType) -> Unit,
     start: (String) -> Unit,
     value: (String) -> Unit,
     field: (String, String) -> Unit,
@@ -18,8 +21,26 @@ object PrometheusReader {
     do {
       val line = read() ?: break
       when {
-        line.startsWith("# HELP") -> help(line.substring(7))
-        line.startsWith("# TYPE") -> type(line.substring(7))
+        line.startsWith("# HELP") -> {
+          val varNameEnd = line.indexOf(char = ' ', startIndex = 7)
+          val varName = line.substring(startIndex = 7, varNameEnd)
+          val help = line.substring(varNameEnd + 1)
+          help(varName, help)
+        }
+
+        line.startsWith("# TYPE") -> {
+          val varNameEnd = line.indexOf(char = ' ', startIndex = 7)
+          val varName = line.substring(startIndex = 7, varNameEnd)
+          val typeStr = line.substring(varNameEnd + 1)
+
+          val type = when (val str = typeStr) {
+            "counter" -> MetricType.COUNTER
+            "gauge" -> MetricType.GAUGE
+            else -> MetricType.Custom(str)
+          }
+          type(varName, type)
+        }
+
         else -> {
           val fieldStartIndex = line.indexOf('{')
           if (fieldStartIndex != -1) {
@@ -74,8 +95,8 @@ object PrometheusReader {
   fun read(reader: Reader, visitor: MetricVisitor) {
     commonRead(
       read = { reader.readln() },
-      help = { visitor.help(it) },
-      type = { visitor.type(it) },
+      help = { name, it -> visitor.help(name = name, text = it) },
+      type = { name, it -> visitor.type(name = name, type = it) },
       start = { visitor.start(it) },
       value = { visitor.value(it) },
       field = { name, value -> visitor.field(name = name, value = value) },
@@ -90,8 +111,8 @@ object PrometheusReader {
   suspend fun read(reader: AsyncReader, visitor: AsyncMetricVisitor) {
     commonRead(
       read = { reader.readln() },
-      help = { visitor.help(it) },
-      type = { visitor.type(it) },
+      help = { name, it -> visitor.help(name = name, text = it) },
+      type = { name, it -> visitor.type(name = name, type = it) },
       start = { visitor.start(it) },
       value = { visitor.value(it) },
       field = { name, value -> visitor.field(name = name, value = value) },

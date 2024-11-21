@@ -2,6 +2,7 @@
 
 package pw.binom.io.http.websocket
 
+import kotlinx.coroutines.CancellationException
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.InternalLog
 import pw.binom.atomic.AtomicBoolean
@@ -94,6 +95,9 @@ class WebSocketConnectionImpl(
       }
       logger.info(method = "read") { "Message read for read. Return it" }
       return message
+    } catch (e: CancellationException) {
+      readChannelLock.unlock()
+      throw e
     } catch (e: ChannelClosedException) {
       logger.info(method = "read") { "Channel closed exception $e" }
       readChannelLock.unlock()
@@ -120,9 +124,11 @@ class WebSocketConnectionImpl(
   }
 
   internal fun writingMessageFinished() {
-    writing = null
-    logger.info(method = "writingMessageFinished") { "release writeChannelLock" }
-    writeChannelLock.unlock()
+    WsDetectSlow("WebSocketConnectionImpl::writingMessageFinisheds") {
+      writing = null
+      logger.info(method = "writingMessageFinished") { "release writeChannelLock" }
+      writeChannelLock.unlock()
+    }
   }
 
   internal fun readingMessageFinished() {

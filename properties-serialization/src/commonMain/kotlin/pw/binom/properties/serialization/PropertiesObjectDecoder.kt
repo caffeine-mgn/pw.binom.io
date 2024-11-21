@@ -16,30 +16,34 @@ class PropertiesObjectDecoder(
   override fun decodeBooleanElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Boolean {
-    TODO("Not yet implemented")
-  }
+  ): Boolean = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toBoolean()
 
   override fun decodeByteElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Byte {
-    TODO("Not yet implemented")
-  }
+  ): Byte = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toByte()
 
   override fun decodeCharElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Char {
-    TODO("Not yet implemented")
-  }
+  ): Char = readValue(
+    descriptor = descriptor,
+    index = index
+  ).single()
 
   override fun decodeDoubleElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Double {
-    TODO("Not yet implemented")
-  }
+  ): Double = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toDouble()
 
   var cursor = 0
 
@@ -60,30 +64,35 @@ class PropertiesObjectDecoder(
   override fun decodeFloatElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Float {
-    TODO("Not yet implemented")
-  }
+  ): Float = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toFloat()
 
   override fun decodeInlineElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Decoder {
-    TODO("Not yet implemented")
-  }
+  ): Decoder = PropertiesDecoder(
+    root = root[descriptor.getElementName(index)],
+    serializersModule = serializersModule,
+    prefix = "",
+  )
 
   override fun decodeIntElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Int {
-    TODO("Not yet implemented")
-  }
+  ): Int = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toInt()
 
   override fun decodeLongElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Long {
-    TODO("Not yet implemented")
-  }
+  ): Long = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toLong()
 
   @ExperimentalSerializationApi
   override fun <T : Any> decodeNullableSerializableElement(
@@ -92,7 +101,7 @@ class PropertiesObjectDecoder(
     deserializer: DeserializationStrategy<T?>,
     previousValue: T?,
   ): T? {
-    val el = root[descriptor.getElementName(index)]?:return null
+    val el = root[descriptor.getElementName(index)] ?: return null
     val d =
       PropertiesDecoder(
         root = el,
@@ -120,17 +129,26 @@ class PropertiesObjectDecoder(
   override fun decodeShortElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Short {
-    TODO("Not yet implemented")
-  }
+  ): Short = readValue(
+    descriptor = descriptor,
+    index = index
+  ).toShort()
 
-  override fun decodeStringElement(
+  private fun readValue(
     descriptor: SerialDescriptor,
     index: Int,
   ): String {
     val value = root[descriptor.getElementName(index)] as PropertyValue.Value
     return value.content!!
   }
+
+  override fun decodeStringElement(
+    descriptor: SerialDescriptor,
+    index: Int,
+  ): String = readValue(
+    descriptor = descriptor,
+    index = index
+  )
 
   override fun endStructure(descriptor: SerialDescriptor) {
   }

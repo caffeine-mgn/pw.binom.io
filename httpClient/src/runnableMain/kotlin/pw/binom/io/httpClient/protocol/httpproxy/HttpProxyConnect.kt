@@ -50,7 +50,7 @@ class HttpProxyConnect(
             host = proxyUrl.host,
             port = proxyUrl.port,
           ).resolve(),
-        ).also { it.channel.setTcpNoDelay(true) }
+        )//.also { it.channel.setTcpNoDelay(true) }
       this.tcp = tcp
     }
     return tcp

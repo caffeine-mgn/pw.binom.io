@@ -40,6 +40,7 @@ kotlin {
       api(project(":pool"))
       api("pw.binom:url:${pw.binom.Versions.BINOM_URL_VERSION}")
       api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
+      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }
 //    val nativeRunnableMain by creating {
 //      dependsOn(commonMain.get())

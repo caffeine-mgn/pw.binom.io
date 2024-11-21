@@ -10,7 +10,7 @@ object EmptyReadOnlyMutableHeaders : MutableHeaders {
 
     override fun add(key: String, value: String): MutableHeaders = throwError()
 
-    override fun add(headers: Headers): MutableHeaders = throwError()
+    override fun addAll(headers: Headers): MutableHeaders = throwError()
 
     override fun remove(key: String): MutableHeaders = throwError()
 

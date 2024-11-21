@@ -11,6 +11,7 @@ import pw.binom.io.Closeable
 @OptIn(ExperimentalForeignApi::class)
 actual class SelectorKey(actual val selector: Selector, val socket: Socket) :
   AbstractNativeKey(), Closeable {
+  actual var watching: Boolean = false
   val rawSocket: Int
     get() = socket.native
   actual var attachment: Any? = null

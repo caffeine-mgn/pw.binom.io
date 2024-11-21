@@ -1,12 +1,6 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncOutput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.DataTransferSize
-import pw.binom.io.holdState
-import kotlin.random.Random
 
 class UnmaskedFrameOutput(
   messageType: MessageType,
@@ -23,26 +17,34 @@ class UnmaskedFrameOutput(
     }
     if (buffer.position > 0) {
       buffer.flip()
-      WebSocketHeader.write(
-        output = stream,
-        opcode = opcode,
-        length = buffer.remaining.toLong(),
-        maskFlag = false,
-        mask = 0,
-        finishFlag = true,
-      )
-      stream.writeFully(buffer)
+      WsDetectSlow("UnmaskedFrameOutput::asyncClose #1") {
+        WebSocketHeader.write(
+          output = stream,
+          opcode = opcode,
+          length = buffer.remaining.toLong(),
+          maskFlag = false,
+          mask = 0,
+          finishFlag = true,
+        )
+      }
+      WsDetectSlow("UnmaskedFrameOutput::asyncClose #2, stream=${stream::class}") {
+        stream.writeFully(buffer)
+      }
     } else {
-      WebSocketHeader.write(
-        output = stream,
-        opcode = opcode,
-        length = 0,
-        maskFlag = false,
-        mask = 0,
-        finishFlag = true,
-      )
+      WsDetectSlow("UnmaskedFrameOutput::asyncClose #3") {
+        WebSocketHeader.write(
+          output = stream,
+          opcode = opcode,
+          length = 0,
+          maskFlag = false,
+          mask = 0,
+          finishFlag = true,
+        )
+      }
     }
-    stream.flush()
+    WsDetectSlow("UnmaskedFrameOutput::asyncClose #4") {
+      stream.flush()
+    }
     buffer.close()
   }
 
@@ -51,18 +53,24 @@ class UnmaskedFrameOutput(
       return
     }
     buffer.flip()
-    WebSocketHeader.write(
-      output = stream,
-      opcode = opcode,
-      length = buffer.remaining.toLong(),
-      maskFlag = true,
-      mask = 0,
-      finishFlag = false,
-    )
-    stream.writeFully(buffer)
+    WsDetectSlow("UnmaskedFrameOutput::flush #1") {
+      WebSocketHeader.write(
+        output = stream,
+        opcode = opcode,
+        length = buffer.remaining.toLong(),
+        maskFlag = true,
+        mask = 0,
+        finishFlag = false,
+      )
+    }
+    WsDetectSlow("UnmaskedFrameOutput::flush #2 stream=${stream::class}") {
+      stream.writeFully(buffer)
+    }
     opcode = Opcode.CONTINUATION
     firstFrame = false
-    stream.flush()
+    WsDetectSlow("UnmaskedFrameOutput::flush #3 stream=${stream::class}") {
+      stream.flush()
+    }
     buffer.clear()
   }
 }

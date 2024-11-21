@@ -63,7 +63,7 @@ object PrometheusResponseGenerator {
     val type =
       when (metric) {
         is Counter -> "counter"
-        is Gauge -> "gauge"
+        is Gauge<*> -> "gauge"
         else -> TODO()
       }
     dest.append("# TYPE ").append(metric.name).append(" ").append(type).append("\n")

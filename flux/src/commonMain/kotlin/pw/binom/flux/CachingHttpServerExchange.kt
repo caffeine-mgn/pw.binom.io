@@ -82,7 +82,7 @@ class CachingHttpServerExchange(val source: HttpServerExchange) : HttpServerExch
     responseStatus = statusCode
     headersSent = true
     responseHeaders.clear()
-    responseHeaders.add(headers)
+    responseHeaders.addAll(headers)
     val bufferedOutput = ByteArrayOutput()
     this.bufferedOutput = bufferedOutput
     outputStream = bufferedOutput.asyncOutput(callClose = false)

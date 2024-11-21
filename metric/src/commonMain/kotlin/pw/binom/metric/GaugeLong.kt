@@ -1,6 +1,9 @@
 package pw.binom.metric
 
-interface GaugeLong : Gauge {
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
+
+interface GaugeLong : Gauge<Long>, ReadOnlyProperty<Any?, Long> {
   companion object {
     fun create(
       name: String,
@@ -17,4 +20,28 @@ interface GaugeLong : Gauge {
   }
 
   val value: Long
+
+  override fun getValue(thisRef: Any?, property: KProperty<*>): Long = value
+
+  override suspend fun accept(visitor: AsyncMetricVisitor) {
+    description?.let { visitor.help(name = name, text = it) }
+    visitor.type(name = name, type = MetricType.GAUGE)
+    visitor.start(name = name)
+    fields.forEach { (name, value) ->
+      visitor.field(name = name, value = value)
+    }
+    visitor.value(value.toString())
+    visitor.end()
+  }
+
+  override fun accept(visitor: MetricVisitor) {
+    description?.let { visitor.help(name = name, text = it) }
+    visitor.type(name = name, type = MetricType.GAUGE)
+    visitor.start(name = name)
+    fields.forEach { (name, value) ->
+      visitor.field(name = name, value = value)
+    }
+    visitor.value(value.toString())
+    visitor.end()
+  }
 }

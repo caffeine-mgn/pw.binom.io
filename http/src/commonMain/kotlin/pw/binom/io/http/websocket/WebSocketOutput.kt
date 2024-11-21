@@ -1,12 +1,18 @@
 package pw.binom.io.http.websocket
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import pw.binom.InternalLog
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 internal class WebSocketOutput(
   messageType: MessageType,
   masked: Boolean,
-  stream: AsyncOutput,
+  val stream: AsyncOutput,
   bufferSize: Int,
   val connection: WebSocketConnectionImpl,
 ) : AsyncOutput {
@@ -30,7 +36,9 @@ internal class WebSocketOutput(
 
 
   override suspend fun flush() {
-    output.flush()
+    WsDetectSlow("WebSocketOutput::flush #0") {
+      output.flush()
+    }
   }
 
   override suspend fun write(data: ByteBuffer): DataTransferSize =
@@ -40,10 +48,35 @@ internal class WebSocketOutput(
     if (!closing.compareAndSet(false, true)) {
       return
     }
-    try {
-      output.asyncClose()
-    } finally {
-      connection.writingMessageFinished()
+    WsDetectSlow("WebSocketOutput::asyncClose #0 stream=${stream::class}") {
+      try {
+        WsDetectSlow("WebSocketOutput::asyncClose #1 stream=${stream::class}") {
+          output.asyncClose()
+        }
+      } finally {
+        WsDetectSlow("WebSocketOutput::asyncClose #2 stream=${stream::class}") {
+          connection.writingMessageFinished()
+        }
+      }
     }
+  }
+}
+
+
+inline fun <T> WsDetectSlow(msg: String, duration: Duration = 1.seconds, func: () -> T): T {
+  val stackTrace = Throwable()
+  val finished = AtomicBoolean(false)
+  GlobalScope.launch {
+    delay(duration)
+    if (!finished.getValue()) {
+      InternalLog.warn(file = "WS") { "Slow: $msg\n${stackTrace.stackTraceToString()}" }
+      println("WS---->Slow: $msg\n${stackTrace.stackTraceToString()}")
+    }
+  }
+
+  return try {
+    func()
+  } finally {
+    finished.setValue(true)
   }
 }

@@ -58,8 +58,8 @@ value class SimpleHeaders private constructor(private val raw: Array<String>) {
   fun forEach(func: (key: String, value: String) -> Unit) {
     var i = 0
     while (i < raw.size) {
-      val key = raw[i * 2 + 0]
-      val value = raw[i * 2 + 1]
+      val key = raw[i + 0]
+      val value = raw[i + 1]
       func(key, value)
       i += 2
     }
@@ -69,8 +69,8 @@ value class SimpleHeaders private constructor(private val raw: Array<String>) {
     var i = 0
     var result: String? = null
     while (i < raw.size) {
-      if (raw[i * 2 + 0] == key) {
-        result = raw[i * 2 + 1]
+      if (raw[i + 0] == key) {
+        result = raw[i + 1]
       }
       i += 2
     }
@@ -80,8 +80,8 @@ value class SimpleHeaders private constructor(private val raw: Array<String>) {
   fun getFirstOrNull(key: String): String? {
     var i = 0
     while (i < raw.size) {
-      if (raw[i * 2 + 0] == key) {
-        return raw[i * 2 + 1]
+      if (raw[i + 0] == key) {
+        return raw[i + 1]
       }
       i += 2
     }

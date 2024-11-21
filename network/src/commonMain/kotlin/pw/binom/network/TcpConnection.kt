@@ -2,10 +2,9 @@
 
 package pw.binom.network
 
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import pw.binom.InternalLog
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.executeAndResumeWithException
@@ -20,6 +19,12 @@ import pw.binom.io.socket.addListen
 import pw.binom.resumeOnException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
+import kotlin.time.TimeSource.Monotonic.ValueTimeMark
+import kotlin.time.measureTime
 
 class TcpConnection(
   val channel: TcpClientSocket,
@@ -28,26 +33,46 @@ class TcpConnection(
   private var connect: CancellableContinuation<Unit>? = null
   var description: String? = null
 
-  private val logger = InternalLog.file("TcpConnection").prefix { "TcpConnection@${hashCode()} " }
+  private val logger = InternalLog.file("TcpConnection").prefix { "$currentKey " }
 
   override fun toString(): String = "TcpConnection($description)"
 
   private class IOState {
     var continuation: CancellableContinuation<DataTransferSize>? = null
+      private set
+    var suspended: Throwable? = null
+      private set
+    var id: Int? = null
+      private set
+    var start: ValueTimeMark? = null
+      private set
     var data: ByteBuffer? = null
+      private set
     var full = false
 
     fun reset() {
       continuation = null
       data = null
+      id = null
+    }
+
+    fun resume(result: Result<DataTransferSize>) {
+      val c = continuation
+      reset()
+      c!!.resumeWith(result)
     }
 
     fun set(
       continuation: CancellableContinuation<DataTransferSize>,
       data: ByteBuffer,
+      id: Int,
+      start: ValueTimeMark,
     ) {
+      suspended = Throwable()
+      this.id = id
       this.continuation = continuation
       this.data = data
+      this.start = start
     }
 
     fun cancel(throwable: Throwable? = null) {
@@ -76,30 +101,53 @@ class TcpConnection(
   }
 
   override fun readyForWrite(key: SelectorKey) {
+    if (currentKey.watching) {
+      println("TcpConnection::readyForWrite #1 id=${sendData.id}, time=${sendData.start?.elapsedNow()}")
+    }
     if (checkConnect()) {
+      if (currentKey.watching) {
+        println("TcpConnection::readyForWrite #2 id=${sendData.id}, time=${sendData.start?.elapsedNow()}")
+      }
       return
     }
-    if (sendData.continuation != null) {
+    val con = sendData.continuation
+    if (con != null) {
+      if (currentKey.watching) {
+        println("TcpConnection::readyForWrite #3 id=${sendData.id}, time=${sendData.start?.elapsedNow()}")
+      }
       val result = runCatching { DataTransferSize.ofSize(channel.send(sendData.data!!)) }
-      if (result.isSuccess && result.getOrNull()!!.isNotAvailable) {
-        sendData.continuation?.cancel(SocketClosedException())
-        sendData.reset()
+      if (currentKey.watching) {
+        println("TcpConnection::readyForWrite #3.1 result=${result.getOrNull()}, id=${sendData.id}, time=${sendData.start?.elapsedNow()}")
+      }
+      if (result.isSuccess && result.getOrThrow().isNotAvailable) {
+        if (currentKey.watching) {
+          println("TcpConnection::readyForWrite $currentKey #4 selector, id=${sendData.id}, time=${sendData.start?.elapsedNow()}")
+        }
+        sendData.exception(SocketClosedException())
         return
       }
-      if (sendData.data!!.remaining == 0) {
-        val con = sendData.continuation!!
-        sendData.reset()
+//      if (sendData.data!!.remaining == 0) {
+
 //                key.removeListen(KeyListenFlags.WRITE)
-        con.resumeWith(result)
-      } else {
-        key.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
+      if (currentKey.watching) {
+        println("TcpConnection::readyForWrite #5 Resume id=${sendData.id}, , currentKey=$currentKey, time=${sendData.start?.elapsedNow()}, result: $result SUSPENDED ON:\n${sendData.suspended?.stackTraceToString()}")
       }
-      if (sendData.continuation == null) {
-        if (!currentKey.updateListenFlags(calcListenFlags())) {
-          closeAnyway()
-        }
-      }
+      sendData.resume(result)
+//      if (currentKey.watching) {
+//        println("TcpConnection::readyForWrite $currentKey #5.2, id=${sendData.id}, time=${sendData.start?.elapsedNow()}")
+//      }
+//      } else {
+//        key.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
+//      }
+//      if (sendData.continuation == null) {
+//        if (!currentKey.updateListenFlags(calcListenFlags())) {
+//          closeAnyway()
+//        }
+//      }
     } else {
+      if (currentKey.watching) {
+        println("TcpConnection::readyForWrite , currentKey=$currentKey #6, id=${sendData.id}")
+      }
 //            key.removeListen(KeyListenFlags.WRITE)
     }
   }
@@ -113,6 +161,9 @@ class TcpConnection(
     val continuation = readData.continuation
     val data = readData.data
     if (continuation == null) {
+      if (currentKey.watching) {
+        println("TcpConnection::readyForRead, currentKey=$currentKey no need to read!")
+      }
       logger.info(method = "readyForRead") { "no any continuation defined. Cleaning keys" }
       readLock.unlock()
       return
@@ -250,35 +301,75 @@ class TcpConnection(
   }
 
   override suspend fun write(data: ByteBuffer): DataTransferSize {
-    val oldRemaining = data.remaining
-    if (oldRemaining == 0) {
-      return DataTransferSize.EMPTY
-    }
-    if (sendData.continuation != null) {
-      error("Connection already has write operation")
-    }
-    if (currentKey.isClosed) {
-      throw SocketClosedException()
-    }
+    val id = Random.nextInt()
+    var lazy = false
+    val start = TimeSource.Monotonic.markNow()
+    println("TcpConnection::write Start id=$id, time=${start.elapsedNow()}")
+    NetworkDetectSlow("TcpConnection.write #0. currentKey: $currentKey id=$id") {
+      if (!data.hasRemaining) {
+        logSlow("#1 id=$id")
+        return DataTransferSize.EMPTY
+      }
+      logSlow("#2 id=$id")
+      check(sendData.continuation == null) { "Connection already has write operation" }
+      if (currentKey.isClosed) {
+        logSlow("#3 id=$id")
+        throw SocketClosedException()
+      }
 //        check(!currentKey.isClosed) { "Key already closed. channel: $channel" }
-    val wrote = channel.send(data)
-    if (wrote > 0) {
-      return DataTransferSize.ofSize(wrote)
-    }
-    if (wrote == -1) {
-      close()
-      throw SocketClosedException()
-    }
-    sendData.data = data
-    return suspendCancellableCoroutine<DataTransferSize> {
-      sendData.continuation = it
-      this.currentKey.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
-      this.currentKey.selector.wakeup()
-      it.invokeOnCancellation {
+      logSlow("#4 id=$id")
+      logger.info(method = "write") { "Try to write ${data.remaining} bytes" }
+      logSlow("#5 remaining=${data.remaining} bytes, id=$id")
+      val wrote = try {
+        channel.send(data)
+      } catch (e: Throwable) {
+        logSlow("#6")
+        throw e
+      }
+      logSlow("#7 wrote=$wrote, id=$id")
+      logger.info(method = "write") { "Wrote $wrote bytes" }
+      if (wrote > 0) {
+        logSlow("#8 id=$id")
+        if (data.hasRemaining) {
+          logger.info(method = "write") { "Wrote process success but not all data was wrote" }
+        } else {
+          logger.info(method = "write") { "Wrote process success!" }
+        }
+        return DataTransferSize.ofSize(wrote)
+      }
+      logSlow("#9 id=$id")
+      if (wrote == -1) {
+        logSlow("#10 id=$id")
+        logger.info(method = "write") { "Can't write because wrote=-1. Looks like closed tcp" }
+        close()
+        throw SocketClosedException()
+      }
+      logSlow("# mark watching id=$id")
+      currentKey.watching = true
+      logger.info(method = "write") { "Wrote 0. We should to wait time to write,  id=$id" }
+      println("TcpConnection::write suspend write id=$id, time=${start.elapsedNow()}, currentKey=$currentKey")
+      val r = suspendCancellableCoroutine<DataTransferSize> {
+        sendData.set(
+          continuation = it,
+          data = data,
+          id = id,
+          start = start,
+        )
+        logSlow("#11 id=$id")
+        logger.info(method = "write") { "Reset selector to mode: WRITE+ERROR+ONCE" }
+        this@TcpConnection.currentKey.addListen(ListenFlags.WRITE + ListenFlags.ERROR + ListenFlags.ONCE)
+        this@TcpConnection.currentKey.selector.wakeup()
+        it.invokeOnCancellation {
+          logger.info(method = "write") { "Write cancelled!" }
 //        this.currentKey.removeListen(KeyListenFlags.WRITE)
 //        this.currentKey.selector.wakeup()
-        sendData.reset()
+          sendData.reset()
+        }
       }
+      if (currentKey.watching && lazy) {
+        println("TcpConnection::write Resume id=$id, time=${start.elapsedNow()}, currentKey=$currentKey")
+      }
+      return r
     }
   }
 
@@ -317,6 +408,8 @@ class TcpConnection(
       readData.set(
         continuation = continuation,
         data = dest,
+        id = 0,
+        start = TimeSource.Monotonic.markNow(),
       )
       currentKey.addListen(ListenFlags.READ + ListenFlags.ERROR + ListenFlags.ONCE)
       currentKey.selector.wakeup()
@@ -374,6 +467,8 @@ class TcpConnection(
         readData.set(
           continuation = it,
           data = dest,
+          id = 0,
+          start = TimeSource.Monotonic.markNow(),
         )
         if (!currentKey.addListen(ListenFlags.READ + ListenFlags.ONCE + ListenFlags.ERROR)) {
           readData.reset()
@@ -387,5 +482,42 @@ class TcpConnection(
     }
 //    println("TcpConnection.read was read $wasRead via suspend")
     return wasRead
+  }
+}
+
+class SlowContext {
+  val text = StringBuilder()
+  fun logSlow(text: String) {
+    this.text.appendLine(text)
+  }
+}
+
+inline fun <T> NetworkDetectSlow(msg: String, duration: Duration = 1.seconds, func: SlowContext.() -> T): T {
+  val stackTrace = Throwable()
+  val finished = AtomicBoolean(false)
+  val timeout = AtomicBoolean(false)
+  val e = SlowContext()
+  GlobalScope.launch {
+    delay(duration)
+    if (!finished.getValue()) {
+      InternalLog.warn(file = "Network") { "Slow: $msg\n${stackTrace.stackTraceToString()}" }
+      timeout.setValue(true)
+      println("Network---->Start: $msg\n${stackTrace.stackTraceToString()}\n\n${e.text}")
+    }
+  }
+
+  return try {
+    val r = func(e)
+    if (timeout.getValue()) {
+      println("Network---->End Success: $msg\n${stackTrace.stackTraceToString()}")
+    }
+    r
+  } catch (e: Throwable) {
+    if (timeout.getValue()) {
+      println("Network---->End With Error: $msg\n${stackTrace.stackTraceToString()}\n\nError:\n ${e.stackTraceToString()}")
+    }
+    throw e
+  } finally {
+    finished.setValue(true)
   }
 }

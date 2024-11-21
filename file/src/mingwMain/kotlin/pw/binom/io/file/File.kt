@@ -7,6 +7,8 @@ import platform.common.internal_get_total_space
 import platform.posix.*
 import platform.windows.CreateSymbolicLinkA
 import platform.windows.GetLastError
+import platform.windows.GetLogicalDriveStringsA
+import platform.windows.MAX_PATH
 import platform.windows.SYMBOLIC_LINK_FLAG_DIRECTORY
 import pw.binom.Environment
 import pw.binom.collections.defaultMutableList
@@ -62,8 +64,23 @@ actual class File actual constructor(path: String) {
     actual val temporalDirectory: File?
       get() {
         val tmpDir = Environment.getEnv("TEMP") ?: Environment.getEnv("TMP")
-          ?: return null
+        ?: return null
         return File(tmpDir.removeSuffix("\\")).takeIfDirection()
+      }
+    actual val listRoots: List<File>
+      get() = memScoped {
+        val mem = allocArray<ByteVar>(MAX_PATH)
+        if (GetLogicalDriveStringsA(MAX_PATH.convert(), mem).toInt() <= 0) {
+          TODO()
+        }
+        val list = ArrayList<File>()
+        for (i in 0 until MAX_PATH) {
+          val e = mem[i]
+          if (e != 0.toByte()) {
+            list += File("${e.toInt().toChar()}:\\")
+          }
+        }
+        list
       }
   }
 
@@ -137,6 +154,7 @@ actual class File actual constructor(path: String) {
       throw IOException("Can't create symbolic from $path to ${to.path}. Error: ${GetLastError()}")
     }
   }
+
   actual fun relative(path: String): File = fileGetRelative(this, path)
   actual fun relative(path: Path): File = relative(path.raw)
   actual fun mkdirs(): File? = fileMkdirs(this)

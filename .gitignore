@@ -3,6 +3,7 @@ build
 .idea
 .fleet
 .cache
+.kotlin
 .gradle/**
 *.o
 buildSrc/.gradle/**

@@ -1,5 +1,7 @@
 package pw.binom.metric.prometheus
 
+import pw.binom.metric.MetricType
+
 internal class InternalPrometheusWriter {
   private var fieldStart = false
 
@@ -8,15 +10,24 @@ internal class InternalPrometheusWriter {
     writer(name)
   }
 
-  inline fun help(text: String, writer: (String) -> Unit) {
+  inline fun help(name:String, text: String, writer: (String) -> Unit) {
     writer("# HELP ")
+    writer(name)
+    writer(" ")
     writer(text)
     writer("\n")
   }
 
-  inline fun type(text: String, writer: (String) -> Unit) {
+  inline fun type(name:String, type: MetricType, writer: (String) -> Unit) {
     writer("# TYPE ")
-    writer(text)
+    writer(name)
+    writer(" ")
+    val typeStr = when (type) {
+      is MetricType.COUNTER -> "counter"
+      is MetricType.GAUGE -> "gauge"
+      is MetricType.Custom -> type.name
+    }
+    writer(typeStr)
     writer("\n")
   }
 

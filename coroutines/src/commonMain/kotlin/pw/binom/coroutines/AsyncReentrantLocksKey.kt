@@ -5,6 +5,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.collections.InternalApi
+import pw.binom.collections.LinkedList
 import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
@@ -22,7 +24,7 @@ private object AsyncReentrantLocksKey : CoroutineContext.Key<AsyncReentrantLocks
 private class AsyncReentrantLocksElement : CoroutineContext.Element {
   override val key: CoroutineContext.Key<*>
     get() = AsyncReentrantLocksKey
-  private val locks = defaultMutableSet<AsyncReentrantLock>()
+  private val locks = HashSet<AsyncReentrantLock>()
   private val locksLock = SpinLock()
   fun add(lock: AsyncReentrantLock) {
     locksLock.synchronize {
@@ -57,18 +59,16 @@ internal suspend fun <T> withTimeout2(timeout: Duration?, block: suspend () -> T
 
 class AsyncReentrantLock : AsyncLock {
   private val waiters by lazy {
-    defaultMutableSet<CancellableContinuation<Unit>>()
+    LinkedList<CancellableContinuation<Unit>>()
   }
   private val waiterLock = SpinLock()
   private val locked = AtomicBoolean(false)
+  val waterCount
+    get() = waiterLock.synchronize { waiters.size }
 
   private fun releaseLock() {
     val waiter = waiterLock.synchronize {
-      val waiter = waiters.firstOrNull()
-      if (waiter != null) {
-        waiters.remove(waiter)
-      }
-      waiter
+      waiters.removeFirstOrNull()
     }
     if (waiter == null) {
       locked.setValue(false)
@@ -114,6 +114,7 @@ class AsyncReentrantLock : AsyncLock {
       func = func
     ).getOrThrow()
 
+  @OptIn(InternalApi::class)
   private suspend fun <T> trySynchronize(
     lockingTimeout: Duration,
     waitLock: Boolean,
@@ -131,12 +132,12 @@ class AsyncReentrantLock : AsyncLock {
       }
       // if lock failed wait until is free
       suspendCancellableCoroutine<Unit> {
-        waiterLock.synchronize {
-          waiters += it
+        val node = waiterLock.synchronize {
+          waiters.addLast(it)
         }
         it.invokeOnCancellation { _ ->
           waiterLock.synchronize {
-            waiters -= it
+            waiters.unlink(node)
           }
         }
       }

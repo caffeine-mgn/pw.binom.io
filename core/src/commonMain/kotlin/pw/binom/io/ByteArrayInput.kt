@@ -7,7 +7,9 @@ class ByteArrayInput(val data: ByteArray) : Input {
   private var cursor = 0
 
   override fun read(dest: ByteBuffer): DataTransferSize {
-    checkClosed()
+    if (closed) {
+      return DataTransferSize.EMPTY
+    }
     val max = minOf(data.size - cursor, dest.remaining)
     if (max == 0) {
       return DataTransferSize.EMPTY
@@ -28,9 +30,11 @@ class ByteArrayInput(val data: ByteArray) : Input {
   }
 
   override fun close() {
-    checkClosed()
     closed = true
   }
+
+  val isEmpty
+    get() = cursor >= data.size
 
   fun readByte(): Byte {
     if (cursor >= data.size) {

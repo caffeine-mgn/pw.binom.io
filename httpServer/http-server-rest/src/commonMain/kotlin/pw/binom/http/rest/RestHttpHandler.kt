@@ -150,7 +150,7 @@ abstract class RestHttpHandler : HttpHandler {
 
       val respBody = e.body
 
-      resp.headers.add(e.headerParams)
+      resp.headers.addAll(e.headerParams)
 
       resp.status =
         if (e.responseCode > 0) {

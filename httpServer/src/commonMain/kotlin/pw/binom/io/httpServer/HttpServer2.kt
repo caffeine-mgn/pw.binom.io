@@ -133,7 +133,9 @@ class HttpServer2(
             try {
               val b = prepareExchange(stream)
               b
-            } catch (e: CancellationException) {
+            } catch (e: EOFException){
+              break
+            }catch (e: CancellationException) {
               break
             } catch (e: SocketClosedException) {
               break

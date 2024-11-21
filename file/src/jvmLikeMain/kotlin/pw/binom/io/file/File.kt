@@ -37,6 +37,8 @@ actual class File actual constructor(path: String) {
         ?.removeSuffix(JFile.pathSeparator)
         ?.let { File(it) }
         ?.takeIfDirection()
+    actual val listRoots: List<File>
+      get() = JFile.listRoots().map { it.binom }
   }
 
   actual fun delete() = native.delete()

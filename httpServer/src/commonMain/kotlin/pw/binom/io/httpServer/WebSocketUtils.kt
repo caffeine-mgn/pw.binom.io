@@ -29,7 +29,7 @@ suspend fun HttpServerExchange.acceptWebsocket(
   responseHeader[Headers.CONNECTION] = Headers.UPGRADE
   responseHeader[Headers.UPGRADE] = Headers.WEBSOCKET
   responseHeader[Headers.SEC_WEBSOCKET_ACCEPT] = HandshakeSecret.generateResponse(sha1, key)
-  responseHeader.add(headers)
+  responseHeader.addAll(headers)
   startResponse(statusCode = 101, headers = responseHeader)
   return WebSocketConnectionImpl(
     _output = output,

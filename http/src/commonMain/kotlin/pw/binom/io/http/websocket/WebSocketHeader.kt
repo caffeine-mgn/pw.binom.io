@@ -20,31 +20,33 @@ class WebSocketHeader {
     ) {
       ByteBuffer(8).use { buf ->
         val first = input.readByte(buf)
-        val second = input.readByte(buf)
+        PackageBreakException.throwOnException {
+          val second = input.readByte(buf)
 
-        dest.finishFlag = first.toInt() and 0b10000000 != 0
-        dest.opcode = Opcode(first and 0b1111)
+          dest.finishFlag = first.toInt() and 0b10000000 != 0
+          dest.opcode = Opcode(first and 0b1111)
 
-        dest.length =
-          (second and 0b1111111.toByte()).let {
-            when (it) {
-              126.toByte() -> {
-                input.readShort(buf).toUShort().toLong()
-              }
+          dest.length =
+            (second and 0b1111111.toByte()).let {
+              when (it) {
+                126.toByte() -> {
+                  input.readShort(buf).toUShort().toLong()
+                }
 
-              127.toByte() -> {
-                input.readLong(buf)
-              }
+                127.toByte() -> {
+                  input.readLong(buf)
+                }
 
-              else -> {
-                it.toLong()
+                else -> {
+                  it.toLong()
+                }
               }
             }
-          }
-        dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
+          dest.maskFlag = second and 0b10000000.toByte() != 0.toByte()
 
-        if (dest.maskFlag) {
-          dest.mask = input.readInt(buf)
+          if (dest.maskFlag) {
+            dest.mask = input.readInt(buf)
+          }
         }
       }
     }
@@ -57,40 +59,37 @@ class WebSocketHeader {
       mask: Int = Random.nextInt(),
       finishFlag: Boolean = false,
     ) {
-//      try {
       ByteBuffer(8).use { buf ->
         var value = opcode.raw and 0b1111
         if (finishFlag) {
           value = value or 0b10000000.toByte()
         }
         output.writeByte(value = value, buffer = buf)
+        PackageBreakException.throwOnException {
+          value =
+            if (maskFlag) {
+              0b10000000.toByte()
+            } else {
+              0b00000000.toByte()
+            }
+          when {
+            length > Short.MAX_VALUE -> {
+              output.writeByte(value = 127.toByte() or value, buffer = buf)
+              output.writeLong(value = length, buffer = buf)
+            }
 
-        value =
+            length >= 126L -> {
+              output.writeByte(value = 126.toByte() or value, buffer = buf)
+              output.writeShort(value = length.toShort(), buffer = buf)
+            }
+
+            else -> output.writeByte(value = length.toByte() or value, buffer = buf)
+          }
           if (maskFlag) {
-            0b10000000.toByte()
-          } else {
-            0b00000000.toByte()
+            output.writeInt(value = mask, buffer = buf)
           }
-        when {
-          length > Short.MAX_VALUE -> {
-            output.writeByte(value = 127.toByte() or value, buffer = buf)
-            output.writeLong(value = length, buffer = buf)
-          }
-
-          length >= 126L -> {
-            output.writeByte(value = 126.toByte() or value, buffer = buf)
-            output.writeShort(value = length.toShort(), buffer = buf)
-          }
-
-          else -> output.writeByte(value = length.toByte() or value, buffer = buf)
-        }
-        if (maskFlag) {
-          output.writeInt(value = mask, buffer = buf)
         }
       }
-//      } catch (e: Throwable) {
-//        throw IOException("Can't write WebSocket Header opcode=$opcode, length: $length", e)
-//      }
     }
 
     suspend fun write(

@@ -1,11 +1,18 @@
 package pw.binom
 
+import pw.binom.atomic.AtomicBoolean
 import pw.binom.atomic.AtomicReference
+import pw.binom.atomic.synchronize
 
 interface InternalLog {
   companion object : InternalLog {
     val NULL: InternalLog =
       object : InternalLog {
+        override val enabled: Boolean
+          get() = false
+
+        override fun <T> tx(func: (Transaction) -> T): T = func(Transaction.NULL)
+
         override fun log(
           level: Level,
           file: String?,
@@ -15,12 +22,18 @@ interface InternalLog {
         ) = Unit
       }
 
-    var internalDefault = AtomicReference(NULL)
-    var default: InternalLog
-      get() = internalDefault.getValue()
-      set(value) {
-        internalDefault.setValue(value)
-      }
+    override val enabled: Boolean
+      get() = default.enabled
+
+    override fun <T> tx(func: (Transaction) -> T): T = default.tx(func)
+
+    private var internalDefault: InternalLog = NULL
+    val default: InternalLog
+      get() = internalDefault
+
+    fun replace(func: (InternalLog) -> InternalLog) {
+      internalDefault = func(internalDefault)
+    }
 
     override fun log(
       level: Level,
@@ -40,6 +53,27 @@ interface InternalLog {
     CRITICAL,
     FATAL,
   }
+
+  interface Transaction {
+    companion object {
+      val NULL = object : Transaction {
+        override fun clear(): Boolean = false
+
+        override fun stop(): Boolean = false
+
+        override fun resume(): Boolean = false
+
+      }
+    }
+
+    fun clear(): Boolean
+    fun stop(): Boolean
+    fun resume(): Boolean
+  }
+
+  val enabled: Boolean
+
+  fun <T> tx(func: (Transaction) -> T): T
 
   fun log(
     level: Level,
@@ -84,8 +118,13 @@ interface InternalLog {
     text: () -> String,
   ) = log(level = Level.FATAL, file = file, text = text, line = line, method = method)
 
-  fun prefix(prefix: ()->String): InternalLog =
+  fun prefix(prefix: () -> String): InternalLog =
     object : InternalLog {
+
+      override fun <T> tx(func: (Transaction) -> T): T = this@InternalLog.tx(func)
+
+      override val enabled: Boolean
+        get() = this@InternalLog.enabled
 
       override fun log(
         level: Level,
@@ -101,6 +140,11 @@ interface InternalLog {
   fun file(file: String): InternalLog {
     val newFile = file
     return object : InternalLog {
+      override val enabled: Boolean
+        get() = this@InternalLog.enabled
+
+      override fun <T> tx(func: (Transaction) -> T): T = this@InternalLog.tx(func)
+
       override fun log(
         level: Level,
         file: String?,

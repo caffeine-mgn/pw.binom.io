@@ -1,8 +1,6 @@
 package pw.binom.mq.nats
 
-import pw.binom.mq.Message
 import pw.binom.mq.MqConnection
-import pw.binom.mq.Topic
 import pw.binom.mq.nats.client.JetStreamImpl
 import pw.binom.mq.nats.client.NatsReader
 import pw.binom.mq.nats.client.dto.StorageType

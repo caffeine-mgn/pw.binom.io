@@ -123,7 +123,7 @@ abstract class RestHttpClient {
       method = method,
       uri = url,
     ).useAsync { request ->
-      request.headers.add(encoder.headerParams)
+      request.headers.addAll(encoder.headerParams)
       val bodyDesc = encoder.body
       if (bodyDesc != null) {
         val bodyEncoder = getBodyEncode<Any, Any?>(descriptor = requestDescription.bodyDescription!!, request = request)
