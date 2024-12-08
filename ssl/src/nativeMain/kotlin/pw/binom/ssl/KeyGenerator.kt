@@ -16,7 +16,7 @@ actual object KeyGenerator {
     when (algorithm) {
       KeyAlgorithm.RSA -> {
         RSA_new()
-        val rsa = RSA_generate_key(keySize, RSA_F4.convert(), null, null)
+        val rsa = internal_RSA_generate_key(keySize, RSA_F4.toUInt(), null, null)
         if (EVP_PKEY_assign(pk, EVP_PKEY_RSA, rsa) <= 0) {
           TODO("EVP_PKEY_assign error")
         }

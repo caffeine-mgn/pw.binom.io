@@ -40,7 +40,7 @@ class SQLCompositeDecoder2(
     override fun decodeDoubleElement(descriptor: SerialDescriptor, index: Int): Double =
         resultSet.getDouble((columnPrefix ?: "") + descriptor.getElementName(index))!!
 
-    var cursor = 0
+    private var cursor = 0
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         if (cursor == descriptor.elementsCount) {

@@ -84,7 +84,7 @@ actual class HMac actual constructor(val algorithm: AlgorithmType, val key: Byte
       memScoped {
         val size = alloc<UIntVar>()
         HMAC_Final(ctx, outPinned.addressOf(0).getPointer(this).reinterpret(), size.ptr)
-        if (size.value != out.size.convert<UInt>()) {
+        if (size.value != out.size.toUInt()) {
           TODO()
         }
         HMAC_CTX_free(ctx)

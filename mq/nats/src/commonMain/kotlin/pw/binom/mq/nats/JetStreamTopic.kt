@@ -1,5 +1,7 @@
 package pw.binom.mq.nats
 
+import kotlinx.serialization.EncodeDefault
+import pw.binom.mq.Consumer
 import pw.binom.mq.Message
 import pw.binom.mq.Topic
 import pw.binom.mq.nats.client.AckPolicy
@@ -38,34 +40,41 @@ class JetStreamTopic(
     )
   }
 
-  override suspend fun createConsumer(
-    group: String?,
+  suspend fun createConsumer(
     start: Boolean,
+    batchSize: Int = 100,
+    config: ConsumerConfiguration,
     func: suspend (Message) -> Unit,
   ): JetStreamConsumer {
-    val name = "consumer-" + Random.nextUuid().toShortString()
     val consumer =
       connection.js.createConsumer(
-        streamName = config.name,
-        config =
-        ConsumerConfiguration(
-          durableName = name,
-          name = name,
-          deliverGroup = group,
-          ackPolicy = AckPolicy.ALL,
-        ),
+        streamName = this.config.name,
+        config = config,
       )
     val jsConsumer = JetStreamConsumer(
       config = consumer.config,
       topic = this,
       incomeListener = func,
-      batchSize = 100,
+      batchSize = batchSize,
     )
     if (start) {
       jsConsumer.start()
     }
     return jsConsumer
   }
+
+  override suspend fun createConsumer(group: String?, start: Boolean, func: suspend (Message) -> Unit) =
+    createConsumer(
+      start = start,
+      func = func,
+      config = ConsumerConfiguration(
+        deliverGroup = group,
+        durableName = group,
+        name = group,
+        ackPolicy = AckPolicy.ALL,
+      ),
+      batchSize = 100,
+    )
 
   override suspend fun asyncClose() {
     // Do nothing

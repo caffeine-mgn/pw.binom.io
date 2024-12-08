@@ -10,14 +10,18 @@ import pw.binom.ssl.*
 
 @OptIn(ExperimentalForeignApi::class)
 internal fun assertError(ssl: CPointer<SSL>, ret: Int) {
-  if (ret <= 0 && SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
-    getLastError()
-    throw RuntimeException(ERR_error_string(SSL_get_error(ssl, ret).convert(), null)?.toKString())
+  if (ret <= 0 && internal_SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
+    throw RuntimeException(
+      internal_ERR_error_string(
+        internal_SSL_get_error(ssl, ret).toUInt(),
+        null,
+      )?.toKString()
+    )
   }
 }
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
-fun getLastError() = ERR_error_string(ERR_peek_last_error(), null)?.toKString()
+fun getLastError() = internal_ERR_error_string(internal_ERR_peek_last_error(), null)?.toKString()
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
@@ -40,12 +44,12 @@ actual class SSLSession(
       SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, null)
       SSL_CTX_set_cert_verify_callback(ctx, sslServerCheck.reinterpret(), self.asCPointer())
     } else {
-      SSL_CTX_callback_ctrl(
+      internal_SSL_CTX_callback_ctrl(
         ctx,
         SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,
-        sslHostCheck.reinterpret(),
-      ).convert<Int>().checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_CB error")
-      SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, self.asCPointer()).convert<Int>()
+        sslHostCheck,
+      ).checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_CB error")
+      internal_SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG, 0, self.asCPointer())
         .checkTrue("SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG error")
     }
   }
@@ -87,7 +91,7 @@ actual class SSLSession(
           break
         }
         assertError(resource.ssl, n)
-        val err = SSL_get_error(resource.ssl, n)
+        val err = internal_SSL_get_error(resource.ssl, n)
         if (err == SSL_ERROR_WANT_WRITE) {
           return State.WANT_WRITE
         }
@@ -99,7 +103,7 @@ actual class SSLSession(
     } else {
       val n = SSL_accept(resource.ssl)
       assertError(resource.ssl, n)
-      return when (SSL_get_error(resource.ssl, n)) {
+      return when (internal_SSL_get_error(resource.ssl, n)) {
         SSL_ERROR_WANT_READ -> State.WANT_READ
         SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
         SSL_ERROR_SSL -> State.ERROR
@@ -115,7 +119,7 @@ actual class SSLSession(
     } else {
       SSL_set_accept_state(ssl)
     }
-    SSL_ctrl((ssl), SSL_CTRL_MODE, SSL_MODE_AUTO_RETRY.convert(), null)
+    internal_SSL_ctrl((ssl), SSL_CTRL_MODE, SSL_MODE_AUTO_RETRY.toInt(), null)
     SSL_set_bio(ssl, resource.rbio, resource.wbio)
   }
 
@@ -160,7 +164,7 @@ actual class SSLSession(
         n,
       )
     }
-    val state = when (val e = SSL_get_error(resource.ssl, n)) {
+    val state = when (val e = internal_SSL_get_error(resource.ssl, n)) {
       SSL_ERROR_WANT_READ -> State.WANT_READ
       SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
       SSL_ERROR_SSL -> State.ERROR
@@ -228,7 +232,7 @@ actual class SSLSession(
         n,
       )
     }
-    val state = when (val e = SSL_get_error(resource.ssl, n)) {
+    val state = when (val e = internal_SSL_get_error(resource.ssl, n)) {
       SSL_ERROR_WANT_READ -> State.WANT_READ
       SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
       SSL_ERROR_SSL -> State.ERROR
@@ -266,7 +270,7 @@ actual class SSLSession(
       )
     }
     assertError(resource.ssl, n)
-    val state = when (val e = SSL_get_error(resource.ssl, n)) {
+    val state = when (val e = internal_SSL_get_error(resource.ssl, n)) {
       SSL_ERROR_WANT_READ -> State.WANT_READ
       SSL_ERROR_WANT_WRITE -> State.WANT_WRITE
       SSL_ERROR_SSL -> State.ERROR

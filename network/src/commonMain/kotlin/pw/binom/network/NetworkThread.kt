@@ -86,6 +86,9 @@ open class NetworkThread : Thread, Closeable {
                         val attachment = event.key.attachment
                         attachment ?: error("NetworkThread::$id-$name Attachment is null")
                         val connection = attachment as AbstractConnection
+                      if (event.key.readFlags.isNotZero){
+                        connection.ready(key = event.key, flags = event.key.readFlags)
+                      }
                         when {
 //                            event.flags and SelectorOld.EVENT_CONNECTED != 0 -> connection.connected()
                             event.key.readFlags.isError -> connection.error()

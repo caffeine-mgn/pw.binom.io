@@ -7,6 +7,7 @@ import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.cinterop.*
 import platform.openssl.*
 
+@OptIn(ExperimentalForeignApi::class)
 value class BigNum(val ptr: CPointer<BIGNUM>) {
   constructor() : this(BN_new() ?: throwError("Can't create BigNum"))
   constructor(ctx: BigNumContext) : this(BN_CTX_get(ctx.ptr)!!)
@@ -66,11 +67,11 @@ value class BigNum(val ptr: CPointer<BIGNUM>) {
   }
 
   fun copy() = BigNum(BN_dup(ptr) ?: TODO("Can't create BigNum duplicating other BigNum"))
-  val sizeInBytes
-    get() = internal_BN_num_bytes(ptr).convert<Int>()
+  val sizeInBytes: Int
+    get() = internal_BN_num_bytes(ptr).toInt()
 
-  val sizeInBits
-    get() = BN_num_bits(ptr).convert<Int>()
+  val sizeInBits: Int
+    get() = BN_num_bits(ptr)
 
   fun setNegative() {
     BN_set_negative(ptr, 0)

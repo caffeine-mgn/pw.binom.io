@@ -1,6 +1,6 @@
 package pw.binom.db.radis
 
-class RemoteList(val connection: RadisConnectionImpl, val key: String) {
+class RemoteList(val connection: RadisConnection, val key: String) {
     suspend fun getSize() = connection.getListSize(key) ?: 0L
     suspend fun addLast(value: String) {
         connection.insertLast(key = key, value = value)

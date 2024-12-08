@@ -134,13 +134,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     if (buffer.position > 0) {
 
       buffer.flip()
-      CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::internalFlush #0 output=${output::class} $output") {
-        output.writeFully(buffer)
-      }
+      output.writeFully(buffer)
       buffer.clear()
-      CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::internalFlush #1 output=${output::class} $output") {
-        output.flush()
-      }
+      output.flush()
     }
   }
 
@@ -153,16 +149,10 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     if (!closed.compareAndSet(false, true)) {
       return
     }
-    CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::asyncClose #0") {
-      internalFlush()
-    }
-    CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::asyncClose #1") {
-      buffer.close()
-    }
-    CoreDetectSlow("AbstractAsyncBufferedAsciiWriter::asyncClose #2") {
-      if (closeParent) {
-        output.asyncClose()
-      }
+    internalFlush()
+    buffer.close()
+    if (closeParent) {
+      output.asyncClose()
     }
   }
 }
@@ -208,21 +198,3 @@ fun AsyncOutput.bufferedAsciiWriter(
   bufferSize = bufferSize,
   closeParent = closeParent,
 )
-
-inline fun <T> CoreDetectSlow(msg: String, duration: Duration = 1.seconds, func: () -> T): T {
-  val stackTrace = Throwable()
-  val finished = AtomicBoolean(false)
-  GlobalScope.launch {
-    delay(duration)
-    if (!finished.getValue()) {
-      InternalLog.warn(file = "Core") { "Slow: $msg\n${stackTrace.stackTraceToString()}" }
-      println("Core---->Slow: $msg\n${stackTrace.stackTraceToString()}")
-    }
-  }
-
-  return try {
-    func()
-  } finally {
-    finished.setValue(true)
-  }
-}

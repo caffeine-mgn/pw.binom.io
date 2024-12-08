@@ -16,7 +16,7 @@ import pw.binom.throwError
 
 @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 actual fun Key.Companion.generateRsa(size: Int): Key.Pair<RSAPublicKey, RSAPrivateKey> {
-  val rsa = RSA_generate_key(size, RSA_F4.convert(), null, null) ?: throwError("RSA_generate_key fail")
+  val rsa = internal_RSA_generate_key(size, RSA_F4.toUInt(), null, null) ?: throwError("RSA_generate_key fail")
   val e = BigNum(RSA_get0_e(rsa)!!).toBigInt() // public
   val n = BigNum(RSA_get0_n(rsa)!!).toBigInt() // public/private
   val d = BigNum(RSA_get0_d(rsa)!!).toBigInt() // private

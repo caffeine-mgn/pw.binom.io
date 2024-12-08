@@ -27,12 +27,12 @@ kotlin {
       api(project(":date"))
       api(project(":network"))
       api(project(":socket"))
+      api(project(":coroutines"))
       api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
-      api(project(":coroutines"))
       api(kotlin("test-annotations-common"))
       api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
     }

@@ -36,9 +36,7 @@ internal class WebSocketOutput(
 
 
   override suspend fun flush() {
-    WsDetectSlow("WebSocketOutput::flush #0") {
-      output.flush()
-    }
+    output.flush()
   }
 
   override suspend fun write(data: ByteBuffer): DataTransferSize =
@@ -48,35 +46,10 @@ internal class WebSocketOutput(
     if (!closing.compareAndSet(false, true)) {
       return
     }
-    WsDetectSlow("WebSocketOutput::asyncClose #0 stream=${stream::class}") {
-      try {
-        WsDetectSlow("WebSocketOutput::asyncClose #1 stream=${stream::class}") {
-          output.asyncClose()
-        }
-      } finally {
-        WsDetectSlow("WebSocketOutput::asyncClose #2 stream=${stream::class}") {
-          connection.writingMessageFinished()
-        }
-      }
+    try {
+      output.asyncClose()
+    } finally {
+      connection.writingMessageFinished()
     }
-  }
-}
-
-
-inline fun <T> WsDetectSlow(msg: String, duration: Duration = 1.seconds, func: () -> T): T {
-  val stackTrace = Throwable()
-  val finished = AtomicBoolean(false)
-  GlobalScope.launch {
-    delay(duration)
-    if (!finished.getValue()) {
-      InternalLog.warn(file = "WS") { "Slow: $msg\n${stackTrace.stackTraceToString()}" }
-      println("WS---->Slow: $msg\n${stackTrace.stackTraceToString()}")
-    }
-  }
-
-  return try {
-    func()
-  } finally {
-    finished.setValue(true)
   }
 }

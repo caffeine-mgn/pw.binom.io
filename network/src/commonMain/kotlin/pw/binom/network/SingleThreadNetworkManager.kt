@@ -100,6 +100,9 @@ class SingleThreadNetworkManager : AbstractNetworkManager(), Closeable {
             val attachment = event.key.attachment
             attachment ?: error("Attachment is null")
             val connection = attachment as AbstractConnection
+            if (event.key.readFlags.isNotZero) {
+              connection.ready(key = event.key, flags = event.key.readFlags)
+            }
             when {
               event.key.readFlags.isError -> connection.error()
               event.key.readFlags.isWrite -> connection.readyForWrite(event.key)

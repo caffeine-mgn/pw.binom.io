@@ -4,6 +4,7 @@ package pw.binom.mq.nats.client
 
 import kotlinx.serialization.json.*
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.coroutines.SimpleAsyncLock
 import pw.binom.io.*
 import pw.binom.io.socket.DomainSocketAddress
 import pw.binom.io.socket.InetSocketAddress
@@ -114,14 +115,28 @@ class InternalNatsConnection private constructor(
       "Message(subject='$subject', sid='$sid', replyTo=$replyTo, headers=$headersBody, data=${data.contentToString()})"
   }
 
-  private val msg = MessageImpl()
+  private class NatsMessageImpl2(
+    override val subject: String,
+    override val sid: String,
+    override val replyTo: String?,
+    override val headersBody: HeadersBody,
+    override val data: ByteArray,
+    override val headers: NatsHeaders,
+  ) : NatsMessage {
+    override suspend fun ack() {
+    }
 
-  private suspend fun parseMsg(msgText: String): MessageImpl {
+  }
+
+  private val msg = MessageImpl()
+  private val writeLock = SimpleAsyncLock()
+
+  private suspend fun parseMsg(msgText: String): NatsMessageImpl2 {
     val items = msgText.split(' ', limit = 5)
     var cursor = 1
-    msg.subject = items[cursor++]
-    msg.sid = items[cursor++]
-    msg.replyTo =
+    val subject = items[cursor++]
+    val sid = items[cursor++]
+    val replyTo =
       if (items.size == 5) {
         items[cursor++]
       } else {
@@ -131,10 +146,16 @@ class InternalNatsConnection private constructor(
     val data = ByteArray(size)
     reader.readFully(data)
     reader.skip(2)
-    msg.headersBody = HeadersBody.empty
-    msg.headers = msg.headersBody.parse()
-    msg.data = data
-    return msg
+    val headersBody = HeadersBody.empty
+    val headers = msg.headersBody.parse()
+    return NatsMessageImpl2(
+      subject = subject,
+      sid = sid,
+      replyTo = replyTo,
+      data = data,
+      headersBody = headersBody,
+      headers = headers,
+    )
   }
 
   private suspend fun parseHMsg(msgText: String): MessageImpl {
@@ -169,8 +190,10 @@ class InternalNatsConnection private constructor(
       when {
         msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
         msgText == "PING" -> {
-          writer.append("PONG\r\n")
-          writer.flush()
+          writeLock.synchronize {
+            writer.append("PONG\r\n")
+            writer.flush()
+          }
           continue@READ_LOOP
         }
 
@@ -191,35 +214,39 @@ class InternalNatsConnection private constructor(
   ) {
     require(subject.isNotEmpty() && " " !in subject)
     require(replyTo == null || (replyTo.isNotEmpty() && " " !in replyTo))
-
-    if (headers.isEmpty) {
-      writer.append("PUB ")
-        .append(subject)
-      if (replyTo != null) {
-        writer.append(" ").append(replyTo)
+    try {
+      writeLock.lock()
+      if (headers.isEmpty) {
+        writer.append("PUB ")
+          .append(subject)
+        if (replyTo != null) {
+          writer.append(" ").append(replyTo)
+        }
+        writer.append(" ").append(dataSize.toString()).append("\r\n")
+        data(writer)
+        writer.append("\r\n")
+        writer.flush()
+      } else {
+        check(config.headersSupported && headerEnabled) { "Headers not supported" }
+        writer.append("HPUB ")
+          .append(subject)
+        if (replyTo != null) {
+          writer.append(" ").append(replyTo)
+        }
+        val headersSize = headers.bytes.size + 2
+        val totalSize = dataSize + headersSize
+        writer.append(" ")
+          .append(headersSize)
+          .append(" ").append(totalSize).append("\r\n")
+        writer.write(headers.bytes)
+        writer.append("\r\n")
+        data(writer)
+        writer.append("\r\n")
+        writer.flush()
+        return
       }
-      writer.append(" ").append(dataSize.toString()).append("\r\n")
-      data(writer)
-      writer.append("\r\n")
-      writer.flush()
-    } else {
-      check(config.headersSupported && headerEnabled) { "Headers not supported" }
-      writer.append("HPUB ")
-        .append(subject)
-      if (replyTo != null) {
-        writer.append(" ").append(replyTo)
-      }
-      val headersSize = headers.bytes.size + 2
-      val totalSize = dataSize + headersSize
-      writer.append(" ")
-        .append(headersSize)
-        .append(" ").append(totalSize).append("\r\n")
-      writer.write(headers.bytes)
-      writer.append("\r\n")
-      data(writer)
-      writer.append("\r\n")
-      writer.flush()
-      return
+    } finally {
+      writeLock.unlock()
     }
   }
 
@@ -244,24 +271,28 @@ class InternalNatsConnection private constructor(
     group: String?,
     subscribeId: String,
   ) {
-    writer.append("SUB ").append(subject)
-    if (group != null) {
-      writer.append(" ").append(group)
+    writeLock.synchronize {
+      writer.append("SUB ").append(subject)
+      if (group != null) {
+        writer.append(" ").append(group)
+      }
+      writer.append(" ").append(subscribeId).append("\r\n")
+      writer.flush()
     }
-    writer.append(" ").append(subscribeId).append("\r\n")
-    writer.flush()
   }
 
   override suspend fun unsubscribe(
     id: String,
     afterMessages: Int,
   ) {
-    writer.append("UNSUB ").append(id)
-    if (afterMessages > 0) {
-      writer.append(" ").append(afterMessages.toString())
+    writeLock.synchronize {
+      writer.append("UNSUB ").append(id)
+      if (afterMessages > 0) {
+        writer.append(" ").append(afterMessages.toString())
+      }
+      writer.append("\r\n")
+      writer.flush()
     }
-    writer.append("\r\n")
-    writer.flush()
   }
 
   override suspend fun publish(

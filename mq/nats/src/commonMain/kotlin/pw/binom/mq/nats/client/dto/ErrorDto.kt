@@ -9,4 +9,8 @@ data class ErrorDto(
   @SerialName("err_code")
   val errCode: Int,
   val description: String,
-)
+) {
+  companion object {
+    const val NOT_FOUND = 404
+  }
+}

@@ -2,7 +2,7 @@ package pw.binom.io.http.websocket
 
 import pw.binom.network.ChannelClosedException
 
-class WebSocketClosedException(val connection: WebSocketConnection) : ChannelClosedException() {
+class WebSocketClosedException() : ChannelClosedException() {
 
     companion object {
         const val CLOSE_NORMAL = 1000.toShort()

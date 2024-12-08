@@ -102,18 +102,11 @@ actual class Selector : Closeable {
           throw ClosedException()
         }
       SELECTOR_LOGGER.info(method = "select") { "Selecting completed. Events count: $selected" }
-      println("Selecting completed. Events count: $selected")
       native.selectedKeys().forEach { nativeKey ->
         val binomKey = nativeKey.attachment() as SelectorKey
-        if (binomKey.watching) {
-          println("Selector::select #1 nativeKey=$binomKey isConnectable=${nativeKey.isConnectable} isValid=${nativeKey.isValid} isReadable=${nativeKey.isReadable} isWritable=${nativeKey.isWritable} isAcceptable=${nativeKey.isAcceptable}")
-        }
         eventImpl.internalKey = binomKey
         when {
           !nativeKey.isValid -> {
-            if (binomKey.watching) {
-              println("Selector::select NOT VALID isConnectable=${nativeKey.isConnectable} isValid=${nativeKey.isValid} isReadable=${nativeKey.isReadable} isWritable=${nativeKey.isWritable} isAcceptable=${nativeKey.isAcceptable}")
-            }
             SELECTOR_LOGGER.info(method = "select") { "Error happened on ${System.identityHashCode(binomKey.native.channel())}" }
             binomKey.isErrorHappened = false
             eventImpl.internalFlag = ListenFlags().withError.withRead.withWrite
@@ -145,9 +138,6 @@ actual class Selector : Closeable {
 
           else -> {
             eventImpl.internalFlag = nativeKey.toCommonReadFlag()
-            if (binomKey.watching) {
-              println("Selector::select INCOME EVENT selectorKey=$binomKey FLAGS=${nativeKey.toCommonReadFlag()} nativeFlags=${nativeKey.readyOps().toString(2)} isConnectable=${nativeKey.isConnectable} isValid=${nativeKey.isValid} isReadable=${nativeKey.isReadable} isWritable=${nativeKey.isWritable} isAcceptable=${nativeKey.isAcceptable}")
-            }
             SELECTOR_LOGGER.info(method = "select") {
               "Income event on ${binomKey.native.channel()::class.java.name}@${System.identityHashCode(binomKey.native.channel())}: ${
                 commonFlagsToString(

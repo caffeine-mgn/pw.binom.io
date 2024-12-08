@@ -31,6 +31,10 @@ class LocalFileSystem(
     return EntityImpl(f)
   }
 
+  override fun put() {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun getQuota(path: Path): Quota {
     val f = File(root, path.toString())
     return Quota(

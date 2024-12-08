@@ -9,7 +9,6 @@ import kotlin.math.absoluteValue
 actual class SelectorKey(val native: SelectionKey, actual val selector: Selector) : Closeable {
   private val logger =
     InternalLog.file("SelectorKey").prefix { "SelectorKey(${System.identityHashCode(native.selector())}) " }
-  actual var watching: Boolean = false
 
   init {
     SelectorMBeanImpl.selectorMapLock.synchronize {
@@ -65,57 +64,27 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
   }
 
   actual fun updateListenFlags(listenFlags: ListenFlags): Boolean {
-    if (watching) {
-      println("SelectorKey::updateListenFlags #1 listenFlags=$listenFlags")
-    }
     if (closed) {
-      if (watching) {
-      println("SelectorKey::updateListenFlags #2")
-        }
       logger.info(method = "updateListenFlags") { "Can't update flags to ${commonFlagsToString(listenFlags)}: socket closed" }
       return false
     }
     val old = internalListenFlags
     internalListenFlags = listenFlags
-    if (watching) {
-      println("SelectorKey::updateListenFlags #3")
-    }
     var r = 0
     if (ListenFlags.ERROR in listenFlags || ListenFlags.READ in listenFlags) {
       r = r or SelectionKey.OP_READ or SelectionKey.OP_ACCEPT
     }
-    if (watching) {
-      println("SelectorKey::updateListenFlags #4")
-    }
     if (ListenFlags.WRITE in listenFlags) {
-      if (watching) {
-        println("SelectorKey::updateListenFlags #4.1")
-      }
       r = r or SelectionKey.OP_WRITE or SelectionKey.OP_CONNECT
     }
-    if (watching) {
-      println("SelectorKey::updateListenFlags #5")
-    }
     return try {
-      if (watching) {
-        println("SelectorKey::updateListenFlags #6")
-      }
       val result = r and native.channel().validOps()
-      if (watching) {
-        println("SelectorKey::updateListenFlags #6.1 result=${result.toString(2)}, r=${result.toString(2)}")
-      }
       native.interestOps(result)
       logger.info(method = "updateListenFlags") {
         "Update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)} = ${javaFlagsToString(result)}"
       }
-      if (watching) {
-        println("SelectorKey::updateListenFlags #7")
-      }
       true
     } catch (e: java.nio.channels.CancelledKeyException) {
-      if (watching) {
-        println("SelectorKey::updateListenFlags #8")
-      }
       logger.info(method = "updateListenFlags") {
         "Can't update flags ${commonFlagsToString(old)}->${commonFlagsToString(listenFlags)}: Locks like socket closed. Set state to close"
       }

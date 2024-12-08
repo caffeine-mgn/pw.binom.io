@@ -11,19 +11,30 @@ import pw.binom.mq.nats.client.DateTimeRFC3339
 class ConsumerCreateResponseDto(
   @SerialName("stream_name")
   val streamName: String,
+  @SerialName("name")
   val name: String,
   @Serializable(DateTimeRFC3339::class)
+  @SerialName("created")
   val created: DateTime,
+  @SerialName("config")
   val config: ConsumerConfiguration,
+  @SerialName("delivered")
   val delivered: SequencePairDto,
   @SerialName("ack_floor")
   val ackFloor: SequencePairDto,
-  val num_ack_pending: Long = 0,
-  val num_redelivered: Long = 0,
-  val num_waiting: Long = 0,
-  val num_pending: Long = 0,
+  @SerialName("num_ack_pending")
+  val numAckPending: Long = 0,
+  @SerialName("num_redelivered")
+  val numRedelivered: Long = 0,
+  @SerialName("num_waiting")
+  val numWaiting: Long = 0,
+  @SerialName("num_pending")
+  val numPending: Long = 0,
+  @SerialName("cluster")
   val cluster: ClusterInfoDto? = null,
-  val push_bound: Boolean = false,
+  @SerialName("push_bound")
+  val pushBound: Boolean = false,
   @Serializable(DateTimeRFC3339::class)
+  @SerialName("timestamp")
   val timestamp: DateTime? = null,
 )

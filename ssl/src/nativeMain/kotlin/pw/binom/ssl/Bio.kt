@@ -18,7 +18,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     memScoped {
       val r =
         data.usePinned { data ->
-          BIO_read(self, data.addressOf(offset), length.convert())
+          BIO_read(self, data.addressOf(offset), length)
         }
       if (r < 0) {
         TODO()
@@ -30,7 +30,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     get() =
       memScoped {
         val ptr = allocPointerTo<ByteVar>()
-        BIO_ctrl(self, BIO_C_GET_BUF_MEM_PTR, 0, ptr.reinterpret())
+        internal_BIO_ctrl(self, BIO_C_GET_BUF_MEM_PTR, 0, ptr.reinterpret())
         ptr.value!!
       }
 
@@ -53,7 +53,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     return memScoped {
       val r =
         data.ref(0) { dataPtr, remaining ->
-          BIO_read(self, dataPtr, remaining.convert())
+          BIO_read(self, dataPtr, remaining)
         }
       if (r < 0) {
         TODO()
@@ -71,7 +71,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     memScoped {
       val r =
         data.usePinned { data ->
-          BIO_write(self, data.addressOf(offset), length.convert())
+          BIO_write(self, data.addressOf(offset), length)
         }
       if (r < 0) {
         TODO()
@@ -84,16 +84,16 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
   }
 
   var cursor: Int
-    get() = BIO_ctrl(self, BIO_C_FILE_TELL.convert(), 0.convert(), null).convert()
+    get() = internal_BIO_ctrl(self, BIO_C_FILE_TELL, 0, null)
     set(value) {
-      BIO_ctrl(self, BIO_C_FILE_SEEK.convert(), value.convert(), null)
+      internal_BIO_ctrl(self, BIO_C_FILE_SEEK, value, null)
     }
 
   val eof: Boolean
-    get() = BIO_ctrl(self, BIO_CTRL_EOF.convert(), 0, null).convert<Int>() == 1
+    get() = internal_BIO_ctrl(self, BIO_CTRL_EOF, 0, null) == 1
 
   val size: Int
-    get() = BIO_ctrl(self, BIO_CTRL_INFO, 0, null).convert()
+    get() = internal_BIO_ctrl(self, BIO_CTRL_INFO, 0, null)
 
   fun push(bio: Bio): Bio {
     BIO_push(self, bio.self)
@@ -103,7 +103,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
   fun pop() = BIO_pop(self)?.let { Bio(it) }
 
   fun reset() {
-    if (BIO_ctrl(self, BIO_CTRL_RESET, 0, null) < 0) {
+    if (internal_BIO_ctrl(self, BIO_CTRL_RESET, 0, null) < 0) {
       TODO("BIO_ctrl(BIO_CTRL_RESET) is fail")
     }
   }
@@ -141,7 +141,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
     fun mem(size: Int): Bio {
       val ptr = platform.posix.malloc(size.convert())
       val bio = BIO_new_mem_buf(ptr, size)!!
-      if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_CLOSE.convert(), null) < 0) {
+      if (internal_BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_CLOSE, null) < 0) {
         TODO()
       }
       return Bio(bio)
@@ -152,7 +152,7 @@ value class Bio(val self: CPointer<BIO>) : Closeable {
         data.usePinned { pinnedData ->
           BIO_new_mem_buf(pinnedData.addressOf(0), data.size)!!
         }
-      if (BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE.convert(), null) < 0) {
+      if (internal_BIO_ctrl(bio, BIO_CTRL_SET_CLOSE, BIO_NOCLOSE, null) < 0) {
         TODO()
       }
       return Bio(bio)

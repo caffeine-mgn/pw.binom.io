@@ -15,9 +15,9 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
 
   init {
     if (inited.compareAndSet(false, true)) {
-      OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS.convert(), null)
-      OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS.convert(), null)
-      OPENSSL_init_ssl(0.convert(), null)
+      OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS.toULong(), null)
+      OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS.toULong(), null)
+      OPENSSL_init_ssl(0uL, null)
     }
   }
 
@@ -49,7 +49,7 @@ actual class SSLContext(method: SSLMethod, val keyManager: KeyManager, val trust
     if (SSL_set1_host(ssl, connect) <= 0) {
       throw RuntimeException("Can't set SSL host to [$connect]")
     }
-    if (SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name.convert(), connect.cstr) <= 0) {
+    if (internal_SSL_ctrl(ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, connect.cstr) <= 0) {
       throw RuntimeException("Can't set SSL tlsext_hostname to [$connect]")
     }
     return SSLSession(ctx = sslCtx, ssl = ssl, client = true, trustManager = trustManager, keyManager = keyManager)

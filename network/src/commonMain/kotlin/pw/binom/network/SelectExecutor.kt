@@ -22,6 +22,11 @@ object SelectExecutor {
           val attachment = event.key.attachment ?: return@select
           //          attachment // ?: error("Attachment is null")
           val connection = attachment as AbstractConnection
+          if (event.key.readFlags.isNotZero){
+            submitTask {
+              connection.ready(key = event.key, flags = event.key.readFlags)
+            }
+          }
           if (event.key.readFlags.isError) {
             submitTask {
               connection.error()

@@ -22,18 +22,12 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
       }
       return object : AsyncChannel {
         override suspend fun asyncClose() {
-          IoDetectSlow("AsyncChannel.create.asyncClose #0 input=${input::class} ($input), output=${output::class} ($output)") {
-            input.asyncClose()
-          }
-          IoDetectSlow("AsyncChannel.create.asyncClose #1 input=${input::class} ($input), output=${output::class} ($output)") {
-            output.asyncClose()
-          }
+          input.asyncClose()
+          output.asyncClose()
         }
 
         override suspend fun flush() {
-          IoDetectSlow("AsyncChannel.create.flush #0 input=${input::class} ($input), output=${output::class} ($output)") {
-            output.flush()
-          }
+          output.flush()
         }
 
         override val available: Int
@@ -43,9 +37,7 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
           input.read(dest)
 
         override suspend fun write(data: ByteBuffer) =
-          IoDetectSlow("AsyncChannel.create.write #0 input=${input::class} ($input), output=${output::class} ($output)") {
-            output.write(data)
-          }
+          output.write(data)
 
         override fun toString(): String = "AsyncChannel(input=$input, output=$output)"
       }
@@ -92,23 +84,5 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
 
       override fun toString(): String = "AsyncChannel($channel)"
     }
-  }
-}
-
-inline fun <T> IoDetectSlow(msg: String, duration: Duration = 1.seconds, func: () -> T): T {
-  val stackTrace = Throwable()
-  val finished = AtomicBoolean(false)
-  GlobalScope.launch {
-    delay(duration)
-    if (!finished.getValue()) {
-      InternalLog.warn(file = "IO") { "Slow: $msg\n${stackTrace.stackTraceToString()}" }
-      println("IO---->Slow: $msg\n${stackTrace.stackTraceToString()}")
-    }
-  }
-
-  return try {
-    func()
-  } finally {
-    finished.setValue(true)
   }
 }

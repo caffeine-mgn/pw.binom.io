@@ -18,7 +18,7 @@ private val loaded = AtomicBoolean(false)
 internal fun loadOpenSSL() {
   if (loaded.compareAndSet(false, true)) {
     OPENSSL_init_crypto(
-      (OPENSSL_INIT_ADD_ALL_CIPHERS or OPENSSL_INIT_ADD_ALL_DIGESTS or OPENSSL_INIT_LOAD_CONFIG).convert(),
+      (OPENSSL_INIT_ADD_ALL_CIPHERS or OPENSSL_INIT_ADD_ALL_DIGESTS or OPENSSL_INIT_LOAD_CONFIG).toULong(),
       null,
     )
   }

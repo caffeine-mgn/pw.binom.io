@@ -3,7 +3,11 @@ package pw.binom.io
 import pw.binom.url.Path
 
 class FileSystemWithDefaultUser(val user: Any, val fileSystem: FileSystem) : FileSystem {
-    override suspend fun getQuota(path: Path): Quota? = fileSystem.useUser(user) {
+  override fun put() {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getQuota(path: Path): Quota? = fileSystem.useUser(user) {
         fileSystem.getQuota(path)
     }
 

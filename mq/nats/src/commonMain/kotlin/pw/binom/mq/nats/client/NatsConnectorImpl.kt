@@ -13,6 +13,7 @@ import pw.binom.network.tcpConnect
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+@Deprecated(message = "Use InternalNatsConnection")
 internal class NatsConnectorImpl(
     val clientName: String? = null,
     val lang: String = "kotlin",

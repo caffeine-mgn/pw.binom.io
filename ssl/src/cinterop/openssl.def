@@ -4,12 +4,55 @@ linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
 linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -lcrypt32
 ---
 
+#define LONG int
+
+ASN1_TIME *internal_X509_gmtime_adj(ASN1_TIME *asn1_time, LONG offset_sec){
+    return X509_gmtime_adj(asn1_time, offset_sec);
+}
+
+int internal_X509_set_version(X509 *x, LONG version){
+    return X509_set_version(x,version);
+}
+
+RSA *internal_RSA_generate_key(int num, unsigned LONG e,
+   void (*callback)(int,int,void *), void *cb_arg){
+    return RSA_generate_key(num,e,callback,cb_arg);
+}
+
+LONG internal_BIO_ctrl(BIO *bp, int cmd, LONG larg,void *parg){
+    return BIO_ctrl(bp, cmd, larg, parg);
+}
+
+LONG internal_SSL_CTX_callback_ctrl(SSL_CTX * ctx, int cmd, void (*fp)()){
+    return SSL_CTX_callback_ctrl(ctx,cmd,fp);
+}
+
+LONG internal_SSL_ctrl(SSL *ssl, int cmd, LONG larg, void *parg){
+    return SSL_ctrl(ssl, cmd, larg, parg);
+}
+
+LONG internal_SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, LONG larg, void *parg){
+    return SSL_CTX_ctrl(ctx, cmd, larg, parg);
+}
+
+int internal_SSL_get_error(const SSL *s, int ret_code){
+    return SSL_get_error(s, ret_code);
+}
+
+char *internal_ERR_error_string(unsigned LONG e, char *buf){
+    return ERR_error_string(e,buf);
+}
+
+unsigned int internal_ERR_peek_last_error(){
+    return ERR_peek_last_error();
+}
+
 void internal_BN_zero(BIGNUM* num){
     BN_zero(num);
 }
 
-size_t internal_BN_num_bytes(BIGNUM* num){
-    return BN_num_bytes(num);
+int internal_BN_num_bytes(BIGNUM* num){
+    return (int)BN_num_bytes(num);
 }
 
 int internal_sk_X509_num(struct stack_st_X509* sk) {

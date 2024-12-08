@@ -1,7 +1,6 @@
 package pw.binom.io.http.websocket
 
-import pw.binom.io.AsyncOutput
-import pw.binom.io.holdState
+import pw.binom.io.*
 import kotlin.random.Random
 
 class MaskedFrameOutput(
@@ -22,43 +21,33 @@ class MaskedFrameOutput(
     }
     if (buffer.position > 0) {
       buffer.flip()
-      WsDetectSlow("MaskedFrameOutput::asyncClose #1") {
-        buffer.holdState {
-          cursor = MessageCoder.encode(
-            cursor = cursor,
-            mask = mask,
-            data = buffer,
-          )
-        }
-      }
-      WsDetectSlow("MaskedFrameOutput::asyncClose #2") {
-        WebSocketHeader.write(
-          output = stream,
-          opcode = opcode,
-          length = buffer.remaining.toLong(),
-          maskFlag = true,
+      buffer.holdState {
+        cursor = MessageCoder.encode(
+          cursor = cursor,
           mask = mask,
-          finishFlag = true,
+          data = buffer,
         )
       }
-      WsDetectSlow("MaskedFrameOutput::asyncClose #3") {
-        stream.writeFully(buffer)
-      }
+      WebSocketHeader.write(
+        output = stream,
+        opcode = opcode,
+        length = buffer.remaining.toLong(),
+        maskFlag = true,
+        mask = mask,
+        finishFlag = true,
+      )
+      stream.writeFully(buffer)
     } else {
-      WsDetectSlow("MaskedFrameOutput::asyncClose #4") {
-        WebSocketHeader.write(
-          output = stream,
-          opcode = opcode,
-          length = 0,
-          maskFlag = true,
-          mask = mask,
-          finishFlag = true,
-        )
-      }
+      WebSocketHeader.write(
+        output = stream,
+        opcode = opcode,
+        length = 0,
+        maskFlag = true,
+        mask = mask,
+        finishFlag = true,
+      )
     }
-    WsDetectSlow("MaskedFrameOutput::asyncClose #5 stream=${stream::class}") {
-      stream.flush()
-    }
+    stream.flush()
     buffer.close()
   }
 
@@ -67,35 +56,27 @@ class MaskedFrameOutput(
       return
     }
     buffer.flip()
-    WsDetectSlow("MaskedFrameOutput::flush #1") {
-      buffer.holdState {
-        cursor = MessageCoder.encode(
-          cursor = cursor,
-          mask = mask,
-          data = buffer,
-        )
-      }
-    }
-    WsDetectSlow("MaskedFrameOutput::flush #2") {
-      WebSocketHeader.write(
-        output = stream,
-        opcode = opcode,
-        length = buffer.remaining.toLong(),
-        maskFlag = true,
+    buffer.holdState {
+      cursor = MessageCoder.encode(
+        cursor = cursor,
         mask = mask,
-        finishFlag = false,
+        data = buffer,
       )
     }
-    WsDetectSlow("MaskedFrameOutput::flush #3") {
-      stream.writeFully(buffer)
-    }
+    WebSocketHeader.write(
+      output = stream,
+      opcode = opcode,
+      length = buffer.remaining.toLong(),
+      maskFlag = true,
+      mask = mask,
+      finishFlag = false,
+    )
+    stream.writeFully(buffer)
     mask = Random.nextInt()
     cursor = 0
     opcode = Opcode.CONTINUATION
     firstFrame = false
     buffer.clear()
-    WsDetectSlow("MaskedFrameOutput::flush #3") {
-      stream.flush()
-    }
+    stream.flush()
   }
 }

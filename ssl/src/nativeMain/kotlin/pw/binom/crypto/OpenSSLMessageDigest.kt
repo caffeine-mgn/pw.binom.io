@@ -97,7 +97,7 @@ abstract class OpenSSLMessageDigest : MessageDigest {
       val size = alloc<UIntVar>()
       EVP_DigestFinal(resource.ptr, out.refTo(0).getPointer(this).reinterpret(), size.ptr)
         .checkTrue("EVP_DigestFinal fails")
-      if (size.value != out.size.convert<UInt>()) {
+      if (size.value != out.size.toUInt()) {
         TODO()
       }
     }

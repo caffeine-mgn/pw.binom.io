@@ -89,7 +89,7 @@ class RadisConnectionImpl(
     connection.asyncClose()
   }
 
-  suspend fun lset(
+  override suspend fun lset(
     key: String,
     value: String,
     index: Int,
@@ -132,7 +132,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun inc(key: String) =
+  override suspend fun inc(key: String) =
     operation {
       resp.startList(2)
       resp.writeASCIStringFast("INCR")
@@ -141,7 +141,7 @@ class RadisConnectionImpl(
       resp.readLong()
     }
 
-  suspend fun inc(
+  override suspend fun inc(
     key: String,
     value: Int,
   ) = operation {
@@ -153,7 +153,7 @@ class RadisConnectionImpl(
     resp.readLong()
   }
 
-  suspend fun inc(
+  override suspend fun inc(
     key: String,
     value: Float,
   ) = operation {
@@ -175,7 +175,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun renameKey(
+  override suspend fun renameKey(
     oldName: String,
     newName: String,
   ) {
@@ -257,7 +257,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun insertFirst(
+  override suspend fun insertFirst(
     key: String,
     value: String,
   ) = operation {
@@ -281,7 +281,7 @@ class RadisConnectionImpl(
     resp.readLong()
   }
 
-  suspend fun insertLast(
+  override suspend fun insertLast(
     key: String,
     value: String,
   ) = operation {
@@ -448,10 +448,10 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun getList(
+  override suspend fun getList(
     key: String,
-    start: Int = 0,
-    end: Int = -1,
+    start: Int,
+    end: Int,
   ): List<String>? {
     operation {
       resp.startList(4)
@@ -464,7 +464,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun getListSize(key: String): Long? {
+  override suspend fun getListSize(key: String): Long? {
     operation {
       resp.startList(2)
       resp.writeASCIStringFast("LLEN")
@@ -488,7 +488,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun setStringAsBytes(
+  override suspend fun setStringAsBytes(
     key: String,
     data: ByteBuffer,
   ) {
@@ -536,7 +536,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun getString(key: String): String? {
+  override suspend fun getString(key: String): String? {
     operation {
       resp.startList(2)
       resp.writeASCIStringFast("GET")
@@ -546,7 +546,7 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun getStringAsByteArray(key: String): ByteArray? {
+  override suspend fun getStringAsByteArray(key: String): ByteArray? {
     var r: ByteArray? = null
     getStringAsByteBuffer(key) {
       r = it.toByteArray()

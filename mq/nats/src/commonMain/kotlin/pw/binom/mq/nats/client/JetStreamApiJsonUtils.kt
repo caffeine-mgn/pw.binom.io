@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package pw.binom.mq.nats.client
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -37,13 +34,16 @@ internal object JetStreamApiJsonUtils {
   fun <T : Any> decode(
     serializer: KSerializer<T>,
     data: ByteArray,
+    checkError: Boolean = true,
   ): T {
     val j = json.parseToJsonElement(data.decodeToString())
     val asObject = j as? JsonObject
-    val error = asObject?.get("error")
-    if (error != null) {
-      println(error)
-      throw RuntimeException("Has error")
+    if (checkError) {
+      val error = asObject?.get("error")
+      if (error != null) {
+        println(error)
+        throw RuntimeException("Has error")
+      }
     }
     return json.decodeFromJsonElement(serializer, j)
   }

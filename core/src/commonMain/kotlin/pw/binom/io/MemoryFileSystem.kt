@@ -7,7 +7,11 @@ import pw.binom.url.Path
 import pw.binom.url.toPath
 
 class MemoryFileSystem : FileSystem {
-    override suspend fun getQuota(path: Path): Quota? = null
+  override fun put() {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getQuota(path: Path): Quota? = null
 
     override val isSupportUserSystem: Boolean
         get() = false

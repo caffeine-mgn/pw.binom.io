@@ -14,10 +14,10 @@ actual fun X509Builder.generate(): X509Certificate {
       X509Builder.Version.V1 -> 0
       X509Builder.Version.V3 -> 2
     }
-  X509_set_version(x, ver.convert())
+  internal_X509_set_version(x, ver)
   ASN1_INTEGER_set_int64(X509_get_serialNumber(x), serialNumber)
-  X509_gmtime_adj(X509_get_notBefore!!.invoke(x), ((DateTime.nowTime - notBefore.milliseconds) / 1000).convert())
-  X509_gmtime_adj(X509_get_notAfter!!.invoke(x), ((DateTime.nowTime - notAfter.milliseconds) / 1000).convert())
+  internal_X509_gmtime_adj(X509_get_notBefore!!.invoke(x), ((DateTime.nowTime - notBefore.milliseconds) / 1000).toInt())
+  internal_X509_gmtime_adj(X509_get_notAfter!!.invoke(x), ((DateTime.nowTime - notAfter.milliseconds) / 1000).toInt())
   X509_set_pubkey(x, pair.native)
 
   X509_get_subject_name(x)!!.addEntry(subject)

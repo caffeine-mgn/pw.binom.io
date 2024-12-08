@@ -104,9 +104,7 @@ class WebSocketConnectionImpl(
       runCatching {
         closeTcp()
       }
-      throw WebSocketClosedException(
-        connection = this,
-      )
+      throw WebSocketClosedException()
     } catch (e: Throwable) {
       logger.info(method = "read") { "Unknown exception $e" }
       readChannelLock.unlock()
@@ -124,11 +122,9 @@ class WebSocketConnectionImpl(
   }
 
   internal fun writingMessageFinished() {
-    WsDetectSlow("WebSocketConnectionImpl::writingMessageFinisheds") {
-      writing = null
-      logger.info(method = "writingMessageFinished") { "release writeChannelLock" }
-      writeChannelLock.unlock()
-    }
+    writing = null
+    logger.info(method = "writingMessageFinished") { "release writeChannelLock" }
+    writeChannelLock.unlock()
   }
 
   internal fun readingMessageFinished() {
@@ -209,7 +205,7 @@ class WebSocketConnectionImpl(
   }
 
   private suspend fun internalClose() {
-    val ex = WebSocketClosedException(this)
+    val ex = WebSocketClosedException()
     readChannelLock.throwAll(ex)
     writeChannelLock.throwAll(ex)
     closeTcp()

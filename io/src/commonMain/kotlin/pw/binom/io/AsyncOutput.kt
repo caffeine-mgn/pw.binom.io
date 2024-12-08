@@ -35,8 +35,8 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     while (data.remaining > 0) {
       val wrote = write(data)
       if (wrote.isNotAvailable) {
-        if (writeSize==0) {
-          throw IOException("Can't write data")
+        if (writeSize == 0) {
+          throw StreamClosedException()
         } else {
           throw PackageBreakException("Can't write data. $writeSize bytes was sent")
         }

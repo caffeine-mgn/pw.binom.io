@@ -122,6 +122,9 @@ class JetStreamImpl(val reader: NatsReader) {
       getStreamInfo(
         name = streamName,
       )
+    if (streamInfo.error?.code==ErrorDto.NOT_FOUND){
+      throw RuntimeException("Stream $streamName not found")
+    }
     if (streamInfo.config?.allowDirect == true) {
       val resp =
         if (config.isLastBySubject) {
@@ -231,6 +234,7 @@ class JetStreamImpl(val reader: NatsReader) {
     return JetStreamApiJsonUtils.decode(
       serializer = StreamInfoResponseDto.serializer(),
       data = msg.data,
+      checkError = false,
     )
   }
 

@@ -44,6 +44,8 @@ interface FileSystem {
     suspend fun unlock(): Boolean = false
   }
 
+  fun put()
+
   suspend fun getQuota(path: Path): Quota?
 
   val isSupportUserSystem: Boolean

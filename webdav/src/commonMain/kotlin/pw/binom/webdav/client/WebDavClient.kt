@@ -16,9 +16,14 @@ import pw.binom.webdav.WebAuthAccess
 import pw.binom.xml.dom.xmlTree
 import kotlin.coroutines.*
 
-open class WebDavClient constructor(val client: HttpClient, val url: URL) :
+open
+class WebDavClient constructor(val client: HttpClient, val url: URL) :
   FileSystem {
-    override suspend fun getQuota(path: Path): Quota? {
+  override fun put() {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getQuota(path: Path): Quota? {
       val dir =
         getDir(user = WebAuthAccess.getCurrentUser(), path = path, depth = 0, excludeCurrent = false)
           ?.firstOrNull() ?: return null
