@@ -8,7 +8,7 @@ import kotlin.time.Duration
 @Serializable
 data class ConsumerConfiguration(
   @SerialName("deliver_policy")
-  val deliverPolicy: DeliverPolicy = DeliverPolicy.All,
+  val deliverPolicy: DeliverPolicy? = null,
   @SerialName("ack_policy")
   val ackPolicy: AckPolicy = AckPolicy.NONE,
   @SerialName("replay_policy")

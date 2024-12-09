@@ -121,11 +121,11 @@ class InternalNatsConnection private constructor(
     override val replyTo: String?,
     override val headersBody: HeadersBody,
     override val data: ByteArray,
-    override val headers: NatsHeaders,
   ) : NatsMessage {
     override suspend fun ack() {
     }
 
+    override val headers: NatsHeaders by lazy { headersBody.parse() }
   }
 
   private val msg = MessageImpl()
@@ -147,23 +147,21 @@ class InternalNatsConnection private constructor(
     reader.readFully(data)
     reader.skip(2)
     val headersBody = HeadersBody.empty
-    val headers = msg.headersBody.parse()
     return NatsMessageImpl2(
       subject = subject,
       sid = sid,
       replyTo = replyTo,
       data = data,
       headersBody = headersBody,
-      headers = headers,
     )
   }
 
-  private suspend fun parseHMsg(msgText: String): MessageImpl {
+  private suspend fun parseHMsg(msgText: String): NatsMessageImpl2 {
     val items = msgText.split(' ', limit = 6)
     var cursor = 1
-    msg.subject = items[cursor++]
-    msg.sid = items[cursor++]
-    msg.replyTo =
+    val subject = items[cursor++]
+    val sid = items[cursor++]
+    val replyTo =
       if (items.size == 6) {
         items[cursor++]
       } else {
@@ -177,11 +175,18 @@ class InternalNatsConnection private constructor(
     reader.skip(2)
     val body = ByteArray(bodySize)
     reader.readFully(body)
-    msg.headersBody = HeadersBody(header)
-    msg.headers = msg.headersBody.parse()
-    msg.data = body
+    val headersBody = HeadersBody(header)
+    val headers = headersBody.parse()
+    val data = body
     reader.skip(2)
-    return msg
+
+    return NatsMessageImpl2(
+      subject = subject,
+      sid = sid,
+      replyTo = replyTo,
+      data = data,
+      headersBody = headersBody,
+    )
   }
 
   override suspend fun readMessage(): NatsMessage {

@@ -250,6 +250,7 @@ class JetStreamImpl(val reader: NatsReader) {
     return JetStreamApiJsonUtils.decode(
       ConsumerInfoResponseDto.serializer(),
       data = msg.data,
+      checkError = false,
     )
   }
 

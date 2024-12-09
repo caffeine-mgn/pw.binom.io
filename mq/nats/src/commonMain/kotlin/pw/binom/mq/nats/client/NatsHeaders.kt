@@ -22,6 +22,7 @@ interface NatsHeaders : Headers {
           get() = Headers.empty.size
 
         override fun iterator(): Iterator<Pair<String, String>> = Headers.empty.iterator()
+        override fun toString(): String = "NatsHeaders.empty"
       }
 
     fun build(func: MutableParsedHeaders.() -> Unit): MutableParsedHeaders {

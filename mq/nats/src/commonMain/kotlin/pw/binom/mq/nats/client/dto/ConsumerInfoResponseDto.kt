@@ -9,15 +9,17 @@ import pw.binom.mq.nats.client.DateTimeRFC3339
 @Serializable
 @SerialName("io.nats.jetstream.api.v1.consumer_info_response")
 data class ConsumerInfoResponseDto(
+  override val type: String,
+  override val error: ErrorDto? = null,
   @SerialName("stream_name")
-  val streamName: String,
-  val name: String,
+  val streamName: String? = null,
+  val name: String? = null,
   @Serializable(DateTimeRFC3339::class)
-  val created: DateTime,
-  val config: ConsumerConfiguration,
-  val delivered: SequencePairDto,
+  val created: DateTime? = null,
+  val config: ConsumerConfiguration? = null,
+  val delivered: SequencePairDto? = null,
   @SerialName("ack_floor")
-  val ackFloor: SequencePairDto,
+  val ackFloor: SequencePairDto? = null,
   val num_ack_pending: Long = 0,
   val num_redelivered: Long = 0,
   val num_waiting: Long = 0,
@@ -26,4 +28,4 @@ data class ConsumerInfoResponseDto(
   val push_bound: Boolean = false,
   @Serializable(DateTimeRFC3339::class)
   val timestamp: DateTime? = null,
-)
+) : ApiResponse

@@ -41,8 +41,7 @@ internal object JetStreamApiJsonUtils {
     if (checkError) {
       val error = asObject?.get("error")
       if (error != null) {
-        println(error)
-        throw RuntimeException("Has error")
+        throw RuntimeException("Has error: $error")
       }
     }
     return json.decodeFromJsonElement(serializer, j)
