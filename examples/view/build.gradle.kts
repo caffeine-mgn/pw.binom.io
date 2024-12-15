@@ -39,7 +39,6 @@ kotlin {
         }
 
         val jsTest by getting {
-            dependsOn(commonTest)
             dependencies {
                 implementation(kotlin("test-js"))
             }

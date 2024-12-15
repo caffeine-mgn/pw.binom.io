@@ -83,6 +83,9 @@ class BytesParsedHeaders() : MutableParsedHeaders {
     }
   }
 
+  override var code: Int = 0
+  override var message: String = ""
+
   override fun get(key: String): List<String>? = values[key]?.values?.map { it.decodeToString() }
 
   override fun clone(): BytesParsedHeaders {

@@ -98,7 +98,6 @@ kotlin {
             dependencies {}
         }
         val jvmTest by getting {
-            dependsOn(commonTest)
             dependencies {
                 api(kotlin("test"))
 //                implementation("junit:junit:4.13.2")
@@ -111,7 +110,6 @@ kotlin {
                 dependsOn(jvmLikeMain)
             }
             val androidTest by getting {
-                dependsOn(commonTest)
                 dependencies {
                     implementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
                     implementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
@@ -122,9 +120,6 @@ kotlin {
                     api("com.android.support.test:runner:0.5")
                 }
             }
-        }
-        val linuxX64Test by getting {
-            dependsOn(commonTest)
         }
     }
 }

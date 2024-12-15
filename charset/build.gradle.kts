@@ -57,14 +57,12 @@ kotlin {
 //        dependsOn("wasm*Main", otherMain)
 
     val jvmTest by getting {
-      dependsOn(commonTest)
       dependencies {
         api(kotlin("test"))
       }
     }
 
     val jsTest by getting {
-      dependsOn(commonTest)
       dependencies {
         api(kotlin("test-js"))
       }

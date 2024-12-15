@@ -6,6 +6,7 @@ import pw.binom.mq.Message
 import pw.binom.mq.Topic
 import pw.binom.mq.nats.client.AckPolicy
 import pw.binom.mq.nats.client.ConsumerConfiguration
+import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.dto.ConsumerInfoResponseDto
 import pw.binom.mq.nats.client.dto.ErrorDto
 import pw.binom.mq.nats.client.dto.MessageGetRequestDto
@@ -46,7 +47,7 @@ class JetStreamTopic(
     start: Boolean,
     batchSize: Int = 100,
     config: ConsumerConfiguration,
-    func: suspend (Message) -> Unit,
+    func: suspend (NatsMessage) -> Unit,
   ): JetStreamConsumer {
     val name = config.name ?: config.durableName!!
     if (getConsumerInfo(name) != null) {

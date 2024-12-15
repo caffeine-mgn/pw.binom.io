@@ -19,7 +19,6 @@ class NatsRawConnection(
     override var subject: String = ""
     override var sid: String = ""
     override var replyTo: String? = null
-    override var headersBody: HeadersBody = HeadersBody.empty
     override var data: ByteArray = ByteArray(0)
     override var headers = NatsHeaders.empty
 

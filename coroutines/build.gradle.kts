@@ -32,7 +32,6 @@ kotlin {
       }
     }
     val jvmTest by getting {
-      dependsOn(commonTest)
       dependencies {
         api(kotlin("test"))
       }

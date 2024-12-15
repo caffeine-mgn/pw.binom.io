@@ -1,5 +1,8 @@
 package pw.binom.mq.nats
 
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
@@ -8,12 +11,14 @@ import pw.binom.mq.Consumer
 import pw.binom.mq.Message
 import pw.binom.mq.nats.client.AckPolicy
 import pw.binom.mq.nats.client.ConsumerConfiguration
+import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.dto.PullRequestOptionsDto
+import kotlin.coroutines.resume
 
 class JetStreamConsumer(
   val config: ConsumerConfiguration,
   val topic: JetStreamTopic,
-  val incomeListener: suspend (Message) -> Unit,
+  val incomeListener: suspend (NatsMessage) -> Unit,
   var batchSize: Int,
 ) : Consumer {
   private var listener: AsyncCloseable? = null
@@ -61,7 +66,13 @@ class JetStreamConsumer(
             streamName = this.topic.config.name,
             consumerName = this.config.name!!,
             config = PullRequestOptionsDto(batch = batchSize),
-            incomeListener = incomeListener,
+            incomeListener = { msg ->
+              if (msg.headers.code == 409) {
+                stop()
+                deleteWaiter.send(Unit)
+              }
+              incomeListener(msg)
+            },
             withAckSupport = config.ackPolicy != AckPolicy.NONE,
           )
       }
@@ -78,12 +89,14 @@ class JetStreamConsumer(
     }.asyncCloseAnyway()
   }
 
+  private val deleteWaiter = Channel<Unit>()
+
   override suspend fun deleteAndClose() {
-    asyncCloseAnyway()
     topic.connection.js.deleteConsumer(
       streamName = topic.config.name,
       consumerName = config.name!!,
     )
+    deleteWaiter.receive()
   }
 
   override val isReceiving: Boolean

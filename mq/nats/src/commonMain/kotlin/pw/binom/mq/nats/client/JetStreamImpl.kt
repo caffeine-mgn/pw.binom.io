@@ -254,13 +254,7 @@ class JetStreamImpl(val reader: NatsReader) {
     )
   }
 
-  private inner class MessageWithAck(val msg: NatsMessage) : Message {
-    override val headers: Headers
-      get() = msg.headers
-    override val topic: String
-      get() = msg.topic
-    override val body: ByteArray
-      get() = msg.body
+  private inner class MessageWithAck(val msg: NatsMessage) : NatsMessage by msg {
 
     override suspend fun ack() {
       val replyTo = msg.replyTo
@@ -268,15 +262,13 @@ class JetStreamImpl(val reader: NatsReader) {
         sendAck(subject = replyTo)
       }
     }
-
-    override fun toString(): String = msg.toString()
   }
 
   suspend fun receiveMessage(
     streamName: String,
     consumerName: String,
     config: PullRequestOptionsDto,
-    incomeListener: suspend (Message) -> Unit,
+    incomeListener: suspend (NatsMessage) -> Unit,
     withAckSupport: Boolean = true,
   ): AsyncCloseable {
     val into = Random.nextUuid().toString()

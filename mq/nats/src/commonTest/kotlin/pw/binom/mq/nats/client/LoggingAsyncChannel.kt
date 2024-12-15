@@ -2,6 +2,7 @@ package pw.binom.mq.nats.client
 
 import pw.binom.io.AsyncChannel
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.holdState
 
 class LoggingAsyncChannel(val source: AsyncChannel) : AsyncChannel {
@@ -9,12 +10,12 @@ class LoggingAsyncChannel(val source: AsyncChannel) : AsyncChannel {
     source.asyncClose()
   }
 
-  override suspend fun write(data: ByteBuffer): Int {
+  override suspend fun write(data: ByteBuffer): DataTransferSize {
     val p = data.position
     val w = source.write(data)
-    if (w > 0) {
+    if (w.isAvailable) {
       data.holdState {
-        it.reset(p, w)
+        it.reset(p, w.length)
         println("WRITE $p->$w: ${it.toByteArray().decodeToString()}")
       }
     }
@@ -28,11 +29,11 @@ class LoggingAsyncChannel(val source: AsyncChannel) : AsyncChannel {
   override val available: Int
     get() = source.available
 
-  override suspend fun read(dest: ByteBuffer): Int {
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
     val p = dest.position
     val r = source.read(dest)
     dest.holdState {
-      it.reset(p, r)
+      it.reset(p, r.length)
       println("READ ${it.toByteArray().decodeToString()}")
     }
     return r

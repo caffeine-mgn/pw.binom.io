@@ -30,7 +30,7 @@ value class HeadersBody(private val raw: ByteArray) {
         val items = line.split(':', limit = 2)
         map.getOrPut(items[0]) { ArrayList() }.add(items[1].removePrefix(" "))
       }
-    return ParsedHeadersMap(map)
+    return ParsedHeadersMap(map = map, code = 0, message = "")
   }
 
   fun clone() = if (isEmpty) empty else HeadersBody(raw)

@@ -15,6 +15,10 @@ interface NatsHeaders : Headers {
         override fun toHeadersBody() = HeadersBody.empty
 
         override fun get(key: String): List<String>? = Headers.empty[key]
+        override val code: Int
+          get() = 0
+        override val message: String
+          get() = ""
 
         override fun clone() = this
 
@@ -32,6 +36,8 @@ interface NatsHeaders : Headers {
     }
   }
 
+  val code: Int
+  val message: String
   override fun clone(): NatsHeaders
 
   fun toHeadersBody(): HeadersBody

@@ -10,6 +10,8 @@ import pw.binom.io.socket.DomainSocketAddress
 import pw.binom.io.socket.InetSocketAddress
 import pw.binom.io.socket.SocketAddress
 import pw.binom.mq.nats.client.dto.ConnectRequestDto
+import pw.binom.mq.nats.find
+import pw.binom.mq.nats.parseHeaders
 import pw.binom.network.SocketClosedException
 
 class InternalNatsConnection private constructor(
@@ -98,13 +100,23 @@ class InternalNatsConnection private constructor(
         throw e
       }
     }
+
+    /**
+     * \r
+     */
+    private const val CR: Byte = 0x0d
+
+    /**
+     * \n
+     */
+    private const val LF: Byte = 0x0a
+    private val LINE_END = byteArrayOf(0x0d, 0x0a)
   }
 
   private class MessageImpl : NatsMessage {
     override var subject: String = ""
     override var sid: String = ""
     override var replyTo: String? = null
-    override var headersBody: HeadersBody = HeadersBody.empty
     override var data: ByteArray = ByteArray(0)
     override var headers = NatsHeaders.empty
 
@@ -112,20 +124,18 @@ class InternalNatsConnection private constructor(
     }
 
     override fun toString() =
-      "Message(subject='$subject', sid='$sid', replyTo=$replyTo, headers=$headersBody, data=${data.contentToString()})"
+      "Message(subject='$subject', sid='$sid', replyTo=$replyTo, headers=$headers, data=${data.contentToString()})"
   }
 
   private class NatsMessageImpl2(
     override val subject: String,
     override val sid: String,
     override val replyTo: String?,
-    override val headersBody: HeadersBody,
     override val data: ByteArray,
+    override val headers: NatsHeaders,
   ) : NatsMessage {
     override suspend fun ack() {
     }
-
-    override val headers: NatsHeaders by lazy { headersBody.parse() }
   }
 
   private val msg = MessageImpl()
@@ -152,12 +162,14 @@ class InternalNatsConnection private constructor(
       sid = sid,
       replyTo = replyTo,
       data = data,
-      headersBody = headersBody,
+      headers = NatsHeaders.empty,
     )
   }
 
+  @OptIn(ExperimentalStdlibApi::class)
   private suspend fun parseHMsg(msgText: String): NatsMessageImpl2 {
     val items = msgText.split(' ', limit = 6)
+    println("Nats START LINE: $items")
     var cursor = 1
     val subject = items[cursor++]
     val sid = items[cursor++]
@@ -175,8 +187,9 @@ class InternalNatsConnection private constructor(
     reader.skip(2)
     val body = ByteArray(bodySize)
     reader.readFully(body)
-    val headersBody = HeadersBody(header)
-    val headers = headersBody.parse()
+    val headers = parseHeaders(header)
+
+
     val data = body
     reader.skip(2)
 
@@ -185,7 +198,7 @@ class InternalNatsConnection private constructor(
       sid = sid,
       replyTo = replyTo,
       data = data,
-      headersBody = headersBody,
+      headers = headers,
     )
   }
 
