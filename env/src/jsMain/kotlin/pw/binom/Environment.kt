@@ -14,6 +14,7 @@ actual val Environment.platform: Platform
 
 actual fun Environment.getEnv(name: String): String? = null
 actual fun Environment.getEnvs(): Map<String, String> = emptyMap()
+actual fun Environment.getProperty(name: String): String? = null
 actual val Environment.isBigEndian: Boolean
     get() = true
 actual val Environment.workDirectory: String

@@ -29,6 +29,11 @@ class StrongProperties(
     return this
   }
 
+  fun add(properties: PropertyValue.Object): StrongProperties {
+    this.properties += properties
+    return this
+  }
+
   fun addEnvironment(
     prefix: String = "strong_",
     caseSensitive: Boolean = false,

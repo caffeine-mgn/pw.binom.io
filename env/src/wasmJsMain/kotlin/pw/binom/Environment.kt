@@ -11,6 +11,8 @@ external fun dataNowTime():JsNumber
 actual val Environment.currentTimeMillis: Long
   get() = dataNowTime().toInt().toLong()
 
+actual fun Environment.getProperty(name: String): String? = null
+
 actual val Environment.currentTimeNanoseconds: Long
   get() = (window.performance.now() * 1000000.0).toLong()
 

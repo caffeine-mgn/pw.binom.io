@@ -13,6 +13,8 @@ actual val Environment.availableProcessors: Int
 actual val Environment.os: OS
   get() = internalOs
 
+actual fun Environment.getProperty(name: String): String? = null
+
 @OptIn(ExperimentalNativeApi::class)
 private val internalOs =
   when (KPlatform.osFamily) {

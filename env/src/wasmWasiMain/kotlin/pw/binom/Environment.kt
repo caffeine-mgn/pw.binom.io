@@ -14,5 +14,7 @@ actual val Environment.currentTimeMillis: Long
 actual val Environment.currentTimeNanoseconds: Long
   get() = currentTimeMillis.milliseconds.inWholeNanoseconds
 
+actual fun Environment.getProperty(name: String): String? = null
+
 actual val Environment.currentExecutionPath: String
     get() = ""
