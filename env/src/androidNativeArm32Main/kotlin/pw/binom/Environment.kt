@@ -4,8 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import pw.binom.collections.defaultMutableMap
 
-@OptIn(ExperimentalForeignApi::class)
-actual fun Environment.getEnv(name: String): String? = getenv(name)?.toKString()
+
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun Environment.getEnvs(): Map<String, String> {
