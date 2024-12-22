@@ -32,6 +32,9 @@ actual open class TcpClientNetSocket(override val native: SocketChannel) : TcpCl
     } catch (e: ConnectException) {
       logger.info(method = "connect") { "Can't connect: connection_refused" }
       ConnectStatus.CONNECTION_REFUSED
+    } catch (e: java.net.NoRouteToHostException) {
+      logger.info(method = "connect") { "Can't connect: no route to host" }
+      ConnectStatus.NO_ROUTE_TO_HOST
     }
   }
 

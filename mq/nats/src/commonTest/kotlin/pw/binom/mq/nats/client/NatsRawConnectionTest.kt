@@ -47,7 +47,7 @@ class NatsRawConnectionTest {
     )
   }
 
-  fun connection(func: suspend (NatsConnection) -> Unit) =
+  fun connection(func: suspend (NatsProtoConnection) -> Unit) =
     testing {
       Dispatchers.Network.tcpConnect(InetSocketAddress.resolve("127.0.0.1", TestUtils.NATS_PORT))
         .useAsync { client ->

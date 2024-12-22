@@ -4,7 +4,7 @@ fun ByteArray.find(byte: ByteArray, startIndex: Int = 0, endIndex: Int = size): 
   if (size < byte.size) {
     return -1
   }
-  MAIN_LOOP@ for (i in startIndex..endIndex) {
+  MAIN_LOOP@ for (i in startIndex until endIndex) {
     SEARCH_LOOP@ for (j in 0 until byte.size) {
       if (this[i + j] != byte[j]) {
         break@SEARCH_LOOP

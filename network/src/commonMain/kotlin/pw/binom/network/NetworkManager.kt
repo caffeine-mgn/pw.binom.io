@@ -3,6 +3,8 @@ package pw.binom.network
 import kotlinx.coroutines.CoroutineScope
 import pw.binom.io.IOException
 import pw.binom.io.socket.*
+import pw.binom.network.exceptions.ConnectionRefusedException
+import pw.binom.network.exceptions.NoRouteToHostException
 import kotlin.coroutines.CoroutineContext
 
 interface NetworkManager : CoroutineContext, CoroutineScope {
@@ -50,6 +52,14 @@ suspend fun NetworkManager.tcpConnect(address: InetSocketAddress): TcpConnection
   val connectStatus = channel.connect(address)
   if (connectStatus != ConnectStatus.IN_PROGRESS && connectStatus != ConnectStatus.OK) {
     channel.close()
+
+    when (connectStatus) {
+      ConnectStatus.OK -> {}
+      ConnectStatus.CONNECTION_REFUSED -> throw ConnectionRefusedException()
+      ConnectStatus.NO_ROUTE_TO_HOST -> throw NoRouteToHostException()
+      ConnectStatus.ALREADY_CONNECTED -> throw IllegalStateException("Connection already connected")
+      ConnectStatus.IN_PROGRESS -> throw IllegalStateException("Connection already in process")
+    }
     throw SocketConnectException("Invalid connect status: $connectStatus")
   }
   channel.blocking = false

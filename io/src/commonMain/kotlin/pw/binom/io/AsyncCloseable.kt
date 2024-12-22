@@ -1,5 +1,9 @@
 package pw.binom.io
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
 fun interface AsyncCloseable {
   companion object;
 
@@ -14,19 +18,30 @@ fun interface AsyncCloseable {
     }
 }
 
+@OptIn(ExperimentalContracts::class)
 suspend inline fun <T : AsyncCloseable, R> T.useAsync(func: (T) -> R): R {
-  val result =
+  contract {
+    callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+  }
+  var exception: Throwable? = null
+  return try {
+    return func(this)
+  } catch (e: Throwable) {
+    exception = e
+    throw e
+  } finally {
+    this.closeFinally(exception)
+  }
+}
+
+@PublishedApi
+internal suspend fun AsyncCloseable?.closeFinally(cause: Throwable?): Unit = when {
+  this == null -> {}
+  cause == null -> asyncClose()
+  else ->
     try {
-      func(this)
-    } catch (funcException: Throwable) {
-      try {
-        asyncClose()
-      } catch (closeException: Throwable) {
-        closeException.addSuppressed(funcException)
-        throw closeException
-      }
-      throw funcException
+      asyncClose()
+    } catch (closeException: Throwable) {
+      cause.addSuppressed(closeException)
     }
-  asyncClose()
-  return result
 }

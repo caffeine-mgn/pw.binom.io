@@ -1,5 +1,9 @@
 package pw.binom.io
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
 fun interface Closeable {
   fun close()
   fun closeAnyway() = try {
@@ -109,7 +113,11 @@ private inline fun tryClose(root: Throwable?, closeable: Closeable?): Throwable?
 private inline fun appendException(root: Throwable?, e: Throwable): Throwable =
   (root ?: RuntimeException("Can't close all closable elements")).apply { addSuppressed(e) }
 
+@OptIn(ExperimentalContracts::class)
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
+  contract {
+    callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+  }
   var exception: Throwable? = null
   try {
     return func(this)

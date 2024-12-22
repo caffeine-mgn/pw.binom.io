@@ -2,6 +2,7 @@ package pw.binom.http.rest.serialization
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
@@ -44,7 +45,13 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
   override fun decodeBooleanElement(
     descriptor: SerialDescriptor,
     index: Int,
-  ): Boolean = readString(index).toBoolean()
+  ): Boolean {
+    val description = description!!
+    if (description.bodyIndex == index) {
+      return body!!.decode(serializer = Boolean.serializer(), data = data, input = input!!) as Boolean
+    }
+    TODO()
+  }
 
   override fun decodeByteElement(
     descriptor: SerialDescriptor,
@@ -153,6 +160,9 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     }
     if (description.responseCodeIndex == index) {
       return responseCode.toString()
+    }
+    if (description.bodyIndex == index) {
+      return body?.decode(serializer = String.serializer(), data = data, input = input!!) as String
     }
     TODO(
       "Unknown type. Index: $index: description.bodyIndex=${description.bodyIndex}, name: ${description.serializer.descriptor.serialName}",

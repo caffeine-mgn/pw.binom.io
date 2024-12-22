@@ -7,10 +7,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.coroutines.SimpleAsyncLock
 import pw.binom.io.*
 import pw.binom.io.socket.DomainSocketAddress
-import pw.binom.io.socket.InetSocketAddress
-import pw.binom.io.socket.SocketAddress
 import pw.binom.mq.nats.client.dto.ConnectRequestDto
-import pw.binom.mq.nats.find
 import pw.binom.mq.nats.parseHeaders
 import pw.binom.network.SocketClosedException
 
@@ -20,7 +17,7 @@ class InternalNatsConnection private constructor(
   private val reader: AsyncBufferedAsciiInputReader,
   private val channel: AsyncChannel,
   private val headerEnabled: Boolean,
-) : NatsConnection {
+) : NatsProtoConnection {
   companion object {
     private fun parseInfoMsg(msg: String): ConnectInfo {
       if (!msg.startsWith("INFO ")) {
@@ -115,7 +112,7 @@ class InternalNatsConnection private constructor(
 
   private class MessageImpl : NatsMessage {
     override var subject: String = ""
-    override var sid: String = ""
+    override var subscribeId: String = ""
     override var replyTo: String? = null
     override var data: ByteArray = ByteArray(0)
     override var headers = NatsHeaders.empty
@@ -124,12 +121,12 @@ class InternalNatsConnection private constructor(
     }
 
     override fun toString() =
-      "Message(subject='$subject', sid='$sid', replyTo=$replyTo, headers=$headers, data=${data.contentToString()})"
+      "Message(subject='$subject', sid='$subscribeId', replyTo=$replyTo, headers=$headers, data=${data.contentToString()})"
   }
 
   private class NatsMessageImpl2(
     override val subject: String,
-    override val sid: String,
+    override val subscribeId: String,
     override val replyTo: String?,
     override val data: ByteArray,
     override val headers: NatsHeaders,
@@ -159,7 +156,7 @@ class InternalNatsConnection private constructor(
     val headersBody = HeadersBody.empty
     return NatsMessageImpl2(
       subject = subject,
-      sid = sid,
+      subscribeId = sid,
       replyTo = replyTo,
       data = data,
       headers = NatsHeaders.empty,
@@ -195,7 +192,7 @@ class InternalNatsConnection private constructor(
 
     return NatsMessageImpl2(
       subject = subject,
-      sid = sid,
+      subscribeId = sid,
       replyTo = replyTo,
       data = data,
       headers = headers,
@@ -300,11 +297,11 @@ class InternalNatsConnection private constructor(
   }
 
   override suspend fun unsubscribe(
-    id: String,
+    subscribeId: String,
     afterMessages: Int,
   ) {
     writeLock.synchronize {
-      writer.append("UNSUB ").append(id)
+      writer.append("UNSUB ").append(subscribeId)
       if (afterMessages > 0) {
         writer.append(" ").append(afterMessages.toString())
       }

@@ -6,7 +6,6 @@ import kotlinx.serialization.json.*
 // import pw.binom.BINOM_VERSION
 import pw.binom.io.*
 import pw.binom.io.socket.DomainSocketAddress
-import pw.binom.io.socket.InetSocketAddress
 import pw.binom.network.SocketClosedException
 
 class NatsRawConnection(
@@ -17,7 +16,7 @@ class NatsRawConnection(
   AsyncCloseable {
   private inner class MessageImpl : NatsMessage {
     override var subject: String = ""
-    override var sid: String = ""
+    override var subscribeId: String = ""
     override var replyTo: String? = null
     override var data: ByteArray = ByteArray(0)
     override var headers = NatsHeaders.empty
@@ -108,7 +107,7 @@ class NatsRawConnection(
               items[3].toInt()
             }
           msg.subject = items[1]
-          msg.sid = items[2]
+          msg.subscribeId = items[2]
           msg.replyTo =
             if (items.size == 5) {
               items[3]

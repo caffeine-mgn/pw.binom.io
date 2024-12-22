@@ -5,7 +5,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.io.socket.DomainSocketAddress
 import pw.binom.io.socket.SocketAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException
@@ -25,7 +24,7 @@ internal class NatsConnectorImpl(
     val attemptCount: Int = 3,
     var networkDispatcher: NetworkManager,
     serverList: List<SocketAddress>,
-) : NatsConnection {
+) : NatsProtoConnection {
   init {
     require(serverList.isNotEmpty()) { "Server list is empty" }
     require(attemptCount >= 1) { "attemptCount should be more than 0" }
@@ -80,7 +79,7 @@ internal class NatsConnectorImpl(
   }
 
   override suspend fun unsubscribe(
-    id: String,
+    subscribeId: String,
     afterMessages: Int,
   ) {
     TODO("Not yet implemented")

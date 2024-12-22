@@ -12,13 +12,12 @@ import pw.binom.uuid.nextUuid
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.random.Random
 
 class NatsReader
 @OptIn(DelicateCoroutinesApi::class)
 private constructor(
-  val connection: NatsConnection,
+  val connection: NatsProtoConnection,
   private val incomeListener: IncomeMessage,
   private val scope: CoroutineScope = GlobalScope,
   private val context: CoroutineContext = EmptyCoroutineContext,
@@ -41,7 +40,13 @@ private constructor(
   private val job =
     scope.launch(context) {
       while (isActive) {
-        val msg = connection.readMessage()
+        val msg = try {
+          connection.readMessage()
+        } catch (e: Throwable) {
+          println("Nats connection closed! ${e::class}")
+          e.printStackTrace()
+          throw e
+        }
         if (msg.subject.startsWith(oneShotSubjectPrefix)) {
           val con = oneShotWatersLock.synchronize { subscribeWaiters.remove(msg.subject) }
           if (con != null) {
@@ -49,8 +54,8 @@ private constructor(
             continue
           }
         }
-        if (msg.sid.startsWith(subscribeSubjectPrefix)) {
-          val listener = subscribeWatersLock.synchronize { listeners[msg.sid] }
+        if (msg.subscribeId.startsWith(subscribeSubjectPrefix)) {
+          val listener = subscribeWatersLock.synchronize { listeners[msg.subscribeId] }
           if (listener != null) {
             scope.launch(context) {
               listener.income(msg)
@@ -77,7 +82,7 @@ private constructor(
       subscribeId = subscribeId,
     )
     return AsyncCloseable {
-      connection.unsubscribe(id = subscribeId)
+      connection.unsubscribe(subscribeId = subscribeId)
     }
   }
 
@@ -117,14 +122,14 @@ private constructor(
     return r
   }
 
-  internal suspend inline fun sendAndReceive(crossinline func: suspend (NatsConnection, String) -> Unit): NatsMessage {
+  internal suspend inline fun sendAndReceive(crossinline func: suspend (NatsProtoConnection, String) -> Unit): NatsMessage {
     val responseSubject = oneShotSubjectPrefix + Random.nextUuid().toString()
     val subscribeId = "subscribe-" + Random.nextUuid().toString()
     connection.subscribe(
       subscribeId = subscribeId,
       subject = responseSubject,
     )
-    connection.unsubscribe(id = subscribeId, afterMessages = 1)
+    connection.unsubscribe(subscribeId = subscribeId, afterMessages = 1)
     func(connection, responseSubject)
     return waitMessage(responseSubject)
   }
@@ -165,7 +170,7 @@ private constructor(
   companion object {
     @OptIn(DelicateCoroutinesApi::class)
     fun start(
-      con: NatsConnection,
+      con: NatsProtoConnection,
       scope: CoroutineScope = GlobalScope,
       context: CoroutineContext = EmptyCoroutineContext,
       incomeListener: IncomeMessage = IncomeMessage.stub,
