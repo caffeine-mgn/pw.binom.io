@@ -173,8 +173,14 @@ class SQLDecoderImpl(val ctx: SQLDecoderPool, val onClose: (SQLDecoderImpl) -> U
 
   @ExperimentalSerializationApi
   override fun decodeInline(inlineDescriptor: SerialDescriptor): Decoder {
+//    val decoder =
+//      ctx.decoderStruct(
+//        prefix = name,
+//        input = input,
+//        serializersModule = serializersModule,
+//      )
     onClose(this)
-    TODO("Not yet implemented")
+    return this
   }
 
   override fun decodeInt(): Int {

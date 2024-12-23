@@ -13,9 +13,10 @@ import pw.binom.network.SocketClosedException
 
 class InternalNatsConnection private constructor(
   override val config: ConnectInfo,
-  private val writer: AsyncBufferedAsciiWriter,
-  private val reader: AsyncBufferedAsciiInputReader,
-  private val channel: AsyncChannel,
+  private val channel: AsyncChannelPair<AsyncBufferedAsciiInputReader, AsyncBufferedAsciiWriter>,
+//  private val writer: AsyncBufferedAsciiWriter,
+//  private val reader: AsyncBufferedAsciiInputReader,
+//  private val channel: AsyncChannel,
   private val headerEnabled: Boolean,
 ) : NatsProtoConnection {
   companion object {
@@ -50,7 +51,7 @@ class InternalNatsConnection private constructor(
     }
 
     suspend fun connect(
-      channel: AsyncChannel,
+      channel: AsyncChannelPair<AsyncInput, AsyncOutput>,
       clientName: String? = null,
       lang: String = "kotlin",
       echo: Boolean = true,
@@ -61,8 +62,12 @@ class InternalNatsConnection private constructor(
       readBufferSize: Int = DEFAULT_BUFFER_SIZE,
       writeBufferSize: Int = DEFAULT_BUFFER_SIZE,
     ): InternalNatsConnection {
-      val writer = channel.bufferedAsciiWriter(bufferSize = writeBufferSize, closeParent = false)
-      val reader = channel.bufferedAsciiReader(bufferSize = readBufferSize, closeParent = false)
+      val bufferedChannel = channel.buffered(
+        readBufferSize = readBufferSize,
+        writeBufferSize = writeBufferSize,
+      )
+//      val writer = channel.bufferedAsciiWriter(bufferSize = writeBufferSize, closeParent = false)
+//      val reader = channel.bufferedAsciiReader(bufferSize = readBufferSize, closeParent = false)
       val connectRequest =
         ConnectRequestDto(
           lang = lang,
@@ -77,23 +82,23 @@ class InternalNatsConnection private constructor(
           echo = echo,
         )
       try {
-        writer.append("CONNECT ")
+        bufferedChannel.output.append("CONNECT ")
           .append(Json.encodeToString(ConnectRequestDto.serializer(), connectRequest))
           .append("\r\n")
 
-        writer.flush()
-        val connectMsg = reader.readln() ?: throw IOException("Can't connect to Nats")
+        bufferedChannel.output.flush()
+        val connectMsg = bufferedChannel.input.readln() ?: throw IOException("Can't connect to Nats")
         val info = parseInfoMsg(connectMsg)
         return InternalNatsConnection(
           config = info,
-          writer = writer,
-          reader = reader,
-          channel = channel,
+          channel = bufferedChannel,
+//          writer = writer,
+//          reader = reader,
+//          channel = channel,
           headerEnabled = headers,
         )
       } catch (e: Throwable) {
-        writer.asyncCloseAnyway()
-        reader.asyncCloseAnyway()
+        bufferedChannel.asyncCloseAnyway()
         throw e
       }
     }
@@ -109,6 +114,9 @@ class InternalNatsConnection private constructor(
     private const val LF: Byte = 0x0a
     private val LINE_END = byteArrayOf(0x0d, 0x0a)
   }
+
+  private val reader = channel.input
+  private val writer = channel.output
 
   private class MessageImpl : NatsMessage {
     override var subject: String = ""

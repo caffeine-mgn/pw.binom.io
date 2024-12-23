@@ -1,9 +1,13 @@
 package pw.binom.mq.nats
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
+import pw.binom.io.AsyncChannelPair
+import pw.binom.io.AsyncInput
+import pw.binom.io.AsyncOutput
 import pw.binom.io.socket.SocketAddress
 import pw.binom.mq.MqConnection
 import pw.binom.mq.nats.client.Auth
@@ -15,8 +19,9 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun MqConnection.Companion.nats(
-  channel: AsyncChannel,
+  channel: AsyncChannelPair<AsyncInput, AsyncOutput>,
   clientName: String? = null,
   lang: String = "kotlin",
   echo: Boolean = true,
@@ -51,6 +56,7 @@ suspend fun MqConnection.Companion.nats(
   return NatsMqConnectionImpl(reader)
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun MqConnection.Companion.nats(
   address: SocketAddress,
   clientName: String? = null,

@@ -159,7 +159,7 @@ actual class File actual constructor(path: String) {
   }
 
   actual fun createSymbolicLink(to: File) {
-    Files.createSymbolicLink(toPath, to.toPath)
+    Files.createSymbolicLink(to.toPath, toPath)
   }
 
   val toPath

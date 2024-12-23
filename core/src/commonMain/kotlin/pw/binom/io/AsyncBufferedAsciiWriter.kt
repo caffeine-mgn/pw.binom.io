@@ -1,14 +1,7 @@
 package pw.binom.io
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import pw.binom.ByteBufferPool
-import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.InternalLog
+import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 abstract class AbstractAsyncBufferedAsciiWriter(
   val closeParent: Boolean,
@@ -49,6 +42,49 @@ abstract class AbstractAsyncBufferedAsciiWriter(
 
   override val outputBufferSize: Int
     get() = buffer.capacity
+
+  protected suspend fun ensureRemaining(size: Int) {
+    if (buffer.remaining < size) {
+      flush()
+    }
+  }
+
+  override suspend fun writeInt(value: Int) {
+    ensureRemaining(Int.SIZE_BYTES)
+    buffer.writeInt(value)
+  }
+
+  override suspend fun writeLong(value: Long) {
+    ensureRemaining(Long.SIZE_BYTES)
+    buffer.writeLong(value)
+  }
+
+  override suspend fun writeByte(value: Byte) {
+    ensureRemaining(Byte.SIZE_BYTES)
+    buffer.put(value)
+  }
+
+  override suspend fun writeShort(value: Short) {
+    ensureRemaining(Short.SIZE_BYTES)
+    buffer.writeShort(value)
+  }
+
+  override suspend fun writeByteArray(value: ByteArray) {
+    if (buffer.capacity >= value.size) {
+      ensureRemaining(value.size)
+      buffer.write(value)
+    } else {
+      var cursor = 0
+      while (cursor < value.size) {
+        internalFlush()
+        val len = buffer.write(offset = cursor, data = value)
+        if (len <= 0) {
+          throw ClosedException("Buffer was closed")
+        }
+        cursor += len
+      }
+    }
+  }
 
   suspend fun write(
     data: ByteArray,
@@ -197,4 +233,20 @@ fun AsyncOutput.bufferedAsciiWriter(
   output = this,
   bufferSize = bufferSize,
   closeParent = closeParent,
+)
+
+fun AsyncChannelPair<*, *>.buffered(
+  readBufferSize: Int = DEFAULT_BUFFER_SIZE,
+  writeBufferSize: Int = DEFAULT_BUFFER_SIZE,
+) = AsyncChannelPair.create(
+  input = input.bufferedAsciiReader(bufferSize = readBufferSize),
+  output = output.bufferedAsciiWriter(bufferSize = writeBufferSize),
+)
+
+
+fun AsyncChannelPair<*, *>.buffered(
+  bufferSize: Int,
+) = AsyncChannelPair.create(
+  input = input.bufferedAsciiReader(bufferSize = bufferSize),
+  output = output.bufferedAsciiWriter(bufferSize = bufferSize),
 )

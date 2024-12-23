@@ -8,10 +8,7 @@ import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.executeAndResumeWithException
-import pw.binom.io.AsyncChannel
-import pw.binom.io.ByteBuffer
-import pw.binom.io.ClosedException
-import pw.binom.io.DataTransferSize
+import pw.binom.io.*
 import pw.binom.io.socket.*
 import pw.binom.resumeOnException
 import kotlin.coroutines.resume
@@ -26,7 +23,12 @@ import kotlin.time.measureTime
 class TcpConnection(
   val channel: TcpClientSocket,
   private val currentKey: SelectorKey,
-) : AbstractConnection(), AsyncChannel {
+) : AbstractConnection(), AsyncChannel, AsyncChannelPair<AsyncInput, AsyncOutput> {
+
+  override val input: AsyncInput
+    get() = this
+  override val output: AsyncOutput
+    get() = this
 
   private var writeWater: CancellableContinuation<Boolean>? = null
   private var readWater: CancellableContinuation<Boolean>? = null

@@ -50,7 +50,8 @@ class HttpInputDecoder : Decoder, CompositeDecoder {
     if (description.bodyIndex == index) {
       return body!!.decode(serializer = Boolean.serializer(), data = data, input = input!!) as Boolean
     }
-    TODO()
+    val str = readString(index)
+    return str=="true"
   }
 
   override fun decodeByteElement(
