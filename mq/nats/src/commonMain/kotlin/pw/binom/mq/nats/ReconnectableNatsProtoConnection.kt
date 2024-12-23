@@ -119,6 +119,10 @@ class ReconnectableNatsProtoConnection(
     }
   }
 
+  suspend fun waitActiveConnection(){
+    getConnection()
+  }
+
   private val subscriptions = HashMap<String, Subscription>()
   private val subscriptionsWaiting = HashMap<String, Subscription>()
   private val subscriptionsLock = SimpleAsyncLock()

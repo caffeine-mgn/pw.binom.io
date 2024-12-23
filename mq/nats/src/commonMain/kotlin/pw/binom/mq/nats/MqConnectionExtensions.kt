@@ -88,6 +88,7 @@ suspend fun MqConnection.Companion.nats(
       reconnectDelayConfig = { reconnectDelay },
       networkManager = networkManager,
     )
+  connection.waitActiveConnection()
   val reader =
     NatsReader.start(
       con = connection,
