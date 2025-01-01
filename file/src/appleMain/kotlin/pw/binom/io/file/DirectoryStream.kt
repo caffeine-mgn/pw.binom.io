@@ -1,5 +1,6 @@
 package pw.binom.io.file
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.toKString
 import platform.posix.closedir
@@ -10,6 +11,7 @@ import pw.binom.io.IOException
 import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.internal.createCleaner
 
+@OptIn(ExperimentalForeignApi::class)
 actual class DirectoryStream internal actual constructor(private val path: File) : Iterator<File> {
 
     init {
