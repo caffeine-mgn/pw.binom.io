@@ -34,7 +34,7 @@ actual value class DateTime(val milliseconds: Long) {
       get() =
         memScoped {
           val ff = alloc<timespec>()
-          clock_gettime(CLOCK_REALTIME, ff.ptr)
+          clock_gettime(CLOCK_REALTIME.convert(), ff.ptr)
           ff.tv_sec * 1000L + ff.tv_nsec / 1000000L
         }
 
