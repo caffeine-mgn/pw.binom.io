@@ -6,6 +6,7 @@ import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
+import org.gradle.util.internal.VersionNumber
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -78,7 +79,7 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         project.propertyOrNull("pw.binom.openssl-dir")?.let { File(it) }
       }
 
-    val config = KonanVersion.findVersion(Version(Versions.KOTLIN_VERSION))!!
+    val config = KonanVersion.findVersion(VersionNumber.parse(Versions.KOTLIN_VERSION))!!
     val compiler = config.getCppCompiler(target.get()) as CLang
     val linker = config.getLinked(target.get()) as CLangLinker
 
