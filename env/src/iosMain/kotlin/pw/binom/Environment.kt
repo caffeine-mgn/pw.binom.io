@@ -3,8 +3,8 @@
 package pw.binom
 
 import kotlinx.cinterop.*
-import platform.osx.*
 import platform.posix.*
+import platform.env.common.*
 import pw.binom.collections.defaultMutableMap
 
 /**
@@ -19,20 +19,17 @@ return
 : UNKNOWN_ENDIAN;
 }
  */
-
 //@OptIn(ExperimentalForeignApi::class)
 //actual fun Environment.getEnvs(): Map<String, String> {
-//    val out = defaultMutableMap<String, String>()
-//    var i = 0
-//    val envs = _NSGetEnviron()
-//    while (true) {
-//        val line = (envs!!.get(i++) ?: break).pointed.value!!.toKString()
-//        val items = line.split('=', limit = 2)
-//        out[items[0]] = items[1]
-//    }
-//    return out
+//  val out = defaultMutableMap<String, String>()
+//  var i = 0
+//  while (true) {
+//    val line = internal_getEnvs()?.get(i++)?.toKString() ?: break
+//    val items = line.split('=', limit = 2)
+//    out[items[0]] = items[1]
+//  }
+//  return out
 //}
-
 //actual val Environment.workDirectory: String
 //    get() {
 //        val data = getcwd(null, 0.convert()) ?: TODO()
@@ -67,13 +64,5 @@ return
 
 //actual val Environment.currentExecutionPath: String
 //    get() = TODO()
-//        memScoped {
-//            _NSGetProgname()?.toK?:throw RuntimeException("Can't get current execution path. Error #$errno")
-//            val result = allocArray<ByteVar>(PATH_MAX)!!
-//            _NSGetProgname()
-//            val len = _NSGetExecutablePath(null, result, PATH_MAX.convert()).convert<Int>()
-//            if (len == 0) {
-//                throw RuntimeException("Can't get current execution path. Error #$errno")
-//            }
-//            result.toKString()
-//        }
+
+
