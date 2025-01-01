@@ -1,7 +1,6 @@
 package pw.binom.charset
 
 import kotlinx.cinterop.*
-import platform.binomiconv.*
 import platform.posix.EBADF
 import platform.posix.errno
 import platform.posix.set_posix_errno
