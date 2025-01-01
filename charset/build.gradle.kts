@@ -27,9 +27,9 @@ kotlin {
     config()
   }
   eachNative {
-    if (konanTarget.family==Family.LINUX || konanTarget.family==Family.ANDROID || konanTarget.family==Family.MINGW) {
+//    if (konanTarget.family==Family.LINUX || konanTarget.family==Family.ANDROID || konanTarget.family==Family.MINGW) {
       useIconvUtils()
-    }
+//    }
   }
   applyDefaultHierarchyBinomTemplate()
 

@@ -4,6 +4,8 @@ import kotlinx.cinterop.*
 import platform.iconv.iconv
 import platform.iconv.iconv_close
 import platform.iconv.iconv_open
+import platform.binomiconv.*
+import kotlinx.cinterop.*
 import platform.posix.size_tVar
 
 
@@ -18,7 +20,7 @@ actual object Iconv {
     inbytesleft: CValuesRef<LongVarOf<Long>>?,
     outbuf: CValuesRef<CPointerVarOf<CPointer<out CPointed>>>?,
     outbytesleft: CValuesRef<LongVarOf<Long>>?,
-  ): Long = binom_iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft)
+  ): Long = binom_iconv(cd?.reinterpret(), inbuf, inbytesleft, outbuf, outbytesleft).convert()
 
   actual fun close(__cd: CPointer<out CPointed>?): Int = iconv_close(__cd)
 }
