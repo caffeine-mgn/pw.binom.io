@@ -20,12 +20,12 @@ internal class Resource(fromCharset: String, toCharset: String) {
 
   init {
     set_posix_errno(0)
-    val r = Iconv.iconv1(
+    val r = Iconv.iconv2(
       iconvHandle,
       null,
       null,
       outputPointer.ptr.reinterpret(),
-      outputAvail.ptr,
+      outputAvail.ptr.reinterpret(),
     ).toInt()
     if (r == -1 && errno == EBADF) {
       throw IllegalArgumentException("Charset not supported")

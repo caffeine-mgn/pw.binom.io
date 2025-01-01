@@ -57,14 +57,14 @@ abstract class AbstractIconv(
 
           val beforeIn = resource.inputAvail.value.toInt()
           val beforeOut = resource.outputAvail.value.toInt()
-          val r = Iconv.iconv1(
+          val r = Iconv.iconv2(
             resource.iconvHandle,
 
             resource.inputPointer.ptr.reinterpret(),
-            resource.inputAvail.ptr,
+            resource.inputAvail.ptr.reinterpret(),
 
             resource.outputPointer.ptr.reinterpret(),
-            resource.outputAvail.ptr,
+            resource.outputAvail.ptr.reinterpret(),
           ).toInt()
           val readed = beforeIn - resource.inputAvail.value.toInt()
           val writed = beforeOut - resource.outputAvail.value.toInt()
