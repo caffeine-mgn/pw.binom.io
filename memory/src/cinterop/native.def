@@ -1,10 +1,24 @@
 ---
-void internal_memset(const signed char*ptr, long long int size, signed char value){
+#ifdef __APPLE__
+#include <string.h>
+#include <stdlib.h>
+#endif
+
+void internal_memset(const signed char* ptr, long long int size, signed char value){
+#ifdef __APPLE__
+    memset((void*)ptr, value, size);
+#else
     memset(ptr, value, size);
+#endif
 }
 
 signed char* internal_alloc(long long int size){
-    return malloc(size);
+#ifdef __APPLE__
+return malloc((size_t)size);
+#else
+return malloc(size);
+#endif
+
 }
 
 void internal_free(signed char* ptr){
