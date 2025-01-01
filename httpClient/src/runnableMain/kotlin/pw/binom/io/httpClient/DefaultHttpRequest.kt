@@ -2,16 +2,7 @@ package pw.binom.io.httpClient
 
 // import pw.binom.BINOM_VERSION
 import pw.binom.Environment
-import pw.binom.charset.Charsets
-import pw.binom.crypto.Sha1MessageDigest
-import pw.binom.io.AsyncChannel
-import pw.binom.io.IOException
-import pw.binom.io.http.*
-import pw.binom.io.http.websocket.HandshakeSecret
-import pw.binom.io.http.websocket.InvalidSecurityKeyException
-import pw.binom.io.http.websocket.WebSocketConnection
 import pw.binom.os
-import pw.binom.url.URL
 
 private val defaultUserAgent =
     "binom-kotlin-${KotlinVersion.CURRENT} os/${Environment.os.name.lowercase()}"

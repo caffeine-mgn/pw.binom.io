@@ -1,16 +1,5 @@
 package pw.binom.io.httpClient
 
-import pw.binom.ByteBufferPool
-import pw.binom.charset.Charsets
-import pw.binom.compression.zlib.AsyncGZIPInput
-import pw.binom.compression.zlib.AsyncInflateInput
-import pw.binom.io.*
-import pw.binom.io.http.AsyncAsciiChannel
-import pw.binom.io.http.Encoding
-import pw.binom.io.http.HashHeaders
-import pw.binom.io.http.Headers
-import pw.binom.io.httpClient.protocol.v11.Http11ConnectFactory2
-import pw.binom.url.URL
 /*
 class DefaultHttpResponse(
     val URI: URL,
