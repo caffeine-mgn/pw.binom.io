@@ -1,0 +1,8 @@
+---
+//#if (__APPLE__)
+extern char **environ;
+//#endif
+
+char** internal_getEnvs(){
+    return environ;
+}
