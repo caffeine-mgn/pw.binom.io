@@ -3,7 +3,6 @@ headers = all.h
 headerFilter = *
 ---
 
-
 int getInternalError() {
 #ifdef WINDOWS_TARGET
     return GetLastError();

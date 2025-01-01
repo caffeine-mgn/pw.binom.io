@@ -1,5 +1,6 @@
 
 ---
+#define _GNU_SOURCE
 #include <unistd.h>
 
 int internal_pipe2(int pipefd[2], int flags){

@@ -4,7 +4,7 @@ headers = iconv.h
 headerFilter = NOTHING
 linkerOpts = -liconv
 ---
-//#include <iconv.h>
+#include <iconv.h>
 
 iconv_t binom_iconv_open(const char* tocode, const char* fromcode){
     return iconv_open(tocode, fromcode);
@@ -19,8 +19,9 @@ long long binom_iconv(iconv_t cd,
             void **restrict outbuf, long long *restrict outbytesleft){
             size_t *restrict _inbytesleft;
             size_t *restrict _outbytesleft;
+// line 17
     size_t res = iconv(cd,inbuf,_inbytesleft,outbuf,_outbytesleft);
-    *inbytesleft=_inbytesleft;
-    *outbytesleft=_outbytesleft;
+    *inbytesleft = *_inbytesleft;
+    *outbytesleft = *_outbytesleft;
     return res;
 }

@@ -1,7 +1,11 @@
 ---
-#ifdef __APPLE__
 #include <string.h>
 #include <stdlib.h>
+
+#if (_WIN32)
+#include <winsock.h>
+#else
+#include <arpa/inet.h>
 #endif
 
 void internal_memset(const signed char* ptr, long long int size, signed char value){

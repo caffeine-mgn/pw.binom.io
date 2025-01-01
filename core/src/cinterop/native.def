@@ -4,6 +4,7 @@ linkerOpts.iosArm64= -lpthread
 #include <processthreadsapi.h>
 #else
 #include <pthread.h>
+#include <sched.h>
 #endif
 
 #ifdef __APPLE__
@@ -16,6 +17,7 @@ void internal_core_thread_yield(){
 #elif defined(TARGET_OS_IPHONE) || defined(TARGET_OS_IPHONE_SIMULATOR)
     pthread_yield_np();
 #else
-    pthread_yield();
+    sched_yield();
+    //pthread_yield();
 #endif
 }

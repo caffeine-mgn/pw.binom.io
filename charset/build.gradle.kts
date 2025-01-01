@@ -13,11 +13,12 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 
 fun KotlinNativeTarget.useIconvUtils() {
-  println("Apply iconv native for ${this.konanTarget} ${this.compileTaskName}")
-  compilations["main"].cinterops {
-    create("binomIconv") {
-      definitionFile.set(project.file("src/cinterop/common.def"))
+  if (this.konanTarget.family!=Family.ANDROID) {
+    compilations["main"].cinterops {
+      create("binomIconv") {
+        definitionFile.set(project.file("src/cinterop/common.def"))
 //      packageName = "platform.binomiconv"
+      }
     }
   }
 }
@@ -52,12 +53,12 @@ kotlin {
     mingwMain {
       dependsOn(nativeIconvMain)
     }
-//    androidNativeMain {
-//      dependsOn(nativeIconvMain)
-//    }
-//    appleMain {
-//      dependsOn(nativeIconvMain)
-//    }
+    appleMain {
+      dependsOn(nativeIconvMain)
+    }
+    androidNativeMain {
+      dependsOn(otherMain)
+    }
 //    dependsOn("wasm*Main", otherMain)
 
 //    val jvmLikeMain by creating {

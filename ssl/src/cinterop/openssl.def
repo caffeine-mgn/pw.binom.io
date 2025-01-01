@@ -1,6 +1,6 @@
 headers = openssl/ssl.h openssl/err.h openssl/evp.h internal/sha3.h keccak/sha3.h
 headerFilter = openssl/** internal/** keccak/**
-linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
+#linkerOpts.mingw_x86 = -lwsock32 -lws2_32 -lcrypt32
 linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -lcrypt32
 ---
 
@@ -84,7 +84,8 @@ long internal_BIO_do_accept(BIO *bp){
 }
 
 BIO* internal_BIO_new_fp(int fd){
-    return BIO_new_fp(fd, BIO_NOCLOSE);
+// line 87
+    return BIO_new_fp((FILE*)fd, BIO_NOCLOSE);
 }
 
 long internal_BIO_set_conn_hostname(BIO*bp, char* host){

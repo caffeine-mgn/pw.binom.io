@@ -1,5 +1,5 @@
 ---
-
+#define _GNU_SOURCE
 #ifndef NATIVE_DEFINITION_H
 #define NATIVE_DEFINITION_H
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
@@ -70,7 +70,8 @@ void internal_thread_yield(){
 #elif defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
     pthread_yield_np();
 #else
-    pthread_yield();
+//    pthread_yield();
+    sched_yield();
 #endif
 }
 
@@ -91,7 +92,8 @@ struct ThreadData {
 #endif
 
 struct ThreadData* internal_createThreadData() {
-    auto result = (struct ThreadData*) malloc(sizeof(struct ThreadData));
+// line 93
+    struct ThreadData* result = (struct ThreadData*) malloc((int)sizeof(struct ThreadData));
 //    result->id = CAST_THREAD_ID(0);
     return result;
 }
@@ -105,7 +107,11 @@ int internal_setThreadName2(struct ThreadData* threadData, const char *name){
     // TODO FIX for macos
     return 1;
 #else
-    return pthread_setname_np(threadData->id, name);
+    #ifdef WINDOWS_TARGET
+        return pthread_setname_np((pthread_t)threadData->id, name);
+    #else
+        return pthread_setname_np(threadData->id, name);
+    #endif
 #endif
 }
 
@@ -126,7 +132,7 @@ int internal_pthread_create(struct ThreadData* threadData,
                           void *(*start_routine)(void *),
                           void *restrict arg){
 #ifdef WINDOWS_TARGET
-    threadData->id = CreateThread(NULL, 0, start_routine, arg, 0, NULL);
+    threadData->id = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)start_routine, arg, 0, NULL);
 #else
     return pthread_create(
         &threadData->id,

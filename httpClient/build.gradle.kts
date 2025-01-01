@@ -11,6 +11,8 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
     -"wasmWasi"
+    -"wasmJs"
+//    -"wasm"
     config()
   }
   applyDefaultHierarchyBinomTemplate()
@@ -24,7 +26,12 @@ kotlin {
         api(project(":compression"))
       }
     }
-
+    jsMain.dependencies {
+//      api(kotlin("dom-api-compat"))
+    }
+    wasmJsMain.dependencies {
+//      api(kotlin("dom-api-compat"))
+    }
     commonTest.dependencies {
       api(project(":coroutines"))
       api(project(":testing"))
@@ -62,11 +69,11 @@ tasks {
       args = listOf(),
       suffix = "WebDav",
       envs =
-      mapOf(
-        "USERNAME" to "root",
-        "PASSWORD" to "root",
-        "TZ" to "GMT",
-      ),
+        mapOf(
+          "USERNAME" to "root",
+          "PASSWORD" to "root",
+          "TZ" to "GMT",
+        ),
     )
 
   eachKotlinTest {

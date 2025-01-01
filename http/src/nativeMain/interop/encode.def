@@ -1,4 +1,10 @@
 ---
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#endif
+
 long long internalMessageCoderEncode(signed char* data, int start, int limit, long long cursor, int mask){
     int dataC = start;
     int maskN = htonl(mask);

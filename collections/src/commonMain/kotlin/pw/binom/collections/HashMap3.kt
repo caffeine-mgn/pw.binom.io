@@ -14,8 +14,9 @@ internal fun <E> Array<E>.resetAt(index: Int) {
 internal inline fun <E> arrayOfUninitializedElements(size: Int): Array<E> {
   // TODO: special case for size == 0?
   require(size >= 0) { "capacity must be non-negative." }
-  @Suppress("TYPE_PARAMETER_AS_REIFIED")
-  return arrayOfNulls<E>(size) as Array<E>
+//  @Suppress("TYPE_PARAMETER_AS_REIFIED")
+//  return arrayOfNulls<E>(size) as Array<E>
+  TODO()
 }
 
 internal fun <T> Array<T>.copyOfUninitializedElements(fromIndex: Int, toIndex: Int): Array<T> {

@@ -12,6 +12,7 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets{
     -"wasmWasi"
+    -"wasmJs"
     config()
   }
   applyDefaultHierarchyBinomTemplate()

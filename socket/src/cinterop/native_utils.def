@@ -1,4 +1,3 @@
-
 ---
 
 #include <stdint.h>
@@ -399,8 +398,8 @@ int internal_set_socket_blocked_mode(SOCKET socket, int value){
         }
         return 1;
     #else
-        auto flags = fcntl(socket, F_GETFL, 0);
-        auto newFlags = value ? flags ^ O_NONBLOCK : flags | O_NONBLOCK;
+        int flags = fcntl(socket, F_GETFL, 0);
+        int newFlags = value ? flags ^ O_NONBLOCK : flags | O_NONBLOCK;
 
         if (fcntl(socket, F_SETFL, newFlags) != 0) {
             return 0;

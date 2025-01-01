@@ -22,7 +22,7 @@ actual class Worker actual constructor(name: String?) {
         }
         val r = FreezableFuture<RESULT>()
         val nativeFeature = nativeWorker.execute(TransferMode.SAFE, getFunc(this, input, func, r)) {
-            initRuntimeIfNeeded()
+//            initRuntimeIfNeeded()
             val ff = it.func
             privateCurrentWorker = it.worker
             it.worker._taskCount.inc()

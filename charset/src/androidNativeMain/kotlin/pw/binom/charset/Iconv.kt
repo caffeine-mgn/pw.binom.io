@@ -1,5 +1,5 @@
 package pw.binom.charset
-
+/*
 import kotlinx.cinterop.*
 import platform.binomiconv.binom_iconv
 import platform.binomiconv.binom_iconv_close
@@ -22,3 +22,4 @@ actual object Iconv {
 
   actual fun close(__cd: CPointer<out CPointed>?): Int = binom_iconv_close(__cd?.reinterpret())
 }
+*/

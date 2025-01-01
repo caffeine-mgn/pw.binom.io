@@ -51,6 +51,10 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef WINDOWS_TARGET
+#include <fileapi.h>
+#endif
+
 #ifndef NULL
 #define NULL (void*)0
 #endif
