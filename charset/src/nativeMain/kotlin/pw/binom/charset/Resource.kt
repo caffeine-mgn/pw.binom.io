@@ -12,7 +12,7 @@ internal class Resource(fromCharset: String, toCharset: String) {
 
   //        val key = "$fromCharset..$toCharset"
   @OptIn(ExperimentalForeignApi::class)
-  val iconvHandle = binom_iconv_open(toCharset, fromCharset)
+  val iconvHandle = Iconv.open(toCharset, fromCharset)
 
   val inputAvail = nativeHeap.alloc<size_tVar>()
   val outputAvail = nativeHeap.alloc<size_tVar>()
@@ -21,7 +21,7 @@ internal class Resource(fromCharset: String, toCharset: String) {
 
   init {
     set_posix_errno(0)
-    val r = binom_iconv(
+    val r = Iconv.iconv1(
       iconvHandle,
       null,
       null,
@@ -34,7 +34,7 @@ internal class Resource(fromCharset: String, toCharset: String) {
   }
 
   fun dispose() {
-    binom_iconv_close(iconvHandle)
+    Iconv.close(iconvHandle)
     nativeHeap.free(inputAvail)
     nativeHeap.free(outputAvail)
     nativeHeap.free(outputPointer)

@@ -4,8 +4,8 @@ import pw.binom.CharBuffer
 import pw.binom.io.ByteBuffer
 
 class IncovCharsetEncoder(
-    name: String,
-    onClose: ((AbstractIconv) -> Unit)?,
+  name: String,
+  onClose: ((AbstractIconv) -> Unit)?,
 ) : CharsetEncoder, AbstractIconv(
     fromCharset = NATIVE_CHARSET,
     toCharset = name,
@@ -13,7 +13,7 @@ class IncovCharsetEncoder(
 ) {
 
     init {
-        CharsetMetrics.incEncoder()
+      CharsetMetrics.incEncoder()
     }
 
     override fun encode(input: CharBuffer, output: ByteBuffer): CharsetTransformResult =
@@ -24,6 +24,6 @@ class IncovCharsetEncoder(
 
     override fun free() {
         super.free()
-        CharsetMetrics.decEncoder()
+      CharsetMetrics.decEncoder()
     }
 }

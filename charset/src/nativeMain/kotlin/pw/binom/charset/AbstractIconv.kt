@@ -3,7 +3,6 @@ package pw.binom.charset
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.binomiconv.*
-import platform.binomiconv.*
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException

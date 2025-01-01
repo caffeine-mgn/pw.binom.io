@@ -27,7 +27,9 @@ kotlin {
     config()
   }
   eachNative {
-    useIconvUtils()
+    if (konanTarget.family==Family.LINUX || konanTarget.family==Family.ANDROID || konanTarget.family==Family.MINGW) {
+      useIconvUtils()
+    }
   }
   applyDefaultHierarchyBinomTemplate()
 
@@ -41,8 +43,20 @@ kotlin {
     val otherMain by creating {
       dependsOn(commonMain)
     }
-//    val nativeIconvMain by creating {
-//      dependsOn(commonMain)
+    val nativeIconvMain by creating {
+      dependsOn(commonMain)
+    }
+    linuxMain {
+      dependsOn(nativeIconvMain)
+    }
+    mingwMain {
+      dependsOn(nativeIconvMain)
+    }
+//    androidNativeMain {
+//      dependsOn(nativeIconvMain)
+//    }
+//    appleMain {
+//      dependsOn(nativeIconvMain)
 //    }
 //    dependsOn("wasm*Main", otherMain)
 
