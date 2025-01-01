@@ -2,7 +2,6 @@ package pw.binom.charset
 
 import kotlinx.cinterop.*
 import platform.posix.*
-import platform.binomiconv.*
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
@@ -58,7 +57,7 @@ abstract class AbstractIconv(
 
           val beforeIn = resource.inputAvail.value.toInt()
           val beforeOut = resource.outputAvail.value.toInt()
-          val r = binom_iconv(
+          val r = Iconv.iconv1(
             resource.iconvHandle,
 
             resource.inputPointer.ptr.reinterpret(),
