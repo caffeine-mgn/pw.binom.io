@@ -66,6 +66,7 @@ tasks {
     val headersPath = file("${buildFile.parent}/src/cinterop/include")
     val keccakStaticTask =
       clangBuildStatic(name = "keccak", target = this.konanTarget) {
+        group = "clang"
         konanVersion.set(pw.binom.Versions.KOTLIN_VERSION)
         include(headersPath.resolve("keccak"))
         compileArgs.addAll(listOf("-std=c99", "-O3", "-g"))

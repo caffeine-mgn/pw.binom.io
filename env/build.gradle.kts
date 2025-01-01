@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.Family
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.*
 
 plugins {
@@ -9,23 +12,44 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 
+fun KotlinNativeTarget.useMacUtils() {
+  compilations["main"].cinterops {
+    create("macNative") {
+      definitionFile.set(project.file("src/cinterop/mac.def"))
+      packageName = "platform.env.mac"
+    }
+  }
+}
+
+fun KotlinNativeTarget.usePosixUtils() {
+  compilations["main"].cinterops {
+    create("native") {
+      definitionFile.set(project.file("src/cinterop/common.def"))
+      packageName = "platform.env.common"
+    }
+  }
+}
+
 kotlin {
   allTargets{
     config()
   }
+  eachNative {
+    if (this.konanTarget.family != Family.MINGW){
+      usePosixUtils()
+    }
+    if (this.konanTarget.family.isAppleFamily){
+      useMacUtils()
+    }
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-//        api(kotlin("stdlib"))
-        api(project(":collections"))
-      }
+    commonMain.dependencies {
+      api(project(":collections"))
     }
-    val commonTest by getting {
-      dependencies {
-        api(kotlin("test-common"))
-        api(kotlin("test-annotations-common"))
-      }
+    commonTest.dependencies {
+      api(kotlin("test-common"))
+      api(kotlin("test-annotations-common"))
     }
   }
 }

@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.Family
+import pw.binom.kotlin.clang.compileTaskName
+import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.allTargets
 import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 import pw.binom.publish.dependsOn
@@ -7,11 +11,26 @@ plugins {
   id("maven-publish")
 }
 apply<pw.binom.KotlinConfigPlugin>()
+
+fun KotlinNativeTarget.useIconvUtils() {
+  println("Apply iconv native for ${this.konanTarget} ${this.compileTaskName}")
+  compilations["main"].cinterops {
+    create("binomIconv") {
+      definitionFile.set(project.file("src/cinterop/common.def"))
+//      packageName = "platform.binomiconv"
+    }
+  }
+}
+
 kotlin {
   allTargets {
     config()
   }
+  eachNative {
+    useIconvUtils()
+  }
   applyDefaultHierarchyBinomTemplate()
+
   sourceSets {
     val commonMain by getting {
       dependencies {
@@ -22,10 +41,10 @@ kotlin {
     val otherMain by creating {
       dependsOn(commonMain)
     }
-    val nativeIconvMain by creating {
-      dependsOn(commonMain)
-    }
-    dependsOn("wasm*Main", otherMain)
+//    val nativeIconvMain by creating {
+//      dependsOn(commonMain)
+//    }
+//    dependsOn("wasm*Main", otherMain)
 
 //    val jvmLikeMain by creating {
 //      dependsOn(commonMain)
@@ -37,13 +56,22 @@ kotlin {
     jsMain {
       dependsOn(otherMain)
     }
-    linuxMain {
-      dependsOn(nativeIconvMain)
+//    linuxMain {
+//      dependsOn(nativeIconvMain)
+//    }
+//    mingwMain {
+//      dependsOn(nativeIconvMain)
+//    }
+//    appleMain {
+//      dependsOn(nativeIconvMain)
+//    }
+//    androidNativeMain {
+//      dependsOn(otherMain)
+//    }
+    wasmJsMain {
+      dependsOn(otherMain)
     }
-    mingwMain {
-      dependsOn(nativeIconvMain)
-    }
-    androidNativeMain {
+    wasmWasiMain {
       dependsOn(otherMain)
     }
 

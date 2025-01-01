@@ -30,6 +30,11 @@ kotlin {
       dependsOn(posixMain)
     }
     dependsOn("linux*Main", posixMain)
+//    dependsOn("ios*Main", posixMain)
+//    dependsOn("mac*Main", posixMain)
+    appleMain{
+      dependsOn(posixMain)
+    }
 //    val jvmLikeMain by creating {
 //      dependsOn(commonMain.get())
 //    }

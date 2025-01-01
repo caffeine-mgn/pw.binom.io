@@ -1,9 +1,9 @@
 package pw.binom.charset
 
 import kotlinx.cinterop.*
-import platform.iconv.iconv_close
-import platform.iconv.iconv_open
 import platform.posix.*
+import platform.binomiconv.*
+import platform.binomiconv.*
 import pw.binom.io.Buffer
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
@@ -11,44 +11,12 @@ import pw.binom.io.ClosedException
 /**
  * Abstract Charset convertor. Uses Iconv native library
  */
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 abstract class AbstractIconv(
   fromCharset: String,
   toCharset: String,
   val onClose: ((AbstractIconv) -> Unit)?,
 ) : Closeable {
-
-  internal class Resource(fromCharset: String, toCharset: String) {
-
-    //        val key = "$fromCharset..$toCharset"
-    val iconvHandle = iconv_open(toCharset, fromCharset)
-    val inputAvail = nativeHeap.alloc<size_tVar>()
-    val outputAvail = nativeHeap.alloc<size_tVar>()
-    val outputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
-    val inputPointer = nativeHeap.allocPointerTo<CPointerVar<ByteVar>>()
-
-    init {
-      set_posix_errno(0)
-      val r = platform.iconv.iconv(
-        iconvHandle,
-        null,
-        null,
-        outputPointer.ptr.reinterpret(),
-        outputAvail.ptr,
-      ).toInt()
-      if (r == -1 && errno == EBADF) {
-        throw IllegalArgumentException("Charset not supported")
-      }
-    }
-
-    fun dispose() {
-      iconv_close(iconvHandle)
-      nativeHeap.free(inputAvail)
-      nativeHeap.free(outputAvail)
-      nativeHeap.free(outputPointer)
-      nativeHeap.free(inputPointer)
-    }
-  }
 
   private val resource = Resource(fromCharset, toCharset)
 
@@ -91,7 +59,7 @@ abstract class AbstractIconv(
 
           val beforeIn = resource.inputAvail.value.toInt()
           val beforeOut = resource.outputAvail.value.toInt()
-          val r = platform.iconv.iconv(
+          val r = binom_iconv(
             resource.iconvHandle,
 
             resource.inputPointer.ptr.reinterpret(),
