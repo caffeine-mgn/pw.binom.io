@@ -15,11 +15,19 @@ actual object Iconv {
 
   actual fun iconv2(
     cd: CPointer<out CPointed>?,
-    inbuf: CValuesRef<CPointerVarOf<CPointer<out CPointed>>>?,
+    inbuf: CPointer<COpaquePointerVar>?,
     inbytesleft: CValuesRef<LongVarOf<Long>>?,
-    outbuf: CValuesRef<CPointerVarOf<CPointer<out CPointed>>>?,
+    outbuf: CPointer<COpaquePointerVar>?,
     outbytesleft: CValuesRef<LongVarOf<Long>>?,
-  ): Long = binom_iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft)
+  ): Long {
+
+    println("cd=$cd")
+    println("inbuf=$inbuf inbuf[0]=${inbuf?.get(0)}")
+    println("inbytesleft=$inbytesleft")
+    println("outbuf=$outbuf outbuf[0]=${outbuf?.get(0)}")
+    println("outbytesleft=$outbytesleft")
+    return binom_iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft)
+  }
 
 //  actual fun iconv1(
 //    __cd: CPointer<out CPointed>?,

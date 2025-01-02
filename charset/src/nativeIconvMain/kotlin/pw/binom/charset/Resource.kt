@@ -28,6 +28,7 @@ internal class Resource(fromCharset: String, toCharset: String) {
       outputAvail.ptr.reinterpret(),
     ).toInt()
     if (r == -1 && errno == EBADF) {
+      dispose()
       throw IllegalArgumentException("Charset not supported")
     }
   }

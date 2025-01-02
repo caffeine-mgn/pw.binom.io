@@ -16,9 +16,9 @@ actual object Iconv {
 
   actual fun iconv2(
     cd: CPointer<out CPointed>?,
-    inbuf: CValuesRef<CPointerVarOf<CPointer<out CPointed>>>?,
+    inbuf: CPointer<COpaquePointerVar>?,
     inbytesleft: CValuesRef<LongVarOf<Long>>?,
-    outbuf: CValuesRef<CPointerVarOf<CPointer<out CPointed>>>?,
+    outbuf: CPointer<COpaquePointerVar>?,
     outbytesleft: CValuesRef<LongVarOf<Long>>?,
   ): Long = binom_iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft)
 

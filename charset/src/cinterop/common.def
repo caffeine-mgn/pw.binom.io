@@ -18,11 +18,15 @@ int binom_iconv_close(iconv_t cd){
 long long binom_iconv(iconv_t cd,
             void **restrict inbuf, long long *restrict inbytesleft,
             void **restrict outbuf, long long *restrict outbytesleft){
-            size_t *restrict _inbytesleft;
-            size_t *restrict _outbytesleft;
+    size_t _inbytesleft = (inbytesleft==(long long *)0)?0:*inbytesleft;
+    size_t _outbytesleft = (outbytesleft==(long long *)0)?0:*outbytesleft;
 // line 17
-    size_t res = iconv(cd,inbuf,_inbytesleft,outbuf,_outbytesleft);
-    *inbytesleft = *_inbytesleft;
-    *outbytesleft = *_outbytesleft;
+    size_t res = iconv(cd, inbuf, &_inbytesleft, outbuf, &_outbytesleft);
+    if (inbytesleft != (long long *)0) {
+        *inbytesleft = _inbytesleft;
+    }
+    if (outbytesleft != (long long *)0) {
+        *outbytesleft = _outbytesleft;
+    }
     return res;
 }
