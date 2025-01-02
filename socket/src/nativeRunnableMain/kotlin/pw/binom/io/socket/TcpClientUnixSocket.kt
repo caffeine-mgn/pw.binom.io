@@ -30,6 +30,7 @@ actual class TcpClientUnixSocket(init: Boolean) : TcpClientSocket,AbstractTcpSoc
       ConnectStatus_CONNECTION_REFUSED -> ConnectStatus.CONNECTION_REFUSED
       ConnectStatus_ALREADY_CONNECTED -> ConnectStatus.ALREADY_CONNECTED
       ConnectStatus_IN_PROGRESS -> ConnectStatus.IN_PROGRESS
+      ConnectStatus_NO_ROUTE_TO_HOST -> ConnectStatus.NO_ROUTE_TO_HOST
       else -> throw IOException("Can't connect to \"$path\" $errno")
     }
   }

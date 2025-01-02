@@ -38,6 +38,7 @@ actual open class TcpClientNetSocket(init: Boolean) : TcpClientSocket, NetSocket
       ConnectStatus_CONNECTION_REFUSED -> ConnectStatus.CONNECTION_REFUSED
       ConnectStatus_ALREADY_CONNECTED -> ConnectStatus.ALREADY_CONNECTED
       ConnectStatus_IN_PROGRESS -> ConnectStatus.IN_PROGRESS
+      ConnectStatus_NO_ROUTE_TO_HOST -> ConnectStatus.NO_ROUTE_TO_HOST
       else -> throw IOException("Can't connect to $address $result $errno")
     }
   }

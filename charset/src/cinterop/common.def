@@ -2,7 +2,8 @@ depends = posix
 package = platform.binomiconv
 headers = iconv.h
 headerFilter = NOTHING
-linkerOpts = -liconv
+linkerOpts.macosArm64 = -liconv
+linkerOpts.macosX86 = -liconv
 ---
 #include <iconv.h>
 

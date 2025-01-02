@@ -176,6 +176,8 @@ int internal_NSocket_connect(int socket, struct sockaddr *address, int addressLe
                 return ConnectStatus_ALREADY_CONNECTED;
             case EINPROGRESS:
                 return ConnectStatus_IN_PROGRESS;
+            case EHOSTUNREACH:
+                return ConnectStatus_NO_ROUTE_TO_HOST;
             default:
                 printf("Unknown error %d\n", errno);
                 return ConnectStatus_FAIL;
@@ -189,6 +191,7 @@ int internal_NSocket_connect(int socket, struct sockaddr *address, int addressLe
             case WSAETIMEDOUT:
                 return ConnectStatus_CONNECTION_REFUSED;
             default:
+                printf("Unknown error %d\n", GetLastError());
                 return ConnectStatus_FAIL;
         }
 #else

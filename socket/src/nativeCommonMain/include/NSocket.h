@@ -29,6 +29,7 @@
 #define ConnectStatus_CONNECTION_REFUSED -2
 #define ConnectStatus_ALREADY_CONNECTED -3
 #define ConnectStatus_IN_PROGRESS -4
+#define ConnectStatus_NO_ROUTE_TO_HOST -5
 
 struct NSocket {
     int native;
