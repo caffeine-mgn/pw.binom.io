@@ -1,8 +1,8 @@
 package pw.binom.dns.protocol
 
-import pw.binom.dns.Class
+import pw.binom.dns.QClass
 import pw.binom.dns.Resource
-import pw.binom.dns.Type
+import pw.binom.dns.QType
 import pw.binom.io.ByteBuffer
 import pw.binom.readInt
 import pw.binom.readShort
@@ -10,11 +10,11 @@ import pw.binom.writeInt
 import pw.binom.writeShort
 
 data class ResourcePackage(
-    var name: String = "",
-    var type: Type = Type(0u),
-    var clazz: Class = Class(0u),
-    var ttl: UInt = 0u,
-    var rdata: ByteArray = byteArrayOf(),
+  var name: String = "",
+  var type: QType = QType(0u),
+  var clazz: QClass = QClass(0u),
+  var ttl: UInt = 0u,
+  var rdata: ByteArray = byteArrayOf(),
 ) {
 
     private val dnsNameLengthInBytes
@@ -22,8 +22,8 @@ data class ResourcePackage(
 
     fun read(buf: ByteBuffer): ResourcePackage {
         name = buf.readDns().fromDns()
-        type = Type(buf.readShort().toUShort())
-        clazz = Class(buf.readShort().toUShort())
+        type = QType(buf.readShort().toUShort())
+        clazz = QClass(buf.readShort().toUShort())
         ttl = buf.readInt().toUInt()
         val dataSize = buf.readShort().toUShort().toInt() and 0xFF
         rdata = ByteArray(dataSize) {

@@ -31,6 +31,8 @@ int NNetworkAddress_convertToIpv6(struct NNetworkAddress *ptr);
 int NNetworkAddress_isMulticast(struct NNetworkAddress *ptr);
 
 int NNetworkAddress_getAddressBytes(struct NNetworkAddress *ptr, signed char *buffer);
+int NNetworkAddress_setAddressBytesV4(struct NNetworkAddress *ptr, signed char *buffer);
+int NNetworkAddress_setAddressBytesV6(struct NNetworkAddress *ptr, signed char *buffer);
 
 int NNetworkAddress_get_host(struct NNetworkAddress *ptr, char *buffer, int bufferLen);
 

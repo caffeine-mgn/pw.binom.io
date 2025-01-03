@@ -5,9 +5,10 @@ import pw.binom.dns.protocol.toDnsString
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class Domain(val raw: ByteArray) {
+value class QName private constructor(private val raw: ByteArray) {
   companion object {
-    fun create(domain: String) = Domain(toDns(domain))
+    fun create(domain: String) = QName(toDns(domain))
+    fun create(data: ByteArray) = QName(data)
 
     fun toDns(domain: String): ByteArray {
       val charArray = domain.toDnsString()
@@ -20,5 +21,10 @@ value class Domain(val raw: ByteArray) {
       }.fromDns()
   }
 
-  override fun toString() = fromDns(raw)
+  val asByteArray
+    get() = raw
+  val asString
+    get() = fromDns(raw)
+
+  override fun toString() = asString
 }

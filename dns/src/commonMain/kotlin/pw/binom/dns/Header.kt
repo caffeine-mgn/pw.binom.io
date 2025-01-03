@@ -19,11 +19,15 @@ data class Header(
 
     /**
      * truncated message
+     *
+     * Данный флаг устанавливается в пакете ответе в том случае если сервер не смог поместить всю необходимую информацию в пакет из-за существующих ограничений.
      */
     var tc: Boolean = false,
 
     /**
      * authoritive answer
+     *
+     * Данное поле имеет смысл только в DNS-ответах от сервера и сообщает о том, является ли ответ авторитетным либо нет.
      */
     var aa: Boolean = false,
 
@@ -38,7 +42,9 @@ data class Header(
     var qr: Boolean = false,
 
     /**
-     * recursion available
+     * Recursion available
+     *
+     * отправляется только в ответах, и сообщает о том, что сервер поддерживает рекурсию
      */
     var ra: Boolean = false,
 

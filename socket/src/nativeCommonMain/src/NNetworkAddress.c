@@ -94,6 +94,15 @@ int NNetworkAddress_getAddressBytes(struct NNetworkAddress *ptr, signed char *bu
     }
 }
 
+int NNetworkAddress_setAddressBytesV4(struct NNetworkAddress *ptr, signed char *buffer){
+    memcpy(ptr->data, buffer, 4);
+    ptr->protocolFamily = NET_TYPE_INET4;
+}
+int NNetworkAddress_setAddressBytesV6(struct NNetworkAddress *ptr, signed char *buffer){
+    memcpy(ptr->data, buffer, 16);
+    ptr->protocolFamily = NET_TYPE_INET6;
+}
+
 int NNetworkAddress_get_host(struct NNetworkAddress *ptr, char *buffer, int bufferLen) {
     if (inet_ntop(convertAddressTypeToNative(ptr->protocolFamily), ptr->data, buffer, bufferLen) == NULL) {
         return 0;

@@ -81,15 +81,15 @@ class DnsPackageTest {
           cd = false,
           rcode = Rcode.NOERROR,
         ),
-      question = listOf(QueryPackage(name = "google.com", type = Type.A, clazz = Class.IN)),
+      question = listOf(QueryPackage(name = "google.com", type = QType.A, clazz = QClass.IN)),
       answer = emptyList(),
       authority = emptyList(),
       additional =
         listOf(
           ResourcePackage(
             name = "",
-            type = Type.OPT,
-            clazz = Class(1232u),
+            type = QType.OPT,
+            clazz = QClass.EDNS,
             ttl = 0u,
             rdata = byteArrayOf(0, 10, 0, 8, -84, 63, 81, -41, -95, -92, -16, 46),
           ),
@@ -126,8 +126,8 @@ class DnsPackageTest {
       ByteBuffer(100).use { buffer ->
         QueryPackage(
           name = "google.com",
-          type = Type.A,
-          clazz = Class.IN,
+          type = QType.A,
+          clazz = QClass.IN,
         ).write(buffer)
         buffer.flip()
         buffer.toByteArray()
@@ -158,8 +158,8 @@ class DnsPackageTest {
           listOf(
             QueryPackage(
               name = "google.com",
-              type = Type.A,
-              clazz = Class.IN,
+              type = QType.A,
+              clazz = QClass.IN,
             ),
           ),
         answer = emptyList(),
@@ -168,8 +168,8 @@ class DnsPackageTest {
           listOf(
             ResourcePackage(
               name = "",
-              type = Type.OPT,
-              clazz = Class(1232u),
+              type = QType.OPT,
+              clazz = QClass(1232u),
               ttl = 0u,
               rdata = byteArrayOf(0, 10, 0, 8, 55, 3, 114, 21, 3, -117, 28, -36),
             ),

@@ -7,6 +7,7 @@ expect open class InetAddress : NetworkAddress {
     fun resolveOrNull(host: String): InetAddress?
     fun resolve(host: String): InetAddress
     fun resolveAll(host: String): List<InetAddress>
+    fun create(address: ByteArray): InetAddress
   }
 
   fun withPort(port: Int): InetSocketAddress

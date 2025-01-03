@@ -31,6 +31,9 @@ actual open class InetAddress(var native: JvmInetAddress) : NetworkAddress {
       } catch (e: JvmUnknownHostException) {
         throw UnknownHostException(host)
       }
+
+    actual fun create(address: ByteArray): InetAddress =
+      InetAddress(JvmInetAddress.getByAddress(address))
   }
 
   actual val protocolFamily: ProtocolFamily

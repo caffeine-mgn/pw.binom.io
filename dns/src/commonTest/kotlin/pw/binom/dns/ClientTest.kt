@@ -44,13 +44,13 @@ class ClientTest {
         }
         val query = QueryPackage().apply {
             name = "google.com"
-            type = Type.A
-            clazz = Class.IN
+            type = QType.A
+            clazz = QClass.IN
         }
         val r = ResourcePackage().apply {
             name = ""
-            type = Type.OPT
-            clazz = Class(4096u)
+            type = QType.OPT
+            clazz = QClass(4096u)
             ttl = 0u
             rdata = ubyteArrayOf(
                 0x0u,
@@ -84,15 +84,15 @@ class ClientTest {
             queries = listOf(
                 Query(
                     name = "google.com",
-                    type = Type.A,
-                    clazz = Class.IN,
+                    type = QType.A,
+                    clazz = QClass.IN,
                 ),
             ),
             add = listOf(
                 Resource(
                     name = "",
-                    type = Type.OPT,
-                    clazz = Class(4096u),
+                    type = QType.OPT,
+                    clazz = QClass(4096u),
                     ttl = 0u,
                     rdata = ubyteArrayOf(
                         0x0u,

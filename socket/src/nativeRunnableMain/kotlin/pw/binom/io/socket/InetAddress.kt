@@ -60,6 +60,21 @@ actual open class InetAddress : NetworkAddress {
 
     actual fun resolve(host: String): InetAddress =
       resolveOrNull(host) ?: throw UnknownHostException(host)
+
+    actual fun create(address: ByteArray): InetAddress {
+      require(address.size == 4 || address.size == 16) { "Unknown address type" }
+      val current = InetAddress()
+      address.usePinned { addressPinned ->
+        current.native.use {
+          when (address.size) {
+            4 -> NNetworkAddress_setAddressBytesV4(it, addressPinned.addressOf(0))
+            16 -> NNetworkAddress_setAddressBytesV6(it, addressPinned.addressOf(0))
+            else -> throw IllegalArgumentException()
+          }
+        }
+      }
+      return current
+    }
   }
 
   val native = InHeap.create<NNetworkAddress>()
