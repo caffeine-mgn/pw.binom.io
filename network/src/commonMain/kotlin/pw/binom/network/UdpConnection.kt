@@ -1,13 +1,19 @@
 package pw.binom.network
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import pw.binom.InternalLog
+import pw.binom.concurrency.synchronize
 import pw.binom.io.ByteBuffer
+import pw.binom.io.DataTransferSize
 import pw.binom.io.IOException
 import pw.binom.io.socket.*
 import pw.binom.io.use
-import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.resume
 
-class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
+class UdpConnection(
+  val channel: UdpNetSocket,
+  private val currentKey: SelectorKey,
+) : AbstractConnection() {
   companion object {
     fun randomPort() =
       UdpNetSocket().use {
@@ -15,6 +21,8 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
         it.port!!
       }
   }
+
+  private val logger = InternalLog.file("UdpConnection").prefix { "$currentKey " }
 
   var description: String? = null
 
@@ -25,11 +33,6 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
       "UdpConnection($description)"
     }
 
-  val keys = KeyCollection()
-
-  private val readData = InternalUdlReadData()
-  private val sendData = InternalUdpSendData()
-
   fun bind(address: InetSocketAddress) {
     if (channel.bind(address) != BindStatus.OK) {
       throw IOException("Can't bind to $address")
@@ -39,28 +42,6 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
   val port
     get() = channel.port
 
-  override fun readyForWrite(key: SelectorKey) {
-    if (sendData.continuation == null) {
-      return
-    }
-
-    val result = runCatching { channel.send(sendData.data!!, sendData.address!!) }
-    if (result.isFailure) {
-      val con = sendData.continuation!!
-      sendData.reset()
-      con.resumeWithException(IOException("Can't send data."))
-    } else {
-      if (result.getOrNull()!! <= 0) {
-        return
-      }
-    }
-    if (sendData.data!!.remaining == 0) {
-      val con = sendData.continuation!!
-      sendData.reset()
-      con.resumeWith(result)
-    }
-  }
-
   override suspend fun connection() {
     throw RuntimeException("Not supported")
   }
@@ -69,122 +50,145 @@ class UdpConnection(val channel: UdpNetSocket) : AbstractConnection() {
     throw RuntimeException("Not supported")
   }
 
-//    override fun cancelSelector() {
-//        sendData.continuation?.cancel()
-//        sendData.continuation = null
-//        sendData.data = null
-//        readData.continuation?.cancel()
-//        readData.continuation = null
-//        readData.data = null
-//    }
+  override fun ready(key: SelectorKey, flags: ListenFlags) {
+    lock.lock()
+    val writeWater = writeWater
+    val readWater = readWater
 
-  override fun readyForRead(key: SelectorKey) {
-    readData.lock()
-    if (readData.continuation == null) {
-      readData.unlock()
+    if (flags.isError) {
+      this.writeWater = null
+      this.readWater = null
+      lock.unlock()
+      writeWater?.resume(false)
+      readWater?.resume(false)
       return
     }
-    val readed = runCatching { channel.receive(readData.data!!, readData.address) }
-    if (readed.isFailure) {
-      readData.unlock()
-      throw readed.exceptionOrNull()!!
-    }
-    if (readData.full) {
-      if (readData.data!!.remaining == 0) {
-        val con = readData.continuation!!
-        readData.reset()
-        readData.unlock()
-        con.resumeWith(readed)
+
+    val w = if (flags.isWrite) {
+      if (writeWater != null) {
+        this.writeWater = null
+        writeWater
+      } else {
+        currentKey.removeListen(ListenFlags.WRITE)
+        null
       }
     } else {
-      val con = readData.continuation!!
-      readData.reset()
-      readData.unlock()
-      con.resumeWith(readed)
+      null
     }
+    val r = if (flags.isRead) {
+      if (readWater != null) {
+        logger.info(method = "ready") { "read water found" }
+        this.readWater = null
+        readWater
+      } else {
+        logger.info(method = "ready") { "read water not found" }
+        currentKey.removeListen(ListenFlags.READ)
+        null
+      }
+    } else {
+      null
+    }
+
+    lock.unlock()
+    w?.resume(true)
+    r?.resume(true)
   }
 
+
   override fun close() {
-    readData.synchronize {
-      readData.continuation?.resumeWithException(SocketClosedException())
-      readData.reset()
-    }
-    sendData.synchronize {
-      sendData.continuation?.resumeWithException(SocketClosedException())
-      sendData.reset()
-    }
-    keys.close()
+    currentKey.close()
     channel.close()
+    lock.lock()
+    val writeWater = writeWater
+    val readWater = readWater
+    this.writeWater = null
+    this.readWater = null
+    lock.unlock()
+    writeWater?.resume(false)
+    readWater?.resume(false)
   }
 
   suspend fun read(
     dest: ByteBuffer,
-    address: MutableInetSocketAddress?,
-  ): Int {
-    keys.checkEmpty()
-    readData.lock()
-    if (readData.continuation != null) {
-      readData.unlock()
-      throw IllegalStateException("Connection already have read listener")
+    address: MutableInetSocketAddress? = null,
+  ): DataTransferSize {
+    if (!dest.hasRemaining) {
+      return DataTransferSize.EMPTY
     }
-    if (dest.remaining == 0) {
-      readData.unlock()
-      return 0
+    if (currentKey.isClosed) {
+      return DataTransferSize.CLOSED
     }
-    val r = channel.receive(dest, address)
-    if (r > 0) {
-      readData.unlock()
-      return r
-    }
-    readData.full = false
-    readData.unlock()
-    val readed =
-      suspendCancellableCoroutine<Int> {
-        readData.synchronize {
-          readData.continuation = it
-          readData.data = dest
-          readData.address = address
-        }
-        keys.addListen(ListenFlags.READ + ListenFlags.ERROR)
-        keys.wakeup()
-        it.invokeOnCancellation {
-          readData.continuation = null
-          readData.data = null
-          readData.address = null
-          keys.removeListen(ListenFlags.READ)
-        }
+    logger.info(method = "read") { "Call read into (${dest.remaining})" }
+    while (true) {
+      val l = channel.receive(dest, address)
+      logger.info(method = "read") { "Was read $l bytes" }
+      if (l > 0) {
+//        println("TcpConnection::read was read $l bytes")
+        return DataTransferSize.ofSize(l)
       }
-    if (readed < 0) {
-      throw SocketClosedException()
+      if (l <= -1) {
+        logger.info(method = "read") { "Socket closed!" }
+//        println("TcpConnection::read connection closed")
+        currentKey.close()
+        channel.close()
+        return DataTransferSize.CLOSED
+      }
+      val success = suspendCancellableCoroutine {
+        it.invokeOnCancellation {
+          lock.synchronize {
+            readWater = null
+          }
+        }
+        lock.synchronize {
+          readWater = it
+        }
+        logger.info(method = "read") { "Add read flag to socket selector" }
+        currentKey.addListen(ListenFlags.READ)
+        currentKey.selector.wakeup()
+      }
+      if (!success) {
+        return DataTransferSize.CLOSED
+      }
     }
-    return readed
   }
 
   suspend fun write(
     data: ByteBuffer,
     address: InetSocketAddress,
-  ): Int {
-    keys.checkEmpty()
-    val l = data.remaining
-    if (l == 0) {
-      return 0
+  ): DataTransferSize {
+    if (!data.hasRemaining) {
+      return DataTransferSize.EMPTY
     }
+    while (true) {
+      val l = channel.send(data, address)
+      if (l > 0) {
+//        println("TcpConnection::write wrote $l bytes")
+        return DataTransferSize.ofSize(l)
+      }
+      if (l <= -1) {
+//        println("TcpConnection::write connection closed")
+        currentKey.close()
+        channel.close()
+        return DataTransferSize.CLOSED
+      }
 
-    if (sendData.continuation != null) {
-      throw IllegalStateException("Connection already has write listener")
+//      currentKey.watching = true
+//      println("TcpConnection::write lazy write")
+      val success = suspendCancellableCoroutine {
+        it.invokeOnCancellation {
+          lock.synchronize {
+            writeWater = null
+          }
+        }
+        lock.synchronize {
+          writeWater = it
+        }
+        currentKey.addListen(ListenFlags.WRITE)
+        currentKey.selector.wakeup()
+      }
+      if (!success) {
+        return DataTransferSize.CLOSED
+      }
     }
-    val wrote = channel.send(data, address)
-    if (wrote > 0) {
-      return wrote
-    }
-
-    sendData.data = data
-    sendData.address = address
-    suspendCancellableCoroutine<Int> {
-      sendData.continuation = it
-      keys.addListen(ListenFlags.WRITE + ListenFlags.ERROR)
-      keys.wakeup()
-    }
-    return l
   }
 }

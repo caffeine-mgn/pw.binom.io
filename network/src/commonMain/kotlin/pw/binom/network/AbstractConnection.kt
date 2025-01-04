@@ -1,5 +1,7 @@
 package pw.binom.network
 
+import kotlinx.coroutines.CancellableContinuation
+import pw.binom.concurrency.SpinLock
 import pw.binom.io.Closeable
 import pw.binom.io.socket.ListenFlags
 import pw.binom.io.socket.SelectorKey
@@ -25,4 +27,8 @@ abstract class AbstractConnection : Closeable {
    * @return should return, should the connection read more
    */
   open fun readyForRead(key: SelectorKey) {}
+
+  protected val lock = SpinLock()
+  protected var writeWater: CancellableContinuation<Boolean>? = null
+  protected var readWater: CancellableContinuation<Boolean>? = null
 }

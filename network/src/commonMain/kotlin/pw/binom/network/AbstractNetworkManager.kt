@@ -42,14 +42,14 @@ abstract class AbstractNetworkManager : CoroutineDispatcher(), NetworkManager {
 
   override fun attach(channel: UdpNetSocket): UdpConnection {
     ensureOpen()
-    val con = UdpConnection(channel)
     channel.blocking = false
     val key = selector.attach(socket = channel)
+    val con = UdpConnection(channel, key)
+
     if (!key.updateListenFlags(ListenFlags.ZERO)) {
       throw IllegalStateException("Can't listening flags")
     }
     key.attachment = con
-    con.keys.addKey(key)
     return con
   }
 

@@ -3,6 +3,7 @@ package pw.binom.io.socket
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.pointed
 import platform.socket.*
+import pw.binom.InternalLog
 import pw.binom.io.ByteBuffer
 import pw.binom.io.InHeap
 
@@ -10,6 +11,7 @@ import pw.binom.io.InHeap
 abstract class AbstractTcpSocket(init: Boolean) : TcpClientSocket {
   override val data = InHeap.create<NSocket>()
   protected abstract fun initSocket()
+  private val logger = InternalLog.file("AbstractTcpSocket.kt")
 
   override val id: String
     get() = TODO("Not yet implemented")
@@ -73,11 +75,14 @@ abstract class AbstractTcpSocket(init: Boolean) : TcpClientSocket {
 
   override fun receive(data: ByteBuffer): Int {
     if (!data.isReferenceAccessAvailable()) {
+      logger.info(method = "receive") { "No referenceAccessAvailable" }
       return 0
     }
     val wasRead = this.data.use { ptr ->
       data.ref(0) { dataPtr, len ->
-        NSocket_receiveOnly(ptr, dataPtr, len)
+        val l=NSocket_receiveOnly(ptr, dataPtr, len)
+        logger.info(method = "receive") { "NSocket_receiveOnly=$l" }
+        l
       }
     }
     if (wasRead > 0) {

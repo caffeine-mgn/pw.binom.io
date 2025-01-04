@@ -18,11 +18,12 @@ object SelectExecutor {
     while (!isSelectorClosed()) {
       val now = TimeSource.Monotonic.markNow()
       selector.select(timeout = Duration.INFINITE) { event ->
+        logger.info(method = "startSelecting") { "Event.flags: ${event.flags}, event.key.readFlags: ${event.key.readFlags}" }
         try {
           val attachment = event.key.attachment ?: return@select
           //          attachment // ?: error("Attachment is null")
           val connection = attachment as AbstractConnection
-          if (event.key.readFlags.isNotZero){
+          if (event.key.readFlags.isNotZero) {
             submitTask {
               connection.ready(key = event.key, flags = event.key.readFlags)
             }
@@ -38,7 +39,9 @@ object SelectExecutor {
             }
           }
           if (event.key.readFlags.isRead) {
+            logger.info(method = "startSelecting") { "Submit read task" }
             submitTask {
+              logger.info(method = "startSelecting") { "Call connection.readyForRead" }
               connection.readyForRead(event.key)
             }
           }

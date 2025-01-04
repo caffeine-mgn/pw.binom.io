@@ -2,23 +2,14 @@
 
 package pw.binom.network
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.InternalLog
-import pw.binom.atomic.AtomicBoolean
-import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
-import pw.binom.executeAndResumeWithException
 import pw.binom.io.*
 import pw.binom.io.socket.*
-import pw.binom.resumeOnException
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.random.Random
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
-import kotlin.time.TimeSource.Monotonic.ValueTimeMark
-import kotlin.time.measureTime
 
 class TcpConnection(
   val channel: TcpClientSocket,
@@ -30,8 +21,6 @@ class TcpConnection(
   override val output: AsyncOutput
     get() = this
 
-  private var writeWater: CancellableContinuation<Boolean>? = null
-  private var readWater: CancellableContinuation<Boolean>? = null
   private var connectWater: CancellableContinuation<Boolean>? = null
 
   var description: String? = null
@@ -42,7 +31,7 @@ class TcpConnection(
   private val logger = InternalLog.file("TcpConnection").prefix { "$currentKey " }
 
   override fun toString(): String = "TcpConnection($description)"
-  private val lock = SpinLock()
+
 
   override fun ready(key: SelectorKey, flags: ListenFlags) {
     lock.lock()
@@ -80,9 +69,11 @@ class TcpConnection(
     }
     val r = if (flags.isRead) {
       if (readWater != null) {
+        logger.info(method = "ready") { "read water found" }
         this.readWater = null
         readWater
       } else {
+        logger.info(method = "ready") { "read water not found" }
         currentKey.removeListen(ListenFlags.READ)
         null
       }
@@ -178,13 +169,19 @@ class TcpConnection(
     if (!dest.hasRemaining) {
       return DataTransferSize.EMPTY
     }
+    if (currentKey.isClosed){
+      return DataTransferSize.CLOSED
+    }
+    logger.info(method = "read") { "Call read into (${dest.remaining})" }
     while (true) {
       val l = channel.receive(dest)
+      logger.info(method = "read") { "Was read $l bytes" }
       if (l > 0) {
 //        println("TcpConnection::read was read $l bytes")
         return DataTransferSize.ofSize(l)
       }
       if (l <= -1) {
+        logger.info(method = "read") { "Socket closed!" }
 //        println("TcpConnection::read connection closed")
         currentKey.close()
         channel.close()
@@ -202,6 +199,7 @@ class TcpConnection(
         lock.synchronize {
           readWater = it
         }
+        logger.info(method = "read") { "Add read flag to socket selector" }
         currentKey.addListen(ListenFlags.READ)
         currentKey.selector.wakeup()
       }

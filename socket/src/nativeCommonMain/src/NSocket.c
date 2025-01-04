@@ -591,6 +591,11 @@ int NSocket_receiveOnly(struct NSocket *native, signed char *buffer, int bufferL
     ssize_t wasRead = recv(native->native, buffer, bufferLen, 0);
     if (IS_SOCKET_ERROR(wasRead)) {
         return internal_NSocket_errorProcessing(native, wasRead);
+    } else {
+        if (wasRead == 0){
+            NSocket_close(native);
+            return -1;
+        }
     }
     return (int) wasRead;
 }

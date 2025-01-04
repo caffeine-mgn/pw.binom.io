@@ -84,7 +84,7 @@ object UPnPDiscover {
               val responseText = ByteBuffer(1536).use { buf ->
                 withTimeoutOrNull(timeout) {
                   val r = con.read(buf, null)
-                  if (r > 0) {
+                  if (r.isAvailable) {
                     buf.flip()
                     buf.toByteArray().decodeToString()
                   } else {
