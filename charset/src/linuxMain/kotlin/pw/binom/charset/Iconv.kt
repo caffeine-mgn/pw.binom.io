@@ -20,12 +20,6 @@ actual object Iconv {
     outbuf: CPointer<COpaquePointerVar>?,
     outbytesleft: CValuesRef<LongVarOf<Long>>?,
   ): Long {
-
-    println("cd=$cd")
-    println("inbuf=$inbuf inbuf[0]=${inbuf?.get(0)}")
-    println("inbytesleft=$inbytesleft")
-    println("outbuf=$outbuf outbuf[0]=${outbuf?.get(0)}")
-    println("outbytesleft=$outbytesleft")
     return binom_iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft)
   }
 
