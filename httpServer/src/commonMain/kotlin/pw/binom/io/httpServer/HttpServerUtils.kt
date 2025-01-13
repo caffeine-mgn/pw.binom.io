@@ -130,7 +130,7 @@ object HttpServerUtils {
         throw IOException("Invalid HTTP Header: \"$s\"")
       }
       val headerKey = s.substring(0, p)
-      val headerValue = s.substring(p + 2)
+      val headerValue = if (s.length > p + 2) s.substring(p + 2) else ""
       dest.add(headerKey, headerValue)
     }
   }

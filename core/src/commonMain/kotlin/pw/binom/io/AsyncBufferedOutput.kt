@@ -68,7 +68,7 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     return DataTransferSize.ofSize(l)
   }
 
-  suspend fun writeByte(value: Byte) {
+  override suspend fun writeByte(value: Byte) {
     if (!buffer.hasRemaining) {
       flush()
     }

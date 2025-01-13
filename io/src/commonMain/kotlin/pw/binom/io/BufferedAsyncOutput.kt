@@ -7,7 +7,7 @@ interface BufferedAsyncOutput : AsyncOutput {
     writeByte(if (value) 1 else 0)
   }
 
-  suspend fun writeByte(value: Byte)
+  override suspend fun writeByte(value: Byte)
   suspend fun writeShort(value: Short)
   suspend fun writeInt(value: Int)
   suspend fun writeLong(value: Long)

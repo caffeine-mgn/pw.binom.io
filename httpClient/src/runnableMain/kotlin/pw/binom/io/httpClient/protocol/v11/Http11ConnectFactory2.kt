@@ -22,35 +22,27 @@ class Http11ConnectFactory2(
 
   class Response(val headers: Headers, val responseCode: Int, val version: Http1Version)
   companion object {
-    suspend fun sendRequest(output: AsyncWriter, method: String, request: String, headers: Headers) {
-      output.append(method).append(" ").append(request).append(" ").append("HTTP/1.1").append(Utils.CRLF)
-      headers.forEachHeader { key, value ->
-        output.append(key).append(": ").append(value).append(Utils.CRLF)
-      }
-      output.append(Utils.CRLF)
-    }
 
     suspend fun readResponse(input: AsyncReader): Response {
-      val title = input.readln() ?: throw EOFException()
-//            if (!title.startsWith("HTTP/1.1 ") && !title.startsWith("HTTP/1.0 ")) {
-//                throw IOException("Unsupported HTTP version. Response: \"$title\"")
-//            }
-      val httpVersion = when {
-        title.startsWith("HTTP/1.1 ") -> Http1Version.V1_1
-        title.startsWith("HTTP/1.0 ") -> Http1Version.V1_0
-        else -> throw IOException("Unsupported HTTP version. Response: \"$title\"")
-      }
-      val responseCode = title.substring(9, 12).toInt()
+      val httpVersion: Http1Version
+      val responseCode: Int
       val headers = HashHeaders()
-      while (true) {
-        val str = input.readln() ?: throw EOFException()
-        if (str.isEmpty()) {
-          break
+      Http11.readResponse(
+        input = input,
+        httpVersion = { version ->
+          httpVersion = when (version) {
+            "HTTP/1.1" -> Http1Version.V1_1
+            "HTTP/1.0" -> Http1Version.V1_0
+            else -> throw IOException("Unsupported HTTP version. Response: \"$version\"")
+          }
+        },
+        responseCode = {
+          responseCode = it
+        },
+        header = { key, value ->
+          headers.add(key = key, value = value)
         }
-        val items = str.split(": ", limit = 2)
-        headers.add(key = items[0], value = items.getOrNull(1) ?: "")
-      }
-
+      )
       return Response(
         headers = headers,
         responseCode = responseCode,
@@ -64,9 +56,6 @@ class Http11ConnectFactory2(
       contentEncoding: List<String>,
       transferEncoding: List<String>,
     ): AsyncInput {
-//            val transferEncoding = headers.getTransferEncodingList()
-//            val contentEncoding = headers.getContentEncodingList()
-//            val contentLength = headers.contentLength
       var stream: AsyncInput = stream
       if (contentLength != null) {
         stream = AsyncContentLengthInput(

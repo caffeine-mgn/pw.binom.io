@@ -5,7 +5,7 @@ interface BufferedAsyncInput : AsyncInput {
 
 
   suspend fun readBoolean() = readByte() > 0
-  suspend fun readByte(): Byte
+  override suspend fun readByte(): Byte
   suspend fun readShort(): Short
   suspend fun readInt(): Int
   suspend fun readLong(): Long
@@ -18,6 +18,6 @@ interface BufferedAsyncInput : AsyncInput {
     return bytes.decodeToString()
   }
 
-  suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
-  suspend fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
+//  suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
+//  suspend fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): Int
 }

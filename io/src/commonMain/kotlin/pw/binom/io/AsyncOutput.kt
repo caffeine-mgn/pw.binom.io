@@ -29,6 +29,31 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
 
   //    suspend fun write(data: ByteDataBuffer, offset: Int = 0, length: Int = data.size - offset): Int
   suspend fun write(data: ByteBuffer): DataTransferSize
+  suspend fun write(data: ByteArray, offset: Int = 0, length: Int = data.size - offset): DataTransferSize =
+    data.wrap {
+      it.position = offset
+      it.limit = offset + length
+      write(it)
+    }
+
+  suspend fun writeFully(data: ByteArray, offset: Int = 0, length: Int = data.size - offset) {
+    var cursor = offset
+    var wrote = 0
+    fun remaining() = length - wrote
+    while (remaining() > 0) {
+      val len = write(data = data, offset = cursor, length = remaining())
+      if (len.isNotAvailable) {
+        throw if (wrote > 0) {
+          PackageBreakException("Wrote $wrote bytes")
+        } else {
+          StreamClosedException()
+        }
+      }
+      val l = len.length
+      cursor += l
+      wrote += l
+    }
+  }
 
   suspend fun writeFully(data: ByteBuffer): Int {
     var writeSize = 0
@@ -44,6 +69,10 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
       writeSize += wrote.length
     }
     return writeSize
+  }
+
+  suspend fun writeByte(value: Byte) {
+    writeFully(ByteArray(1) { value })
   }
 }
 

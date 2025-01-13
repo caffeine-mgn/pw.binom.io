@@ -86,13 +86,15 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     }
   }
 
-  suspend fun write(
+  override suspend fun write(
     data: ByteArray,
-    offset: Int = 0,
-    length: Int = data.size - offset,
-  ): Int {
+    offset: Int,
+    length: Int,
+  ): DataTransferSize {
     busy {
-      ensureOpen()
+      if (closed.getValue()) {
+        return DataTransferSize.CLOSED
+      }
       var r = 0
       var remaining = length
       while (remaining > 0) {
@@ -101,7 +103,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
         r += wrote
         remaining -= wrote
       }
-      return r
+      return DataTransferSize.ofSize(r)
     }
   }
 

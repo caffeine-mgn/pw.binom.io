@@ -3,7 +3,7 @@ package pw.binom.io.http
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class SimpleHeaders private constructor(private val raw: Array<String>) {
+value class SimpleHeaders private constructor(@PublishedApi internal val raw: Array<String>) {
   class HeaderBuilderContext {
     internal val list = ArrayList<String>()
     fun put(key: String, value: String) {
@@ -55,7 +55,7 @@ value class SimpleHeaders private constructor(private val raw: Array<String>) {
       raw.size / 2
     }
 
-  fun forEach(func: (key: String, value: String) -> Unit) {
+  inline fun forEach(func: (key: String, value: String) -> Unit) {
     var i = 0
     while (i < raw.size) {
       val key = raw[i + 0]

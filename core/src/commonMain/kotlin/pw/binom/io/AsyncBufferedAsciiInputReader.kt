@@ -169,8 +169,10 @@ class AsyncBufferedAsciiInputReader private constructor(
     return Long.fromBytes(buffer)
   }
 
-  override suspend fun read(dest: ByteArray, offset: Int, length: Int): Int {
-    ensureOpen()
+  override suspend fun read(dest: ByteArray, offset: Int, length: Int): DataTransferSize {
+    if (closed.getValue()) {
+      return DataTransferSize.CLOSED
+    }
     full()
     val len = minOf(minOf(dest.size - offset, length), buffer.remaining)
     buffer.readInto(
@@ -178,23 +180,27 @@ class AsyncBufferedAsciiInputReader private constructor(
       offset = offset,
       length = len,
     )
-    return len
+    return DataTransferSize.ofSize(len)
   }
 
-  override suspend fun readFully(dest: ByteArray, offset: Int, length: Int): Int {
-    ensureOpen()
-    var readed = 0
-    while (true) {
-      val r = read(dest, offset + readed, length - readed)
-      readed += r
-      if (readed == length) {
-        return length
-      }
-      if (r == 0) {
-        throw EOFException()
-      }
-    }
-  }
+//  override suspend fun readFully(dest: ByteArray, offset: Int, length: Int): Int {
+//    ensureOpen()
+//    var readed = 0
+//    while (true) {
+//      val r = read(dest, offset = offset + readed, length = length - readed)
+//      if (r.isAvailable) {
+//        readed += r.length
+//        if (readed == length) {
+//          return length
+//        }
+//      }
+//      if (readed > 0) {
+//        throw PackageBreakException()
+//      } else {
+//        throw EOFException()
+//      }
+//    }
+//  }
 
   suspend fun readUntil(stopByte: Byte, exclude: Boolean, dest: AsyncOutput) =
     readUntil(

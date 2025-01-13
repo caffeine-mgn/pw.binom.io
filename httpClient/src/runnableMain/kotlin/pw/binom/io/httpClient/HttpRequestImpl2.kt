@@ -10,7 +10,11 @@ import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.MutableHeaders
 import pw.binom.url.URL
 
-class HttpRequestImpl2(val client: BaseHttpClient, override val method: String, override val url: URL) : HttpRequest {
+class HttpRequestImpl2(
+  val client: BaseHttpClient,
+  override val method: String,
+  override val url: URL,
+) : HttpRequest {
   override val headers: MutableHeaders = HashHeaders2()
   override var request: String = url.request.ifEmpty { "/" }
   private var hasBodyExist: Boolean = false

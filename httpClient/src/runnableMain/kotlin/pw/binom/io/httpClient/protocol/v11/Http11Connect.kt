@@ -16,7 +16,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-@OptIn(ExperimentalTime::class)
 class Http11Connect(
   private val networkManager: NetworkManager,
   private var tcp: AsyncChannel?,
@@ -57,15 +56,19 @@ class Http11Connect(
       this.tcp = tcp
     }
     val output = tcp.bufferedAsciiWriter(closeParent = false)
+    try {
+      Http11.sendRequest(
+        output = output,
+        method = method,
+        request = url.request,
+        headers = headers,
+      )
+      output.flush()
+    } catch (e: Throwable) {
+      output.asyncCloseAnyway()
+      throw e
+    }
     val input = tcp.bufferedAsciiReader(closeParent = false)
-    Http11ConnectFactory2.sendRequest(
-      output = output,
-      method = method,
-      request = url.request,
-      headers = headers,
-    )
-    output.flush()
-
     return Http11RequestBody(
       headers = headers,
       autoFlushBuffer = DEFAULT_BUFFER_SIZE,

@@ -150,7 +150,7 @@ private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncI
       input.available
     }
 
-  suspend fun readByte(): Byte {
+  override suspend fun readByte(): Byte {
     if (limit < Byte.SIZE_BYTES) {
       throw EOFException()
     }

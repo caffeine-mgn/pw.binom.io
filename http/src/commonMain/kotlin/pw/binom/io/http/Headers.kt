@@ -23,6 +23,8 @@ interface Headers : Map<String, List<String>> {
     const val UPGRADE = "Upgrade"
     const val CONTENT_RANGE = "Content-Range"
     const val WEBSOCKET = "websocket"
+    const val ALLOW = "Allow"
+    const val DAV = "DAV"
     const val TCP = "tcp"
     const val VIA = "via"
     const val KEEP_ALIVE = "keep-alive"

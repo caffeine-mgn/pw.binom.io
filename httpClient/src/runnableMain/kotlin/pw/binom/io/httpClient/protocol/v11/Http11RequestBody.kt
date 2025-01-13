@@ -13,8 +13,8 @@ class Http11RequestBody(
   val url: URL,
   override val headers: Headers,
   override val autoFlushBuffer: Int,
-  override val input: AsyncInput,
-  override val output: AsyncOutput,
+  override val input: AsyncInput, // течёт это
+  override val output: AsyncOutput, // течёт это
   private val requestFinishedListener: RequestFinishedListener? = null,
   override val mainChannel: AsyncChannel,
 ) : AbstractHttpRequestBody() {

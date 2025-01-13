@@ -1,6 +1,10 @@
 package pw.binom.io
 
-internal class AsyncInputWithLimit(val limit: Long, val source: AsyncInput) : AsyncInput {
+internal class AsyncInputWithLimit(
+  val limit: Long,
+  val source: AsyncInput,
+  val closeParent: Boolean,
+) : AsyncInput {
 
   var remaining: Long = limit
     private set
@@ -28,6 +32,8 @@ internal class AsyncInputWithLimit(val limit: Long, val source: AsyncInput) : As
 
   override suspend fun asyncClose() {
     remaining = 0
-    source.asyncClose()
+    if (closeParent) {
+      source.asyncClose()
+    }
   }
 }

@@ -49,7 +49,7 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
     buffer.flip()
   }
 
-  suspend fun readByte(): Byte {
+  override suspend fun readByte(): Byte {
     if (buffer.remaining <= 0) {
       fill()
     }

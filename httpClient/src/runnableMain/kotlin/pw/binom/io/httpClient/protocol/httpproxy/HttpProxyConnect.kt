@@ -10,6 +10,7 @@ import pw.binom.io.httpClient.getPort
 import pw.binom.io.httpClient.protocol.ConnectionPoll
 import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.io.httpClient.protocol.ProtocolSelector
+import pw.binom.io.httpClient.protocol.v11.Http11
 import pw.binom.io.httpClient.protocol.v11.Http11ConnectFactory2
 import pw.binom.io.httpClient.protocol.v11.Http11RequestBody
 import pw.binom.io.socket.DomainSocketAddress
@@ -79,7 +80,7 @@ class HttpProxyConnect(
 //            headers
 //        }
     output.bufferedAsciiWriter(closeParent = false).useAsync { writer ->
-      Http11ConnectFactory2.sendRequest(
+      Http11.sendRequest(
         output = writer,
         method = method,
         request = url.toString(),
@@ -121,7 +122,7 @@ class HttpProxyConnect(
       newHeaders[Headers.PROXY_CONNECTION] = Headers.KEEP_ALIVE
       newHeaders[Headers.HOST] = host
       output.bufferedAsciiWriter(closeParent = false).useAsync { bufOutput ->
-        Http11ConnectFactory2.sendRequest(
+        Http11.sendRequest(
           output = bufOutput,
           method = "CONNECT",
           request = host,

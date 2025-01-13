@@ -1,74 +1,94 @@
 package pw.binom.io.http
 
 interface HTTPMethod {
-    val code: String
+  val code: String
 
-    fun isMatch(method: String) = code.equals(method, ignoreCase = true)
+  fun isMatch(method: String) = code.equals(method, ignoreCase = true)
 
-    companion object
+  companion object
 
-    object GET : HTTPMethod {
-        override val code: String
-            get() = "GET"
-    }
+  object GET : HTTPMethod {
+    override val code: String
+      get() = "GET"
+  }
 
-    object POST : HTTPMethod {
-        override val code: String
-            get() = "POST"
-    }
+  object POST : HTTPMethod {
+    override val code: String
+      get() = "POST"
+  }
 
-    object PUT : HTTPMethod {
-        override val code: String
-            get() = "PUT"
-    }
+  object PUT : HTTPMethod {
+    override val code: String
+      get() = "PUT"
+  }
 
-    object DELETE : HTTPMethod {
-        override val code: String
-            get() = "DELETE"
-    }
+  object DELETE : HTTPMethod {
+    override val code: String
+      get() = "DELETE"
+  }
 
-    object MKCOL : HTTPMethod {
-        override val code: String
-            get() = "MKCOL"
-    }
+  object MKCOL : HTTPMethod {
+    override val code: String
+      get() = "MKCOL"
+  }
 
-    object COPY : HTTPMethod {
-        override val code: String
-            get() = "COPY"
-    }
+  object COPY : HTTPMethod {
+    override val code: String
+      get() = "COPY"
+  }
 
-    object MOVE : HTTPMethod {
-        override val code: String
-            get() = "MOVE"
-    }
+  object PROPPATCH : HTTPMethod {
+    override val code: String
+      get() = "PROPPATCH"
+  }
 
-    object PROPFIND : HTTPMethod {
-        override val code: String
-            get() = "PROPFIND"
-    }
+  object LOCK : HTTPMethod {
+    override val code: String
+      get() = "LOCK"
+  }
 
-    object HEAD : HTTPMethod {
-        override val code: String
-            get() = "HEAD"
-    }
+  object UNLOCK : HTTPMethod {
+    override val code: String
+      get() = "UNLOCK"
+  }
 
-    object TRACE : HTTPMethod {
-        override val code: String
-            get() = "TRACE"
-    }
+  object ORDERPATCH : HTTPMethod {
+    override val code: String
+      get() = "ORDERPATCH"
+  }
 
-    object CONNECT : HTTPMethod {
-        override val code: String
-            get() = "CONNECT"
-    }
+  object MOVE : HTTPMethod {
+    override val code: String
+      get() = "MOVE"
+  }
 
-    object PATCH : HTTPMethod {
-        override val code: String
-            get() = "PATCH"
-    }
+  object PROPFIND : HTTPMethod {
+    override val code: String
+      get() = "PROPFIND"
+  }
 
-    object OPTIONS : HTTPMethod {
-        override val code: String
-            get() = "OPTIONS"
-    }
+  object HEAD : HTTPMethod {
+    override val code: String
+      get() = "HEAD"
+  }
+
+  object TRACE : HTTPMethod {
+    override val code: String
+      get() = "TRACE"
+  }
+
+  object CONNECT : HTTPMethod {
+    override val code: String
+      get() = "CONNECT"
+  }
+
+  object PATCH : HTTPMethod {
+    override val code: String
+      get() = "PATCH"
+  }
+
+  object OPTIONS : HTTPMethod {
+    override val code: String
+      get() = "OPTIONS"
+  }
 }

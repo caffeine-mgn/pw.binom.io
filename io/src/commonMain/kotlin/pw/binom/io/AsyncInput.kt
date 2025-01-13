@@ -59,6 +59,48 @@ interface AsyncInput : AsyncCloseable {
     }
   }
 
+  suspend fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): DataTransferSize =
+    dest.wrap {
+      it.position = offset
+      it.limit = offset + length
+      read(it)
+    }
+
+  suspend fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset) {
+    var wasRead = 0
+    while (true) {
+      val r = read(dest, offset = offset + wasRead, length = length - wasRead)
+      if (r.isAvailable) {
+        wasRead += r.length
+        if (wasRead == length) {
+          return
+        }
+      }
+      if (wasRead > 0) {
+        throw PackageBreakException()
+      } else {
+        throw EOFException()
+      }
+    }
+
+//    var cursor = offset
+//    var wasRead = 0
+//    fun remaining() = length - wasRead
+//    while (remaining() > 0) {
+//      val len = read(dest = dest, offset = cursor, length = remaining())
+//      if (len.isNotAvailable) {
+//        throw if (wasRead > 0) {
+//          PackageBreakException("Wrote $wasRead bytes")
+//        } else {
+//          StreamClosedException()
+//        }
+//      }
+//      val l = len.length
+//      cursor += l
+//      wasRead += l
+//    }
+  }
+
   suspend fun read(dest: ByteBuffer): DataTransferSize
   suspend fun readFully(dest: ByteBuffer): Int {
     val length = dest.remaining
@@ -78,5 +120,17 @@ interface AsyncInput : AsyncCloseable {
     return length
   }
 
-  fun withLimit(limit: Long): AsyncInput = AsyncInputWithLimit(limit = limit, source = this)
+  fun withLimit(limit: Long, closeParent: Boolean = true): AsyncInput =
+    AsyncInputWithLimit(
+      limit = limit,
+      source = this,
+      closeParent = closeParent,
+    )
+
+
+  suspend fun readByte(): Byte {
+    val r = ByteArray(1)
+    readFully(r)
+    return r[0]
+  }
 }
