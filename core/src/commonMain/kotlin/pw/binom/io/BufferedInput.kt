@@ -5,8 +5,8 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 class BufferedInput(val stream: Input, bufferSize: Int = DEFAULT_BUFFER_SIZE) : Input {
     private val buffer = ByteBuffer(bufferSize).empty()
 
-    val available
-        get() = if (buffer.remaining == 0) -1 else buffer.remaining
+    override val available
+        get() = if (buffer.remaining == 0) Available.NOT_AVAILABLE else Available.of(buffer.remaining)
 
     override fun read(dest: ByteBuffer): DataTransferSize {
         if (buffer.remaining == 0) {

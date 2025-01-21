@@ -3,6 +3,10 @@ package pw.binom.io
 import pw.binom.DEFAULT_BUFFER_SIZE
 
 interface Input : Closeable {
+
+  val available: Available
+    get() = Available.UNKNOWN
+
   fun read(dest: ByteBuffer): DataTransferSize
 
   /**

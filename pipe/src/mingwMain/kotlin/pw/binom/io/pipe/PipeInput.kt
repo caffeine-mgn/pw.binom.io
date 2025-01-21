@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.sleep
 import platform.windows.*
 import pw.binom.atomic.AtomicBoolean
+import pw.binom.io.Available
 import pw.binom.io.ByteBuffer
 import pw.binom.io.DataTransferSize
 import pw.binom.io.Input
@@ -17,7 +18,7 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
   var readFd = fd.second
     private set
 
-  val available: Int
+  override val available: Available
     get() {
       memScoped {
         val totalAvailableBytes = alloc<UIntVar>()
@@ -30,11 +31,11 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
             null,
           ) == 0
         ) {
-          return -2
+          return Available.of(-2)
         }
 
         if (totalAvailableBytes.value > 0u) {
-          return totalAvailableBytes.value.toInt()
+          return Available.of(totalAvailableBytes.value.toInt())
         }
 
         TODO()
@@ -60,11 +61,11 @@ actual class PipeInput private constructor(fd: Pair<HANDLE?, HANDLE?>) : Input {
     }
     while (true) {
       sleep(1.convert())
-      if (available == 0) {
+      if (available.isNotAvailable) {
         return DataTransferSize.EMPTY
       }
 
-      if (available > 0) {
+      if (available.isAvailable) {
         break
       }
     }

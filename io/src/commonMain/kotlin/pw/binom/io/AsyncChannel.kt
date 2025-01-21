@@ -1,13 +1,5 @@
 package pw.binom.io
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import pw.binom.InternalLog
-import pw.binom.atomic.AtomicBoolean
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-
 interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
   companion object {
 
