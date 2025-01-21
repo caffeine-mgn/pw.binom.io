@@ -5,11 +5,11 @@ import pw.binom.url.URL
 
 class JsBaseHttpClient : HttpClient {
   override suspend fun startConnect(
-    method: String,
-    uri: URL,
-    headers: Headers,
-    requestLength: OutputLength,
-    keepAlive: Boolean?,
+      method: String,
+      uri: URL,
+      headers: Headers,
+      requestLength: ResponseLength,
+      keepAlive: Boolean?,
   ) = JsHttpRequestBody(method = method, url = uri, headers = headers)
 
   override suspend fun connect(method: String, uri: URL) = JsHttpRequest(

@@ -26,7 +26,7 @@ class LoggingAsyncChannel(val source: AsyncChannel) : AsyncChannel {
     source.flush()
   }
 
-  override val available: Int
+  override val available
     get() = source.available
 
   override suspend fun read(dest: ByteBuffer): DataTransferSize {

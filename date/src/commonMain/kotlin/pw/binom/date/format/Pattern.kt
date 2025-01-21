@@ -4,6 +4,10 @@ import pw.binom.date.Calendar
 import kotlin.math.absoluteValue
 
 internal sealed interface Pattern {
+  sealed interface ImmutablePattern : Pattern {
+    fun find(text: String, position: Int): Boolean
+  }
+
   companion object {
     fun find(format: String, position: Int): Pattern? {
       val or = Or.parse(text = format, position)
@@ -25,7 +29,7 @@ internal sealed interface Pattern {
         MM.find(format, position) -> MM
         dd.find(format, position) -> dd
         HH.find(format, position) -> HH
-        mm_.find(format, position) -> mm_
+        mm.find(format, position) -> mm
         EEE.find(format, position) -> EEE
         COMMA.find(format, position) -> COMMA
         u.find(format, position) -> u
@@ -47,6 +51,7 @@ internal sealed interface Pattern {
       }
     }
   }
+
 
   /**
    * Returns string length of pattern data. For example:
@@ -244,8 +249,8 @@ internal sealed interface Pattern {
   /**
    * Year. Example: "2021"
    */
-  object yyyy : Pattern {
-    fun find(text: String, position: Int) =
+  object yyyy : ImmutablePattern {
+    override fun find(text: String, position: Int) =
       text.regionMatches(position, "yyyy", 0, patternLength)
 
     override val patternLength: Int
@@ -273,12 +278,12 @@ internal sealed interface Pattern {
   /**
    * Month. Example: "04"
    */
-  object MM : Pattern {
+  object MM : ImmutablePattern {
 
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "MM", 0, patternLength)
 
     override fun parse(
@@ -302,12 +307,12 @@ internal sealed interface Pattern {
   /**
    * Day of month. Example: "15"
    */
-  object dd : Pattern {
+  object dd : ImmutablePattern {
 
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "dd", 0, patternLength)
 
     override fun parse(
@@ -357,11 +362,11 @@ internal sealed interface Pattern {
   /**
    * Hours. Example: "31"
    */
-  object HH : Pattern {
+  object HH : ImmutablePattern {
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "HH", 0, patternLength)
 
     override fun parse(
@@ -386,11 +391,11 @@ internal sealed interface Pattern {
   /**
    * Minutes. Example: "31"
    */
-  object mm_ : Pattern {
+  object mm : ImmutablePattern {
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "mm", 0, patternLength)
 
     override fun parse(
@@ -413,11 +418,11 @@ internal sealed interface Pattern {
   }
 
   // Seconds. Example: "31"
-  object ss : Pattern {
+  object ss : ImmutablePattern {
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "ss", 0, patternLength)
 
     override fun parse(
@@ -440,11 +445,11 @@ internal sealed interface Pattern {
   }
 
   // Day of week. Example: "Mon"
-  object EEE : Pattern {
+  object EEE : ImmutablePattern {
     override val patternLength: Int
       get() = 3
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "EEE", 0, patternLength)
 
     override fun parse(
@@ -491,11 +496,11 @@ internal sealed interface Pattern {
    *
    * Example: "3"
    */
-  object u : Pattern {
+  object u : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text[position] == 'u'
 
     override fun parse(
@@ -519,11 +524,11 @@ internal sealed interface Pattern {
   /**
    * Month. Example: "Feb"
    */
-  object MMM : Pattern {
+  object MMM : ImmutablePattern {
     override val patternLength: Int
       get() = 3
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "MMM", 0, patternLength)
 
     override fun parse(
@@ -574,11 +579,11 @@ internal sealed interface Pattern {
     override fun toString(): String = "MMM"
   }
 
-  object SSS : Pattern {
+  object SSS : ImmutablePattern {
     override val patternLength: Int
       get() = 3
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "SSS", 0, patternLength)
 
     override fun parse(
@@ -604,11 +609,11 @@ internal sealed interface Pattern {
   /**
    * Milliseconds. 9 numbers
    */
-  object SSSSSSSSS : Pattern {
+  object SSSSSSSSS : ImmutablePattern {
     override val patternLength: Int
       get() = 9
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "SSSSSSSSS", 0, patternLength)
 
     override fun parse(
@@ -634,11 +639,11 @@ internal sealed interface Pattern {
   /**
    * Milliseconds. 8 numbers
    */
-  object SSSSSSSS : Pattern {
+  object SSSSSSSS : ImmutablePattern {
     override val patternLength: Int
       get() = 8
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "SSSSSSSS", 0, patternLength)
 
     override fun parse(
@@ -664,11 +669,11 @@ internal sealed interface Pattern {
   /**
    * Milliseconds. 7 numbers
    */
-  object SSSSSSS : Pattern {
+  object SSSSSSS : ImmutablePattern {
     override val patternLength: Int
       get() = 7
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "SSSSSSS", 0, patternLength)
 
     override fun parse(
@@ -694,11 +699,11 @@ internal sealed interface Pattern {
   /**
    * Milliseconds. 6 numbers
    */
-  object SSSSSS : Pattern {
+  object SSSSSS : ImmutablePattern {
     override val patternLength: Int
       get() = 6
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "SSSSSS", 0, patternLength)
 
     override fun parse(
@@ -721,11 +726,11 @@ internal sealed interface Pattern {
     override fun toString(): String = "SSSSSS"
   }
 
-  object SSm : Pattern {
+  object SSm : ImmutablePattern {
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "SS", 0, patternLength)
 
     override fun parse(
@@ -753,11 +758,11 @@ internal sealed interface Pattern {
     override fun toString(): String = "SS"
   }
 
-  object Sm : Pattern {
+  object Sm : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "S", 0, patternLength)
 
     override fun parse(
@@ -784,11 +789,11 @@ internal sealed interface Pattern {
   /**
    * Timezone. Example: "-07"
    */
-  object X : Pattern {
+  object X : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "X", 0, patternLength)
 
     override fun parse(
@@ -829,11 +834,11 @@ internal sealed interface Pattern {
   /**
    * Timezone. Example: "-0700"
    */
-  object XX : Pattern {
+  object XX : ImmutablePattern {
     override val patternLength: Int
       get() = 2
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "XX", 0, patternLength)
 
     override fun parse(
@@ -882,11 +887,11 @@ internal sealed interface Pattern {
   /**
    * Timezone. Example: "-07:00"
    */
-  object XXX : Pattern {
+  object XXX : ImmutablePattern {
     override val patternLength: Int
       get() = 3
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "XXX", 0, patternLength)
 
     override fun parse(
@@ -938,11 +943,11 @@ internal sealed interface Pattern {
   /**
    * Timezone. Example: "-0700"
    */
-  object Z : Pattern {
+  object Z : ImmutablePattern {
     override val patternLength: Int
       get() = 3
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "Z", 0, patternLength)
 
     override fun parse(
@@ -991,11 +996,11 @@ internal sealed interface Pattern {
   /**
    * Timezone. Example: "Z"
    */
-  object zGTZ : Pattern {
+  object zGTZ : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "z", 0, patternLength)
 
     override fun parse(
@@ -1029,11 +1034,11 @@ internal sealed interface Pattern {
   /**
    * "-"
    */
-  object MINUS : Pattern {
+  object MINUS : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "-", 0, patternLength)
 
     override fun parse(
@@ -1055,11 +1060,11 @@ internal sealed interface Pattern {
   /**
    * ":"
    */
-  object DOUBLE_POINT : Pattern {
+  object DOUBLE_POINT : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, ":", 0, patternLength)
 
     override fun parse(
@@ -1081,11 +1086,11 @@ internal sealed interface Pattern {
   /**
    * "."
    */
-  object POINT : Pattern {
+  object POINT : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, ".", 0, patternLength)
 
     override fun parse(
@@ -1107,11 +1112,11 @@ internal sealed interface Pattern {
   /**
    * "/"
    */
-  object SLASH : Pattern {
+  object SLASH : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, "/", 0, patternLength)
 
     override fun parse(
@@ -1133,11 +1138,11 @@ internal sealed interface Pattern {
   /**
    * ","
    */
-  object COMMA : Pattern {
+  object COMMA : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text.regionMatches(position, ",", 0, patternLength)
 
     override fun parse(
@@ -1159,11 +1164,11 @@ internal sealed interface Pattern {
   /**
    * " "
    */
-  object SPACE : Pattern {
+  object SPACE : ImmutablePattern {
     override val patternLength: Int
       get() = 1
 
-    fun find(text: String, position: Int): Boolean =
+    override fun find(text: String, position: Int): Boolean =
       text[position] == ' '
 
     override fun toString(): String = " "

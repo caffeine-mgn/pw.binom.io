@@ -22,7 +22,7 @@ class JsHttpRequest(val client: JsBaseHttpClient, override val method: String, o
       method = method,
       uri = url,
       headers = headers,
-      requestLength = if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) OutputLength.None else OutputLength.Chunked,
+      requestLength = if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) ResponseLength.None else ResponseLength.Chunked,
     )
     this.httpRequestBody = req
     return req

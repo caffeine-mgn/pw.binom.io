@@ -25,8 +25,8 @@ class TcpConnection(
 
   var description: String? = null
 
-  override val available: Int
-    get() = -1
+  override val available: Available
+    get() = Available.UNKNOWN
 
   private val logger = InternalLog.file("TcpConnection").prefix { "$currentKey " }
 

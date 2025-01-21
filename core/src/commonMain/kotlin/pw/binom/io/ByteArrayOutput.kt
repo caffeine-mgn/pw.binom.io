@@ -109,10 +109,10 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
   ) {
     var w = 0
     while (true) {
-      if (input.available == 0) {
+      if (input.available.isNotAvailable) {
         break
       }
-      val tmpBlockSize = if (input.available > 0) input.available else blockSize
+      val tmpBlockSize = if (input.available.isAvailable) input.available.toInt else blockSize
       alloc(tmpBlockSize)
       val p = data.position
       val wasRead = input.read(this.data)

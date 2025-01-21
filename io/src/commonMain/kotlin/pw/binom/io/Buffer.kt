@@ -8,15 +8,6 @@ fun <T : Buffer> T.clean(): T {
   return this
 }
 
-expect interface Buffer {
+expect interface Buffer : CommonBuffer {
   companion object;
-  var position: Int
-  var limit: Int
-  val capacity: Int
-  val elementSizeInBytes: Int
-  val remaining: Int
-  val hasRemaining: Boolean
-  fun flip()
-  fun compact()
-  fun clear()
 }

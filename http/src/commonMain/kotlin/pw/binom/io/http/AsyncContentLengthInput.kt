@@ -1,10 +1,7 @@
 package pw.binom.io.http
 
 import pw.binom.atomic.AtomicBoolean
-import pw.binom.io.AsyncInput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.ClosedException
-import pw.binom.io.DataTransferSize
+import pw.binom.io.*
 
 open class AsyncContentLengthInput(
   val stream: AsyncInput,
@@ -18,8 +15,8 @@ open class AsyncContentLengthInput(
   private val eof
     get() = closed.getValue() || readed >= contentLength
 
-  override val available: Int
-    get() = minOf(contentLength - readed, Int.MAX_VALUE.toULong()).toInt()
+  override val available: Available
+    get() = Available.of(minOf(contentLength - readed, Int.MAX_VALUE.toULong()).toInt())
 
   private var readed = 0uL
   private var closed = AtomicBoolean(false)

@@ -9,8 +9,8 @@ internal class AsyncInputWithLimit(
   var remaining: Long = limit
     private set
 
-  override val available: Int
-    get() = if (remaining <= 0) 0 else minOf(source.available, remaining.toInt())
+  override val available: Available
+    get() = if (remaining <= 0) Available.NOT_AVAILABLE else minOf(source.available, Available.of(remaining.toInt()))
 
   override suspend fun read(dest: ByteBuffer): DataTransferSize {
     val rem = dest.remaining

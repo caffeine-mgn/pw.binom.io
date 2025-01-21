@@ -25,9 +25,9 @@ class HttpRequestImpl2(
     check(httpRequestBody == null) { "Request already sent" }
     val requestLength =
       if (headers.contentLength != null || headers.transferEncoding != Encoding.CHUNKED) {
-        OutputLength.None
+        ResponseLength.None
       } else {
-        OutputLength.Chunked
+        ResponseLength.Chunked
       }
     val req =
       client.startConnect(

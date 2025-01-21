@@ -2,7 +2,9 @@ package pw.binom.db.tarantool
 
 import pw.binom.atomic.AtomicInt
 import pw.binom.io.AsyncInput
+import pw.binom.io.Available
 import pw.binom.io.ByteBuffer
+import pw.binom.io.minOf
 import pw.binom.io.DataTransferSize
 
 internal class AsyncInputWithCounter(val input: AsyncInput) : AsyncInput {
@@ -12,8 +14,8 @@ internal class AsyncInputWithCounter(val input: AsyncInput) : AsyncInput {
     set(value) {
       _limit.setValue(value)
     }
-  override val available: Int
-    get() = minOf(input.available, limit)
+  override val available: Available
+    get() = minOf(input.available, Available.of(limit))
 
   override suspend fun read(dest: ByteBuffer): DataTransferSize {
     val oldLimit = dest.limit

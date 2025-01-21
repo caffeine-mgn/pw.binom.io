@@ -42,8 +42,8 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
   override val isEof: Boolean
     get() = closed.getValue() || eof
 
-  override val available: Int
-    get() = if (eof) 0 else -1
+  override val available: Available
+    get() = if (eof) Available.NOT_AVAILABLE else Available.UNKNOWN
 
   private var chunkedSize: ULong = 0u
   private var readed = 0uL

@@ -11,7 +11,7 @@ interface HttpClient : Closeable {
     method: String,
     uri: URL,
     headers: Headers,
-    requestLength: OutputLength = OutputLength.Chunked,
+    requestLength: ResponseLength = ResponseLength.Chunked,
     keepAlive: Boolean? = true,
   ): HttpRequestBody
 

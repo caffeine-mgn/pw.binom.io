@@ -8,8 +8,8 @@ import kotlin.reflect.KClass
 
 internal class InternalDefiner : Definer {
     private val alreadyDefined = defaultMutableMap<String, Throwable>().useName("InternalDefiner.alreadyDefined")
-    private val definitions = defaultMutableList<Definition>()
-    fun getLastDefinitions(): List<Definition> {
+    private val definitions = defaultMutableList<DefinitionImpl>()
+    fun getLastDefinitions(): List<DefinitionImpl> {
         val l = defaultMutableList(definitions)
         definitions.clear()
         return l
@@ -28,7 +28,7 @@ internal class InternalDefiner : Definer {
             throw BeanAlreadyDefinedException(beanName = defName, cause = defEx)
         }
         alreadyDefined[defName] = BeanAlreadyDefinedException(beanName = defName)
-        definitions += Definition(
+        definitions += DefinitionImpl(
             name = name ?: clazz.genDefaultName(),
             clazz = clazz,
             init = bean,

@@ -5,8 +5,8 @@ import pw.binom.pool.using
 import pw.binom.uuid.UUID
 
 fun Input.asyncInput(callClose: Boolean = true) = object : AsyncInput {
-  override val available: Int
-    get() = -1
+  override val available: Available
+    get() = Available.UNKNOWN
 
   override suspend fun read(dest: ByteBuffer) =
     this@asyncInput.read(dest)

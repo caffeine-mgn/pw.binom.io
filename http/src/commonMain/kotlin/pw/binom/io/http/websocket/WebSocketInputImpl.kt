@@ -22,11 +22,11 @@ internal class WebSocketInputImpl(
   private var cursor = 0L
   private val header = WebSocketHeader()
   override fun toString(): String = "WebSocketInputImpl@${hashCode()}"
-  override val available: Int
+  override val available: Available
     get() = when {
-      inputReady == 0L && lastFrame -> 0
-      inputReady > 0L -> inputReady.toInt()
-      else -> -1
+      inputReady == 0L && lastFrame -> Available.NOT_AVAILABLE
+      inputReady > 0L -> Available.of(inputReady.toInt())
+      else -> Available.UNKNOWN
     }
 
   override suspend fun read(dest: ByteBuffer): DataTransferSize {

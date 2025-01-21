@@ -174,8 +174,8 @@ class AsyncSSLChannel private constructor(
         checkClosed()
     }
 
-    override val available: Int
-        get() = -1
+    override val available: Available
+        get() = Available.UNKNOWN
 
     override suspend fun read(dest: ByteBuffer): DataTransferSize {
         checkClosed()

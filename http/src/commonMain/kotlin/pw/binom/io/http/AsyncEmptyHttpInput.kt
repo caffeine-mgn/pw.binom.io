@@ -1,5 +1,6 @@
 package pw.binom.io.http
 
+import pw.binom.io.Available
 import pw.binom.io.ByteBuffer
 import pw.binom.io.DataTransferSize
 
@@ -7,8 +8,8 @@ object AsyncEmptyHttpInput : AsyncHttpInput {
     override val isEof: Boolean
         get() = true
 
-    override val available: Int
-        get() = 0
+    override val available: Available
+        get() = Available.NOT_AVAILABLE
 
     override suspend fun read(dest: ByteBuffer)= DataTransferSize.EMPTY
 

@@ -3,7 +3,7 @@ package pw.binom.io
 import pw.binom.security.MessageDigest
 
 class AsyncCheckedInput(val stream: AsyncInput, val cksum: MessageDigest) : AsyncInput {
-  override val available: Int
+  override val available
     get() = stream.available
 
 //    override suspend fun read(data: ByteDataBuffer, offset: Int, length: Int): Int {

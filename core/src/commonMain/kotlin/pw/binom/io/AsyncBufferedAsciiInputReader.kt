@@ -60,8 +60,13 @@ class AsyncBufferedAsciiInputReader private constructor(
 
 //    private val buffer = ByteBuffer(bufferSize).empty()
 
-  override val available: Int
-    get() = if (closed.getValue()) 0 else if (buffer.remaining > 0) buffer.remaining else -1
+  override val available: Available
+    get() =
+      when {
+        closed.getValue() -> Available.NOT_AVAILABLE
+        buffer.remaining > 0 -> Available.of(buffer.remaining)
+        else -> Available.NOT_AVAILABLE
+      }
 
   init {
 //        println("AsyncBufferedAsciiInputReader:: after construct. ${buffer.position}, limit: ${buffer.limit}, byteBuffer: ByteBuffer@${buffer.hashCode()}")

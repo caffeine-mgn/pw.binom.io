@@ -1,13 +1,14 @@
 package pw.binom.io
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.fromBytes
 import kotlin.coroutines.cancellation.CancellationException
 
 interface AsyncInput : AsyncCloseable {
   companion object {
     private object EmptyAsyncInput : AsyncInput {
-      override val available: Int
-        get() = 0
+      override val available: Available
+        get() = Available.NOT_AVAILABLE
 
       override suspend fun read(dest: ByteBuffer) = DataTransferSize.EMPTY
 
@@ -23,7 +24,7 @@ interface AsyncInput : AsyncCloseable {
    * Available Data size in bytes
    * @return Available data in bytes. If returns value less 0 it's mean that size of available data is unknown
    */
-  val available: Int
+  val available: Available
 
   suspend fun skipAll(bufferSize: Int = DEFAULT_BUFFER_SIZE) {
     ByteBuffer(bufferSize).use { buffer ->
@@ -127,6 +128,35 @@ interface AsyncInput : AsyncCloseable {
       closeParent = closeParent,
     )
 
+  suspend fun readBoolean() = readByte() > 0
+
+  suspend fun readInt(): Int {
+    val buf = ByteArray(Int.SIZE_BYTES)
+    readFully(buf)
+    return Int.fromBytes(buf)
+  }
+
+  suspend fun readShort(): Short {
+    val buf = ByteArray(Short.SIZE_BYTES)
+    readFully(buf)
+    return Short.fromBytes(buf)
+  }
+
+  suspend fun readLong(): Long {
+    val buf = ByteArray(Long.SIZE_BYTES)
+    readFully(buf)
+    return Long.fromBytes(buf)
+  }
+
+  suspend fun readFloat() = Float.fromBits(readInt())
+  suspend fun readDouble() = Double.fromBits(readLong())
+
+  suspend fun readString(): String {
+    val size = readInt()
+    val bytes = ByteArray(size)
+    readFully(bytes)
+    return bytes.decodeToString()
+  }
 
   suspend fun readByte(): Byte {
     val r = ByteArray(1)

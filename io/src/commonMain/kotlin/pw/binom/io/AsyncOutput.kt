@@ -2,6 +2,7 @@ package pw.binom.io
 
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.using
+import pw.binom.toByteArray
 
 interface AsyncOutput : AsyncCloseable, AsyncFlushable {
   companion object {
@@ -73,6 +74,32 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
 
   suspend fun writeByte(value: Byte) {
     writeFully(ByteArray(1) { value })
+  }
+
+  suspend fun writeShort(value: Short) {
+    writeFully(value.toByteArray())
+  }
+
+  suspend fun writeInt(value: Int) {
+    writeFully(value.toByteArray())
+  }
+
+  suspend fun writeLong(value: Long) {
+    writeFully(value.toByteArray())
+  }
+
+  suspend fun writeFloat(value: Float) {
+    writeInt(value.toBits())
+  }
+
+  suspend fun writeDouble(value: Double) {
+    writeLong(value.toBits())
+  }
+
+  suspend fun writeString(value: String) {
+    val data = value.encodeToByteArray()
+    writeInt(data.size)
+    writeFully(data)
   }
 }
 

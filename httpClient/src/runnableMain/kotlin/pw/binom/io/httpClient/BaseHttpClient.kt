@@ -43,17 +43,17 @@ class BaseHttpClient(
     method: String,
     uri: URL,
     headers: Headers,
-    requestLength: OutputLength,
+    requestLength: ResponseLength,
     keepAlive: Boolean?,
   ): HttpRequestBody {
-    require(requestLength !is OutputLength.Chunked || headers.transferEncoding == null || headers.transferEncoding == Encoding.CHUNKED)
-    require(requestLength !is OutputLength.Fixed || headers.contentLength == null || headers.contentLength!!.toLong() == requestLength.length)
+    require(requestLength !is ResponseLength.Chunked || headers.transferEncoding == null || headers.transferEncoding == Encoding.CHUNKED)
+    require(requestLength !is ResponseLength.Fixed || headers.contentLength == null || headers.contentLength!!.toLong() == requestLength.length)
 
     val newHeaders = HashHeaders2(headers)
-    if (requestLength is OutputLength.Chunked) {
+    if (requestLength is ResponseLength.Chunked) {
       newHeaders.transferEncoding = Encoding.CHUNKED
     }
-    if (requestLength is OutputLength.Fixed) {
+    if (requestLength is ResponseLength.Fixed) {
       newHeaders.transferEncoding = null
       newHeaders.contentLength = requestLength.length.toULong()
     }

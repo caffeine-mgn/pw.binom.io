@@ -30,7 +30,7 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
           output.flush()
         }
 
-        override val available: Int
+        override val available
           get() = input.available
 
         override suspend fun read(dest: ByteBuffer) =
@@ -52,7 +52,7 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
         output.flush()
       }
 
-      override val available: Int
+      override val available
         get() = input.available
 
       override suspend fun read(dest: ByteBuffer) =
@@ -73,7 +73,7 @@ interface AsyncChannel : AsyncCloseable, AsyncOutput, AsyncInput {
         channel.flush()
       }
 
-      override val available: Int
+      override val available
         get() = channel.available
 
       override suspend fun read(dest: ByteBuffer) =

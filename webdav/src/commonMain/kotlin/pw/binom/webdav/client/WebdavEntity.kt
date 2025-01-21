@@ -40,7 +40,7 @@ class WebdavEntity(
     val body = resp.readBinary()
 
     return object : AsyncInput {
-      override val available: Int
+      override val available
         get() = body.available
 
       override suspend fun read(dest: ByteBuffer) = body.read(dest)

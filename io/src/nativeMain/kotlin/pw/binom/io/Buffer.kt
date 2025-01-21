@@ -4,17 +4,10 @@ package pw.binom.io
 
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 
-actual interface Buffer {
+actual interface Buffer : CommonBuffer {
   actual companion object;
+  @OptIn(ExperimentalForeignApi::class)
   fun <T> refTo(position: Int, func: (CPointer<ByteVar>) -> T): T?
-  actual val remaining: Int
-  actual var position: Int
-  actual var limit: Int
-  actual val capacity: Int
-  actual val hasRemaining: Boolean
-  actual fun flip()
-  actual fun compact()
-  actual fun clear()
-  actual val elementSizeInBytes: Int
 }

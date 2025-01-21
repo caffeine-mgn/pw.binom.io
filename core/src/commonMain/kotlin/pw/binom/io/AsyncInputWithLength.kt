@@ -8,9 +8,9 @@ class AsyncInputWithLength(val input: AsyncInput, val length: Long) : AsyncInput
   private var internalRemaining = length
   val remaining
     get() = internalRemaining
-  override val available: Int
-    get() = if (input.available > 0) {
-      minOf(input.available, internalRemaining.toInt())
+  override val available: Available
+    get() = if (input.available.isAvailable) {
+      minOf(input.available, Available.of(internalRemaining.toInt()))
     } else {
       input.available
     }

@@ -1,14 +1,5 @@
 package pw.binom.io
 
-actual interface Buffer {
-    actual companion object;
-    actual var position: Int
-    actual var limit: Int
-    actual val remaining: Int
-    actual val capacity: Int
-    actual val hasRemaining: Boolean
-    actual val elementSizeInBytes: Int
-    actual fun flip()
-    actual fun compact()
-    actual fun clear()
+actual interface Buffer : CommonBuffer {
+  actual companion object;
 }

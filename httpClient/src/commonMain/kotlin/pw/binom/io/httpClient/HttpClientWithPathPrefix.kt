@@ -11,11 +11,11 @@ class HttpClientWithPathPrefix(val original: HttpClient, val prefix: Path) : Htt
   private fun makeUrl(uri: URL) = uri.copy(path = prefix.append(uri.path))
 
   override suspend fun startConnect(
-    method: String,
-    uri: URL,
-    headers: Headers,
-    requestLength: OutputLength,
-    keepAlive: Boolean?,
+      method: String,
+      uri: URL,
+      headers: Headers,
+      requestLength: ResponseLength,
+      keepAlive: Boolean?,
   ) = original.startConnect(
     method = method,
     uri = makeUrl(uri),

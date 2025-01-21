@@ -22,7 +22,7 @@ class AsyncBufferedChannel(
         outputBuf.flush()
     }
 
-    override val available: Int
+    override val available: Available
         get() = inputBuf.available
 
     override suspend fun read(dest: ByteBuffer) =

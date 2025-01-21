@@ -1,10 +1,7 @@
 package pw.binom.compression.zlib
 
 import pw.binom.DEFAULT_BUFFER_SIZE
-import pw.binom.io.AsyncInput
-import pw.binom.io.ByteBuffer
-import pw.binom.io.DataTransferSize
-import pw.binom.io.empty
+import pw.binom.io.*
 
 // private val tmpBuf = ByteBuffer(DEFAULT_BUFFER_SIZE)
 
@@ -55,8 +52,8 @@ open class AsyncInflateInput(
         buffer.flip()
     }
 
-    override val available: Int
-        get() = -1
+    override val available: Available
+        get() = Available.UNKNOWN
 
     override suspend fun read(dest: ByteBuffer): DataTransferSize {
         checkBusy()

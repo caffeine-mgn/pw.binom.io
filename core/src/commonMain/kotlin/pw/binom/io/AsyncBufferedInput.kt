@@ -39,8 +39,8 @@ abstract class AbstractAsyncBufferedInput : AsyncInput {
   val readBytes
     get() = internalReadBytes
 
-  override val available: Int
-    get() = if (buffer.remaining == 0) -1 else buffer.remaining
+  override val available: Available
+    get() = if (buffer.remaining == 0) Available.UNKNOWN else Available.of(buffer.remaining)
 
   protected var closed = false
 

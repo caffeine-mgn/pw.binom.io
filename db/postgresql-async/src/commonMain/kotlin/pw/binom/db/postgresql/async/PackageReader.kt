@@ -143,9 +143,9 @@ private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncI
     return r
   }
 
-  override val available: Int
-    get() = if (input.available > 0) {
-      minOf(input.available, limit)
+  override val available: Available
+    get() = if (input.available.isAvailable) {
+      minOf(input.available, Available.of(limit))
     } else {
       input.available
     }
@@ -159,7 +159,7 @@ private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncI
     return value
   }
 
-  suspend fun readShort(): Short {
+  override suspend fun readShort(): Short {
     if (limit < Short.SIZE_BYTES) {
       throw EOFException()
     }
@@ -168,7 +168,7 @@ private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncI
     return value
   }
 
-  suspend fun readInt(): Int {
+  override suspend fun readInt(): Int {
     if (limit < Int.SIZE_BYTES) {
       throw EOFException()
     }
@@ -177,7 +177,7 @@ private class AsyncInputLimit(val input: AsyncBufferedAsciiInputReader) : AsyncI
     return value
   }
 
-  suspend fun readLong(): Long {
+  override suspend fun readLong(): Long {
     if (limit < Long.SIZE_BYTES) {
       throw EOFException()
     }

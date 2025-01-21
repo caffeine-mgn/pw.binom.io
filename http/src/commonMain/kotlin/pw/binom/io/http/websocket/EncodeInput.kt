@@ -7,8 +7,8 @@ class EncodeInput(
   val stream: AsyncInput,
   private var mask: Int,
 ) : AsyncInput {
-  override val available: Int
-    get() = -1
+  override val available: Available
+    get() = Available.UNKNOWN
 
   private var cursor = 0L
 
