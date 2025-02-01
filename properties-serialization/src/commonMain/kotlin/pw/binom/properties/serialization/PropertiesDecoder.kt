@@ -4,6 +4,7 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.EmptySerializersModule
@@ -11,6 +12,7 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.properties.PropertyValue
 import pw.binom.properties.serialization.annotations.PropertiesPrefix
 
+@OptIn(ExperimentalSerializationApi::class)
 class PropertiesDecoder(
   val root: PropertyValue?,
   override val serializersModule: SerializersModule,
@@ -54,9 +56,22 @@ class PropertiesDecoder(
         serializersModule = serializersModule,
       )
     }
+
     if (vv !is PropertyValue.Object) {
+      if (descriptor.kind == StructureKind.MAP) {
+        return PropertiesMapDecoder(
+          root = PropertyValue.Object.EMPTY,
+          serializersModule = serializersModule,
+        )
+      }
       return PropertiesObjectDecoder(
         root = PropertyValue.Object.EMPTY,
+        serializersModule = serializersModule,
+      )
+    }
+    if (descriptor.kind == StructureKind.MAP) {
+      return PropertiesMapDecoder(
+        root = vv,
         serializersModule = serializersModule,
       )
     }
@@ -121,5 +136,10 @@ class PropertiesDecoder(
 
   override fun decodeShort(): Short = decodeString().toShort()
 
-  override fun decodeString(): String = (root as PropertyValue.Value).content!!
+  override fun decodeString(): String{
+    if (root !is PropertyValue.Value){
+      throw SerializationException("Can't read value from $root. Value is object")
+    }
+    return root.content!!
+  }
 }

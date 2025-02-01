@@ -36,6 +36,13 @@ sealed interface PropertyValue {
   }
 
   interface Value : PropertyValue {
+    companion object {
+      fun of(content:String?)=object :Value{
+        override val content: String?
+          get() = content
+
+      }
+    }
     val content: String?
 
     override fun getByPath(path: String): PropertyValue? = if (path.isEmpty()) this else null
