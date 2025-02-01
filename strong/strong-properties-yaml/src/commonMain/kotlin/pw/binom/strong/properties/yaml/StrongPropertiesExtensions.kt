@@ -9,9 +9,10 @@ import pw.binom.strong.properties.StrongProperties
 fun StrongProperties.addYaml(
   text: String,
   yaml: Yaml = Yaml(configuration = YamlConfiguration(anchorsAndAliases = AnchorsAndAliases.Permitted())),
-) {
+): StrongProperties {
   val obj = YamlConvertor.convert(yaml.parseToYamlNode(text))
   if (obj is PropertyValue.Object) {
     add(obj)
   }
+  return this
 }

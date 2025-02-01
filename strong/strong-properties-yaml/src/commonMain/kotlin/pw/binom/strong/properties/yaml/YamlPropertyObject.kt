@@ -19,4 +19,7 @@ internal class YamlPropertyObject(map: YamlMap) : PropertyValue.Object {
 
   override fun get(key: String): PropertyValue? =
     values[key]
+
+  override fun toString(): String =
+    "YamlPropertyObject(names=$names, values=$values)"
 }

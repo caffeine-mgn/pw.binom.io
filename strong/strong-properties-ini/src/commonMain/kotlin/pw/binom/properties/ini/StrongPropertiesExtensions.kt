@@ -2,7 +2,7 @@ package pw.binom.properties.ini
 
 import pw.binom.strong.properties.StrongProperties
 
-fun StrongProperties.addIni(ini: String) {
+fun StrongProperties.addIni(ini: String):StrongProperties {
   ini.lineSequence()
     .map { it.trimStart() }
     .filter {
@@ -13,4 +13,5 @@ fun StrongProperties.addIni(ini: String) {
       items[0] to items.getOrNull(1)
     }.toMap()
     .let { add(it) }
+  return this
 }
