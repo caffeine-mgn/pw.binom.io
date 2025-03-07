@@ -2,6 +2,7 @@
 
 package pw.binom.io.socket
 
+import java.nio.channels.CancelledKeyException
 import java.nio.channels.SelectionKey
 
 //fun InetNetworkSocketAddress.toJvmAddress() = if (this is JvmMutableInetNetworkSocketAddress) {
@@ -11,12 +12,19 @@ import java.nio.channels.SelectionKey
 //}
 
 internal fun SelectionKey.toCommonReadFlag(): ListenFlags {
-    var r = ListenFlags()
+  if (!isValid) {
+    return ListenFlags.ERROR + ListenFlags.READ
+  }
+  var r = ListenFlags()
+  try {
     if (isAcceptable || isReadable || isConnectable) {
-        r = r.withRead
+      r = r.withRead
     }
     if (isWritable || isConnectable) {
-        r = r.withWrite
+      r = r.withWrite
     }
-    return r
+  } catch (e: CancelledKeyException) {
+    r = r.withRead.withError
+  }
+  return r
 }

@@ -9,26 +9,13 @@ import org.gradle.api.tasks.TaskAction
 import java.net.HttpURLConnection
 import java.net.URL
 
-abstract class OpenSSLDownloadTask : DefaultTask() {
+abstract class DownloadTask: DefaultTask() {
 
   @get:OutputFile
   abstract val output: RegularFileProperty
 
   @get:Input
   abstract val url: Property<String>
-
-  private val lastUrl = project.layout.buildDirectory.file("openssl/openssl.date").get().asFile
-
-  init {
-    url.set("https://github.com/openssl/openssl/archive/refs/tags/openssl-3.1.1.zip")
-    output.set(project.layout.buildDirectory.file("openssl/openssl.zip"))
-    val lastUrl = lastUrl.takeIf { it.isFile }?.readText()
-    if (lastUrl != url.get()) {
-      this.lastUrl.parentFile?.mkdirs()
-      this.lastUrl.writeText(url.get())
-    }
-    inputs.file(this.lastUrl)
-  }
 
   @TaskAction
   fun execute() {

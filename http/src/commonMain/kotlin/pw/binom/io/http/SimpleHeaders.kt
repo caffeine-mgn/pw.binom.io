@@ -88,6 +88,15 @@ value class SimpleHeaders private constructor(@PublishedApi internal val raw: Ar
     return null
   }
 
+  inline fun any(func: (key: String, value: String) -> Boolean): Boolean {
+    forEach { key, value ->
+      if (func(key, value)) {
+        return true
+      }
+    }
+    return false
+  }
+
   @Suppress("UNCHECKED_CAST")
   operator fun plus(other: SimpleHeaders): SimpleHeaders {
     val result = arrayOfNulls<String>(raw.size + other.size) as Array<String>

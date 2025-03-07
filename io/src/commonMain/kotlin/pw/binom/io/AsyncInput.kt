@@ -75,6 +75,8 @@ interface AsyncInput : AsyncCloseable {
         wasRead += r.length
         if (wasRead == length) {
           return
+        } else {
+          continue
         }
       }
       if (wasRead > 0) {

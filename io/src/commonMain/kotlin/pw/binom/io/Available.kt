@@ -12,7 +12,7 @@ value class Available(val raw: Int) {
     }
 
     val UNKNOWN = Available(-1)
-    val NOT_AVAILABLE = Available(-1)
+    val NOT_AVAILABLE = Available(0)
   }
 
   val isUnknown

@@ -3,6 +3,7 @@ package pw.binom.io.socket
 import pw.binom.InternalLog
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
+import java.nio.channels.CancelledKeyException
 import java.nio.channels.SelectionKey
 import kotlin.math.absoluteValue
 
@@ -33,11 +34,21 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
       if (isErrorHappened) {
         r = r.withRead.withError
       }
-      if (native.isAcceptable || native.isReadable || native.isConnectable) {
-        r = r.withRead
+      if (!native.isValid){
+        isErrorHappened=true
+        r = r.withRead.withError
+        return r
       }
-      if (native.isWritable || native.isConnectable) {
-        r = r.withWrite
+      try {
+        if (native.isAcceptable || native.isReadable || native.isConnectable) {
+          r = r.withRead
+        }
+        if (native.isWritable || native.isConnectable) {
+          r = r.withWrite
+        }
+      } catch (e: CancelledKeyException){
+        isErrorHappened=true
+        r = r.withRead.withError
       }
       return r
     }

@@ -4,34 +4,34 @@ import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
 
 interface SafeExceptionContext {
-  fun closeOnException(func: () -> Unit)
+  fun onException(func: () -> Unit)
 
   fun <T : Closeable> T.closeOnException(): T {
-    closeOnException { close() }
+    onException { close() }
     return this
   }
 
   fun <T : AutoCloseable> T.closeOnException(): T {
-    closeOnException { this.close() }
+    onException { this.close() }
     return this
   }
 }
 
 interface SafeAsyncExceptionContext {
-  fun closeOnException(func: suspend () -> Unit)
+  fun onException(func: suspend () -> Unit)
 
   fun <T : AsyncCloseable> T.closeOnException(): T {
-    closeOnException { asyncClose() }
+    onException { asyncClose() }
     return this
   }
 
   fun <T : Closeable> T.closeOnException(): T {
-    closeOnException { close() }
+    onException { close() }
     return this
   }
 
   fun <T : AutoCloseable> T.closeOnException(): T {
-    closeOnException { close() }
+    onException { close() }
     return this
   }
 }
@@ -39,7 +39,7 @@ interface SafeAsyncExceptionContext {
 @PublishedApi
 internal class SafeExceptionContextImpl : SafeExceptionContext {
   val rollbackActions = mutableListOf<() -> Unit>()
-  override fun closeOnException(func: () -> Unit) {
+  override fun onException(func: () -> Unit) {
     rollbackActions += func
   }
 }
@@ -47,7 +47,7 @@ internal class SafeExceptionContextImpl : SafeExceptionContext {
 @PublishedApi
 internal class SafeAsyncExceptionContextImpl : SafeAsyncExceptionContext {
   val rollbackActions = mutableListOf<suspend () -> Unit>()
-  override fun closeOnException(func: suspend () -> Unit) {
+  override fun onException(func: suspend () -> Unit) {
     rollbackActions += func
   }
 }

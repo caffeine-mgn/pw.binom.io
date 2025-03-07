@@ -24,6 +24,7 @@ kotlin {
       dependencies {
         api(project(":ssl"))
         api(project(":compression"))
+        api(project(":network"))
       }
     }
     jsMain.dependencies {

@@ -1,5 +1,7 @@
 package pw.binom.memory
 
+import kotlin.AutoCloseable
+
 expect class ForeignMemory : AutoCloseable {
   companion object {
     fun allocate(length: ULong): ForeignMemory

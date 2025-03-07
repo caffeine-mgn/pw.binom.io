@@ -6,7 +6,7 @@ import java.util.*
 import kotlin.time.Duration
 
 @JvmInline
-actual value class DateTime(val milliseconds: Long) {
+actual value class DateTime(val milliseconds: Long): Comparable<DateTime> {
   actual companion object {
     actual val systemZoneOffset: Int
       get() = TimeZone.getDefault().rawOffset / 1000 / 60
@@ -44,7 +44,7 @@ actual value class DateTime(val milliseconds: Long) {
 
   actual fun calendar(timeZoneOffset: Int): Calendar = Calendar(utcTime = milliseconds, timeZoneOffset = timeZoneOffset)
 
-  actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+  actual override operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
 
   actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
 

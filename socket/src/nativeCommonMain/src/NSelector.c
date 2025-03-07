@@ -24,7 +24,7 @@ struct NSelector *NSelector_createSelector(int size)
 {
     struct NSelector *selector = malloc(sizeof(struct NSelector));
 #ifdef USE_EPOLL
-    int epoll = epoll_create(size);
+    int epoll = (int)epoll_create(size);
     if (epoll == -1)
     {
         return NULL;
@@ -58,11 +58,19 @@ void NSelector_closeSelector(struct NSelector *selector)
 int NSelector_selectKeys(struct NSelector *selector, struct NSelectedList *selectedList, int timeout)
 {
 #ifdef USE_EPOLL
-    int result = epoll_wait(
-        selector->epoll,
-        selectedList->events,
-        selectedList->size,
-        timeout);
+    #ifdef WINDOWS_TARGET
+        int result = epoll_wait(
+            (HANDLE)selector->epoll,
+            selectedList->events,
+            selectedList->size,
+            timeout);
+    #else
+        int result = epoll_wait(
+            selector->epoll,
+            selectedList->events,
+            selectedList->size,
+            timeout);
+    #endif
 #ifdef LINUX_LIKE_TARGET
     if (result == -1 && errno == EINTR)
     {
@@ -93,7 +101,11 @@ int NSelector_selectKeys(struct NSelector *selector, struct NSelectedList *selec
 int NSelector_registryKey(struct NSelector *selector, int key, struct NEvent *event)
 {
 #ifdef USE_EPOLL
-    return epoll_ctl(selector->epoll, EPOLL_CTL_ADD, key, (struct epoll_event *)event) == 0;
+    #ifdef WINDOWS_TARGET
+        return epoll_ctl((HANDLE)selector->epoll, EPOLL_CTL_ADD, key, (struct epoll_event *)event) == 0;
+    #else
+        return epoll_ctl(selector->epoll, EPOLL_CTL_ADD, key, (struct epoll_event *)event) == 0;
+    #endif
 #elif defined(__APPLE__)
     struct kevent *nativeEvent = (struct kevent *)event;
     nativeEvent->ident = key;
@@ -122,7 +134,11 @@ int NSelector_registryKey(struct NSelector *selector, int key, struct NEvent *ev
 int NSelector_updateKey(struct NSelector *selector, int key, struct NEvent *event)
 {
 #ifdef USE_EPOLL
-    return epoll_ctl(selector->epoll, EPOLL_CTL_MOD, key, (struct epoll_event *)event) == 0;
+    #ifdef WINDOWS_TARGET
+        return epoll_ctl((HANDLE)selector->epoll, EPOLL_CTL_MOD, key, (struct epoll_event *)event) == 0;
+    #else
+        return epoll_ctl(selector->epoll, EPOLL_CTL_MOD, key, (struct epoll_event *)event) == 0;
+    #endif
 #elif defined(__APPLE__)
     struct kevent *nativeEvent = (struct kevent *)event;
     nativeEvent->ident = key;
@@ -151,7 +167,11 @@ int NSelector_updateKey(struct NSelector *selector, int key, struct NEvent *even
 int NSelector_removeKey(struct NSelector *selector, int key)
 {
 #ifdef USE_EPOLL
-    return epoll_ctl(selector->epoll, EPOLL_CTL_DEL, key, NULL) == 0;
+    #ifdef WINDOWS_TARGET
+        return epoll_ctl((HANDLE)selector->epoll, EPOLL_CTL_DEL, key, NULL) == 0;
+    #else
+        return epoll_ctl(selector->epoll, EPOLL_CTL_DEL, key, NULL) == 0;
+    #endif
 #elif defined(__APPLE__)
     struct kevent event;
     EV_SET(&event, key, EVFILT_EMPTY, EV_DELETE | EV_CLEAR, 0, 0, NULL);

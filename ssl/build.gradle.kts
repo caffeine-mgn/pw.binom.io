@@ -1,8 +1,7 @@
+import pw.binom.DownloadTask
 import pw.binom.OpenSSLBuildTask
-import pw.binom.OpenSSLDownloadTask
-import pw.binom.OpenSSLUnpackTask
+import pw.binom.ExtractTask
 import pw.binom.kotlin.clang.clangBuildStatic
-import pw.binom.kotlin.clang.compileTaskName
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.*
 
@@ -21,7 +20,7 @@ kotlin {
     -"wasmJs"
     -"wasmWasi"
   }
-  linuxX64{
+  linuxX64 {
     this.compilerOptions.verbose.set(true)
   }
   applyDefaultHierarchyBinomTemplate()
@@ -29,10 +28,8 @@ kotlin {
     commonMain.dependencies {
       api(kotlin("stdlib-common"))
       api(project(":core"))
-      api(project(":network"))
       api(project(":file"))
       api(project(":date"))
-      api(project(":socket"))
       api(project(":concurrency"))
       api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
     }
@@ -53,11 +50,14 @@ apply<pw.binom.plugins.ConfigPublishPlugin>()
 
 tasks {
 
-  val downloadSsl by creating(OpenSSLDownloadTask::class) {
+  val downloadSsl by creating(DownloadTask::class) {
+    output.set(project.layout.buildDirectory.file("openssl/openssl.zip"))
+    url.set("https://github.com/openssl/openssl/archive/refs/tags/openssl-3.1.1.zip")
   }
-  val extractSsl by creating(OpenSSLUnpackTask::class) {
+  val extractSsl by creating(ExtractTask::class) {
     dependsOn(downloadSsl)
-    this.input.set(downloadSsl.output)
+    output.set(project.layout.buildDirectory.file("openssl/source"))
+    input.set(downloadSsl.output)
   }
 
 //  var lastBuildTask: OpenSSLBuildTask? = null
@@ -75,10 +75,9 @@ tasks {
         )
       }
     val buildOpensslTask = register("buildOpenSSL$targetName", OpenSSLBuildTask::class.java)
-    findByName(compileTaskName)?.let {
-      it.dependsOn(keccakStaticTask)
-      it.dependsOn(buildOpensslTask)
-    }
+//    findByName(compileTaskName)?.let {
+//
+//    }
     buildOpensslTask.configure {
       dependsOn(extractSsl)
       opensslDirection.set(extractSsl.output)
@@ -101,7 +100,12 @@ tasks {
         keccakStaticTask.staticFile.asFile.get().absolutePath,
         "-opt-in=kotlin.RequiresOptIn",
       )
-    compilations["main"].kotlinOptions.freeCompilerArgs = args
-    compilations["test"].kotlinOptions.freeCompilerArgs = args
+    compilations.all {
+      compileTaskProvider.configure {
+        dependsOn(keccakStaticTask)
+        dependsOn(buildOpensslTask)
+        compilerOptions.freeCompilerArgs = args
+      }
+    }
   }
 }

@@ -18,6 +18,7 @@ class InternalNatsConnection private constructor(
 //  private val reader: AsyncBufferedAsciiInputReader,
 //  private val channel: AsyncChannel,
   private val headerEnabled: Boolean,
+  private val onDisconnect: (() -> Unit)? = null,
 ) : NatsProtoConnection {
   companion object {
     private fun parseInfoMsg(msg: String): ConnectInfo {
@@ -332,6 +333,10 @@ class InternalNatsConnection private constructor(
     ) {
       data?.let { bytes -> it.write(bytes) }
     }
+  }
+
+  private fun onDisconnect() {
+    onDisconnect?.invoke()
   }
 
   override suspend fun asyncClose() {

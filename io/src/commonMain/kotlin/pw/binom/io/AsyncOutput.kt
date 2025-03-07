@@ -137,12 +137,12 @@ suspend fun AsyncOutput.writeByteArray(value: ByteArray, buffer: ByteBuffer) {
   while (cursor < value.size) {
     buffer.clear()
     val len = buffer.write(value, offset = cursor)
-    if (len <= 0) {
+    if (len.isNotAvailable) {
       break
     }
     buffer.flip()
     writeFully(buffer)
-    cursor += len
+    cursor += len.length
   }
 }
 

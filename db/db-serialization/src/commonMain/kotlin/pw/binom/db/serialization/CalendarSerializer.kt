@@ -1,5 +1,6 @@
 package pw.binom.db.serialization
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -7,6 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import pw.binom.date.Calendar
 
+@OptIn(ExperimentalSerializationApi::class)
 object CalendarSerializer : KSerializer<Calendar> {
   override fun deserialize(decoder: Decoder): Calendar {
     if (decoder !is SQLValueDecoder) {

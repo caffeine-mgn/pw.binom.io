@@ -3,7 +3,7 @@ package pw.binom.date
 import kotlin.js.Date
 import kotlin.time.Duration
 
-actual value class DateTime(val milliseconds: Long) {
+actual value class DateTime(val milliseconds: Long): Comparable<DateTime> {
   actual companion object {
     actual val systemZoneOffset: Int
       get() = -js("new Date().getTimezoneOffset()").unsafeCast<Int>()
@@ -31,7 +31,7 @@ actual value class DateTime(val milliseconds: Long) {
 
   actual fun calendar(timeZoneOffset: Int): Calendar = Calendar(utcTime = milliseconds, offset = timeZoneOffset)
 
-  actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+  actual override operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
 
   actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
 

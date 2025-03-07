@@ -105,11 +105,11 @@ kotlin {
       }
     }
 
-    val jsTest by getting {
-      dependencies {
-        api(kotlin("test-js"))
-      }
-    }
+//    val jsTest by getting {
+//      dependencies {
+//        api(kotlin("test-js"))
+//      }
+//    }
   }
 }
 

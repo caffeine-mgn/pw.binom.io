@@ -102,7 +102,7 @@ class StreamReader(
 
   override fun string(): String = readString()
 
-  fun readString(): String {
+  override fun readString(): String {
     val len = v32u().toInt()
     val bytes = readByteArray(len, buffer)
     return bytes.decodeToString()

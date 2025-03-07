@@ -283,7 +283,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     return r
   }
 
-  actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+  actual fun rewrite(data: ByteArray, offset: Int, length: Int): Int {
     if (closed) {
       return 0
     }

@@ -57,32 +57,32 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     }
   }
 
-  fun writeByte(value: Byte) {
+  override fun writeByte(value: Byte) {
     ensureUnlocked()
     alloc(1)
     data.put(value)
     _wrote++
   }
 
-  fun writeInt(value: Int) {
+  override fun writeInt(value: Int) {
     ensureUnlocked()
     alloc(Int.SIZE_BYTES)
     value.toByteBuffer(data)
     _wrote += Int.SIZE_BYTES
   }
 
-  fun writeFloat(value: Float) = writeInt(value.toBits())
+  override fun writeFloat(value: Float) = writeInt(value.toBits())
 
-  fun writeDouble(value: Double) = writeLong(value.toBits())
+  override fun writeDouble(value: Double) = writeLong(value.toBits())
 
-  fun writeLong(value: Long) {
+  override fun writeLong(value: Long) {
     ensureUnlocked()
     alloc(Long.SIZE_BYTES)
     value.toByteBuffer(data)
     _wrote += Long.SIZE_BYTES
   }
 
-  fun writeShort(value: Short) {
+  override fun writeShort(value: Short) {
     ensureUnlocked()
     alloc(Short.SIZE_BYTES)
     value.toByteBuffer(data)
@@ -157,15 +157,15 @@ open class ByteArrayOutput(capacity: Int = 512, val capacityFactor: Float = 1.7f
     return l
   }
 
-  fun write(
+  override fun write(
     data: ByteArray,
-    offset: Int = 0,
-    length: Int = data.size - offset,
-  ): Int {
+    offset: Int,
+    length: Int,
+  ): DataTransferSize {
     ensureUnlocked()
     alloc(data.size)
     val l = this.data.write(data, offset = offset, length = length)
-    _wrote += l
+    _wrote += l.length
     return l
   }
 

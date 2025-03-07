@@ -46,8 +46,8 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
         flush()
       }
       val wrote = buffer.write(data)
-      internalWroteBytes += wrote
-      l += wrote
+      internalWroteBytes += wrote.length
+      l += wrote.length
     }
     return l
   }

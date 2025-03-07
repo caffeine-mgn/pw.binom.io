@@ -4,7 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.time.Duration
 
-actual value class DateTime(val milliseconds: Long) {
+actual value class DateTime(val milliseconds: Long): Comparable<DateTime> {
   @OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
   actual companion object {
     actual val systemZoneOffset: Int
@@ -70,7 +70,7 @@ actual value class DateTime(val milliseconds: Long) {
 
   actual fun calendar(timeZoneOffset: Int): Calendar = Calendar(utcTime = milliseconds, offset = timeZoneOffset)
 
-  actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
+  override actual operator fun compareTo(expDate: DateTime): Int = dateTimeCompareTo(this, expDate)
 
   actual operator fun plus(duration: Duration) = dateTimePlus(date = this, duration = duration)
 

@@ -222,6 +222,7 @@ class ReconnectableNatsProtoConnection(
     }
   }
 
+
   override suspend fun readMessage(): NatsMessage {
     while (true) {
       val con = getConnection()

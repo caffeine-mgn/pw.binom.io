@@ -246,7 +246,7 @@ actual open class ByteBuffer actual constructor(
     return r
   }
 
-  actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+  actual fun rewrite(data: ByteArray, offset: Int, length: Int): Int {
     ensureOpen()
     if (offset + length > data.size) throw IndexOutOfBoundsException()
     val l = minOf(remaining, length)

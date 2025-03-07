@@ -20,6 +20,9 @@ class FixedThreadExecutorService(
       try {
         val func = queue.popBlocked()
         val marker = func === maker
+        if (marker){
+          break
+        }
         func.invoke()
       } catch (e: Throwable) {
         thread.uncaughtExceptionHandler.uncaughtException(thread = thread, throwable = e)

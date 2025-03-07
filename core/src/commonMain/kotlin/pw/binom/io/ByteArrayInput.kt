@@ -36,7 +36,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
   val isEmpty
     get() = cursor >= data.size
 
-  fun readByte(): Byte {
+  override fun readByte(): Byte {
     if (cursor >= data.size) {
       throw EOFException()
     }
@@ -45,7 +45,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
     return result
   }
 
-  fun readInt(): Int {
+  override fun readInt(): Int {
     if (cursor + Int.SIZE_BYTES - 1 >= data.size) {
       throw EOFException()
     }
@@ -54,7 +54,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
     return result
   }
 
-  fun readLong(): Long {
+  override fun readLong(): Long {
     if (cursor + Long.SIZE_BYTES - 1 >= data.size) {
       throw EOFException()
     }
@@ -63,7 +63,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
     return result
   }
 
-  fun readShort(): Short {
+  override fun readShort(): Short {
     if (cursor + Short.SIZE_BYTES - 1 >= data.size) {
       throw EOFException()
     }
@@ -99,7 +99,7 @@ class ByteArrayInput(val data: ByteArray) : Input {
     return out
   }
 
-  fun readFloat() = Float.fromBits(readInt())
+  override fun readFloat() = Float.fromBits(readInt())
 
-  fun readDouble() = Double.fromBits(readLong())
+  override fun readDouble() = Double.fromBits(readLong())
 }

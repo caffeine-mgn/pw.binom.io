@@ -4,7 +4,7 @@ import kotlin.jvm.JvmInline
 import kotlin.time.Duration
 
 
-expect value class DateTime(val milliseconds: Long = nowTime) {
+expect value class DateTime(val milliseconds: Long = nowTime) : Comparable<DateTime> {
   companion object {
     val systemZoneOffset: Int
     val nowTime: Long
@@ -29,7 +29,7 @@ expect value class DateTime(val milliseconds: Long = nowTime) {
 
   fun calendar(timeZoneOffset: Int = getSystemZoneOffset()): Calendar
 
-  operator fun compareTo(expDate: DateTime): Int
+  override operator fun compareTo(expDate: DateTime): Int
 
   operator fun plus(duration: Duration): DateTime
 

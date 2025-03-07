@@ -1,25 +1,46 @@
 package pw.binom.io.http
 
 import pw.binom.ByteBufferPool
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.bufferedAsciiWriter
 
-open class AsyncAsciiChannel(
-    pool: ByteBufferPool,
-    val channel: AsyncChannel,
+open class AsyncAsciiChannel private constructor(
+  pool: ByteBufferPool?,
+  val channel: AsyncChannel,
+  val bufferSize: Int,
 ) : AsyncCloseable {
-    //    var reader = channel.bufferedAsciiReader(closeParent = false, bufferSize = 50)
-//    var writer = channel.bufferedAsciiWriter(closeParent = false, bufferSize = 50)
-    var reader = channel.bufferedAsciiReader(closeParent = false, pool = pool)
-    var writer = channel.bufferedAsciiWriter(closeParent = false, pool = pool)
-    override suspend fun asyncClose() {
-        try {
-            reader.asyncCloseAnyway()
-            writer.asyncCloseAnyway()
-        } finally {
-            channel.asyncCloseAnyway()
-        }
+  constructor(channel: AsyncChannel, pool: ByteBufferPool) : this(
+    pool = pool,
+    channel = channel,
+    bufferSize = 0,
+  )
+
+  constructor(channel: AsyncChannel, bufferSize: Int = DEFAULT_BUFFER_SIZE) : this(
+    pool = null,
+    channel = channel,
+    bufferSize = bufferSize,
+  )
+
+  var reader = if (pool == null) {
+    channel.bufferedAsciiReader(closeParent = false, bufferSize = bufferSize)
+  } else {
+    channel.bufferedAsciiReader(closeParent = false, pool = pool)
+  }
+  var writer = if (pool == null) {
+    channel.bufferedAsciiWriter(closeParent = false, bufferSize = bufferSize)
+  } else {
+    channel.bufferedAsciiWriter(closeParent = false, pool = pool)
+  }
+
+  override suspend fun asyncClose() {
+    try {
+      reader.asyncCloseAnyway()
+      writer.asyncCloseAnyway()
+    } finally {
+      channel.asyncCloseAnyway()
     }
+  }
 }

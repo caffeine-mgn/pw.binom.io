@@ -2,41 +2,15 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import pw.binom.publish.TargetConfig
 
-internal class BuildTarget(val name: String, val preset: String)
-
 fun TargetConfig.config() {
   -"watchosArm64"
   -"watchosX64"
   -"watchosDeviceArm64"
+  -"wasmJs"
+  -"wasmWasi"
+  -"js"
 }
 
-/*
-class TargetConfig {
-  internal val nativeTargets = ArrayList<BuildTarget>()
-
-  operator fun String.unaryMinus() {
-    val target =
-      nativeTargets.find { it.name == this }
-        ?: throw GradleException("Target \"$this\" not found. Available targets: ${nativeTargets.map { it.name }}")
-    nativeTargets.remove(target)
-  }
-
-  operator fun KonanTarget.unaryMinus() {
-    -this.name
-  }
-
-  fun withoutDeprecated() {
-    KonanTarget.deprecatedTargets.forEach {
-      -it
-    }
-  }
-}
-*/
-/*
-fun KotlinMultiplatformExtension.allTargets() {
-  allTargets {}
-}
-*/
 
 fun KotlinMultiplatformExtension.linux(func: KotlinNativeTarget.() -> Unit = {}) {
 //    linuxArm32Hfp(func)

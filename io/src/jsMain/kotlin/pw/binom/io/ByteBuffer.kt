@@ -417,7 +417,7 @@ actual open class ByteBuffer(val native: NativeMem) : Channel, Buffer, ByteBuffe
     return l
   }
 
-  actual fun write(data: ByteArray, offset: Int, length: Int): Int {
+  actual fun rewrite(data: ByteArray, offset: Int, length: Int): Int {
     ensureOpen()
     if (offset + length > data.size) throw IndexOutOfBoundsException()
     val l = minOf(remaining, length)

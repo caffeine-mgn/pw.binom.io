@@ -49,7 +49,7 @@ expect open class ByteBuffer :
    */
   fun peek(): Byte
   fun reset(position: Int, length: Int): ByteBuffer
-  fun write(
+  fun rewrite(
     data: ByteArray,
     offset: Int = 0,
     length: Int = calcLength(

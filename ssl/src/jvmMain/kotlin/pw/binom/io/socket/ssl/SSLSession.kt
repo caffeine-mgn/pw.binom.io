@@ -243,7 +243,13 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         }
         rbio.limit(l + l1)
         rbio.position(p)
+      var cur = 0
         while (true) {
+          cur++
+          if (cur>5000){
+            println("SSL work to long!")
+            throw RuntimeException("SSL work to long!")
+          }
             if (sslEngine.handshakeStatus == SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
                 tmpBuf.clear()
                 val rr = sslEngine.unwrap(rbio, tmpBuf)

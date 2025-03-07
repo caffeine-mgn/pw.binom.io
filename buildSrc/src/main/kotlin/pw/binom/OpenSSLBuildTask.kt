@@ -105,9 +105,9 @@ abstract class OpenSSLBuildTask : DefaultTask() {
       }
     val exe = if (HostManager.hostIsMingw) ".exe" else ""
     val envs1 = HashMap(System.getenv())
-    envs1["CC"] = compiler.file.path
-    envs1["CXX"] = compiler.file.path
-    envs1["AR"] = linker.file.path
+    envs1["CC"] = compiler.clangFile.path
+    envs1["CXX"] = compiler.clangFile.path
+    envs1["AR"] = linker.arFile.path
     envs1["CPPFLAGS"] = compiler.args.map { "\"$it\"" }.joinToString(" ")
     if (target.get().family == Family.MINGW) {
       envs1["RC"] = "i686-w64-mingw32-windres"

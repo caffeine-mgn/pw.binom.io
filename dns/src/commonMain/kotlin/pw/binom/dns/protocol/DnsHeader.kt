@@ -140,10 +140,10 @@ class DnsHeader {
       .let { it and 0xFFF }
       .toShort()
     dest.writeShort(flags)
-      .writeShort(qCount.toShort())
-      .writeShort(ansCount.toShort())
-      .writeShort(authCount.toShort())
-      .writeShort(addCount.toShort())
+    dest.writeShort(qCount.toShort())
+    dest.writeShort(ansCount.toShort())
+    dest.writeShort(authCount.toShort())
+    dest.writeShort(addCount.toShort())
   }
 
   fun writeEnd(packageStartPosition: Int, dest: ByteBuffer) {

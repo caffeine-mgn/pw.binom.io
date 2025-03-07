@@ -3,11 +3,12 @@
 #include "../include/Network.h"
 
 #if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
-
+#define __ANDROID_API__ 24
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <netinet/in.h>
-
+#include <sys/types.h>
+#include <sys/socket.h>
 #else
 
 #include <winsock2.h>

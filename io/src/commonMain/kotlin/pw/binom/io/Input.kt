@@ -1,6 +1,7 @@
 package pw.binom.io
 
 import pw.binom.DEFAULT_BUFFER_SIZE
+import pw.binom.fromBytes
 
 interface Input : Closeable {
 
@@ -25,6 +26,69 @@ interface Input : Closeable {
       }
     }
     return length
+  }
+
+  fun read(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset): DataTransferSize =
+    dest.wrap {
+      it.position = offset
+      it.limit = offset + length
+      read(it)
+    }
+
+  fun readFully(dest: ByteArray, offset: Int = 0, length: Int = dest.size - offset) {
+    var wasRead = 0
+    while (true) {
+      val r = read(dest, offset = offset + wasRead, length = length - wasRead)
+      if (r.isAvailable) {
+        wasRead += r.length
+        if (wasRead == length) {
+          return
+        } else {
+          continue
+        }
+      }
+      if (wasRead > 0) {
+        throw PackageBreakException()
+      } else {
+        throw EOFException()
+      }
+    }
+  }
+
+  fun readBoolean() = readByte() > 0
+
+  fun readInt(): Int {
+    val buf = ByteArray(Int.SIZE_BYTES)
+    readFully(buf)
+    return Int.fromBytes(buf)
+  }
+
+  fun readShort(): Short {
+    val buf = ByteArray(Short.SIZE_BYTES)
+    readFully(buf)
+    return Short.fromBytes(buf)
+  }
+
+  fun readLong(): Long {
+    val buf = ByteArray(Long.SIZE_BYTES)
+    readFully(buf)
+    return Long.fromBytes(buf)
+  }
+
+  fun readFloat() = Float.fromBits(readInt())
+  fun readDouble() = Double.fromBits(readLong())
+
+  fun readString(): String {
+    val size = readInt()
+    val bytes = ByteArray(size)
+    readFully(bytes)
+    return bytes.decodeToString()
+  }
+
+  fun readByte(): Byte {
+    val r = ByteArray(1)
+    readFully(r)
+    return r[0]
   }
 
   fun skipAll(bufferSize: Int = DEFAULT_BUFFER_SIZE) {

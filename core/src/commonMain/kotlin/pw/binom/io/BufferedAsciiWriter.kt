@@ -62,10 +62,10 @@ abstract class AbstractBufferedAsciiWriter : Writer, Output {
     while (pos < data.size) {
       checkFlush()
       val wrote = buffer.write(data, offset = pos)
-      if (wrote <= 0) {
+      if (wrote.isNotAvailable) {
         throw IOException("Can't append data to")
       }
-      pos += wrote
+      pos += wrote.length
     }
     return this
   }

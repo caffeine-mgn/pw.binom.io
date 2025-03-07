@@ -26,7 +26,7 @@ plugins {
 //  kotlin("jvm") version "1.8.21" apply false
 //  id("org.jetbrains.dokka") version "1.8.10" apply false
 //  id("com.gradle.plugin-publish") version "0.16.0" apply false
-  id("com.github.gmazzo.buildconfig") version "3.0.3" apply false
+  id("com.github.gmazzo.buildconfig") version "5.5.1" apply false
 }
 
 allprojects {

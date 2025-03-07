@@ -78,10 +78,10 @@ abstract class AbstractAsyncBufferedAsciiWriter(
       while (cursor < value.size) {
         internalFlush()
         val len = buffer.write(offset = cursor, data = value)
-        if (len <= 0) {
+        if (len.isNotAvailable) {
           throw ClosedException("Buffer was closed")
         }
-        cursor += len
+        cursor += len.length
       }
     }
   }
@@ -99,7 +99,7 @@ abstract class AbstractAsyncBufferedAsciiWriter(
       var remaining = length
       while (remaining > 0) {
         checkFlush()
-        val wrote = buffer.write(data, offset = offset, length = length)
+        val wrote = buffer.write(data, offset = offset, length = length).length
         r += wrote
         remaining -= wrote
       }
@@ -159,10 +159,10 @@ abstract class AbstractAsyncBufferedAsciiWriter(
       while (pos < data.size) {
         checkFlush()
         val wrote = buffer.write(data, offset = pos)
-        if (wrote <= 0) {
+        if (wrote.isNotAvailable) {
           throw IOException("Can't append data to")
         }
-        pos += wrote
+        pos += wrote.length
       }
       return this
     }
