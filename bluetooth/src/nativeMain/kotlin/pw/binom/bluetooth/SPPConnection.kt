@@ -4,26 +4,23 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
-import platform.bluetooth.NSPPConnection
-import platform.bluetooth.closeSPP
-import platform.bluetooth.readFromSPP
-import platform.bluetooth.writeToSPP
-import pw.binom.atomic.AtomicBoolean
+import platform.bluetooth.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.Channel
 import pw.binom.io.DataTransferSize
+import kotlin.concurrent.AtomicInt
 
 @OptIn(ExperimentalForeignApi::class)
 actual class SPPConnection(val native: CPointer<NSPPConnection>) : Channel {
-  private val closed = AtomicBoolean(false)
+  private val closed = AtomicInt(0)
   actual override fun close() {
-    if (!closed.compareAndSet(false, true)) {
+    if (!closed.compareAndSet(0, 1)) {
       return
     }
-    closeSPP(native)
+    closeSPPConnection(native)
   }
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     if (!data.hasRemaining) {
       DataTransferSize.EMPTY
     }
@@ -51,11 +48,11 @@ actual class SPPConnection(val native: CPointer<NSPPConnection>) : Channel {
       )
     }
 
-  override fun flush() {
+  actual override fun flush() {
 
   }
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     if (!dest.hasRemaining) {
       DataTransferSize.EMPTY
     }

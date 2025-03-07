@@ -24,7 +24,7 @@ actual class SPPConnection(val native: Pointer) : Channel {
     }
   }
 
-  override fun read(dest: ByteBuffer): DataTransferSize {
+  actual override fun read(dest: ByteBuffer): DataTransferSize {
     val wrote = if (dest.native.isDirect) {
       NativeLibrary.INSTANCE.readFromSPP(
         connection = native,
@@ -55,7 +55,7 @@ actual class SPPConnection(val native: Pointer) : Channel {
     if (!closed.compareAndSet(false, true)) {
       return
     }
-    NativeLibrary.INSTANCE.closeSPP(native)
+    NativeLibrary.INSTANCE.closeSPPConnection(native)
   }
 
   override fun write(data: ByteArray, offset: Int, length: Int): DataTransferSize {
@@ -72,7 +72,7 @@ actual class SPPConnection(val native: Pointer) : Channel {
     }
   }
 
-  override fun write(data: ByteBuffer): DataTransferSize {
+  actual override fun write(data: ByteBuffer): DataTransferSize {
     val wrote = if (data.native.isDirect) {
       NativeLibrary.INSTANCE.writeToSPP(
         connection = native,
@@ -99,6 +99,6 @@ actual class SPPConnection(val native: Pointer) : Channel {
     }
   }
 
-  override fun flush() {
+  actual override fun flush() {
   }
 }

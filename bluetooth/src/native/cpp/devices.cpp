@@ -67,7 +67,6 @@ EXTERN_DLL_EXPORT const struct NLocalDevice* getLocalDevices(){
     struct NLocalDevice* result = NULL;
 #ifdef LINUX_TARGET
     struct hci_dev_info di;
-
     // Получаем список всех доступных адаптеров
     for (int dev_id = 0; ; dev_id++) {
         int sock = hci_open_dev(dev_id);
@@ -82,13 +81,12 @@ EXTERN_DLL_EXPORT const struct NLocalDevice* getLocalDevices(){
             close(sock);
             continue;
         }
-
-        struct NLocalDevice* s = (struct NLocalDevice*)malloc(sizeof(NLocalDevice));
-        s->deviceId = dev_id;
-        copyAddressAndReverseBytes((unsigned char*)&di.bdaddr, (unsigned char*)&s->address);
-        memcpy(&s->name, &di.name, 8);
-        s->next = result;
-        result = s;
+        struct NLocalDevice* nextDevice = (struct NLocalDevice*)malloc(sizeof(NLocalDevice));
+        nextDevice->deviceId = dev_id;
+        copyAddressAndReverseBytes((unsigned char*)&di.bdaddr, (unsigned char*)&nextDevice->address);
+        memcpy(&nextDevice->name, &di.name, 8);
+        nextDevice->next = result;
+        result = nextDevice;
         close(sock);
     }
 #endif
@@ -137,9 +135,9 @@ EXTERN_DLL_EXPORT const struct NLocalDevice* getLocalDevices(){
 EXTERN_DLL_EXPORT void detachLocalDevices(struct NLocalDevice *devices){
     struct NLocalDevice* d = devices;
     while (d != NULL) {
-      struct NLocalDevice* n = d;
-      d = d->next;
-      n->next = (struct NLocalDevice *)NULL;
+        struct NLocalDevice* n = d;
+        d = d->next;
+        n->next = (struct NLocalDevice *)NULL;
     }
 }
 

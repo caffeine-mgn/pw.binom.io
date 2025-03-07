@@ -13,8 +13,7 @@ class GetDevicesTest {
   @Test
   fun bb() {
     val e = Devices.getDevices()
-    println("--->$e")
-    val self = e.find { it.address.toString() == selfDeviceAddress1 }!!
+    val self = e.find { it.address.toString() == selfDeviceAddress2 }!!
     println("--->$self")
     self.open().use {
       println("found:\n${it.discover().joinToString("\n")}")
@@ -26,7 +25,7 @@ class GetDevicesTest {
 //    }
   }
 
-  @Test
+//  @Test
   fun aa() {
     val e = Devices.getDevices()
     val self = e.find { it.address.toString() == selfDeviceAddress2 }!!

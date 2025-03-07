@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 actual class OpenedLocalDevice(val native: Pointer) : Closeable {
   private val closed = AtomicBoolean(false)
   private fun ensureOpened() {
-    if (!closed.get()) {
+    if (closed.get()) {
       throw ClosedException()
     }
   }
@@ -33,7 +33,7 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
 
   actual fun openSPP(removeAddress: Address, channel: Int): SPPConnection {
     ensureOpened()
-    val connection = NativeLibrary.INSTANCE.openSPP(
+    val connection = NativeLibrary.INSTANCE.connectSPP(
       device = native,
       removeDeviceAddress = removeAddress.raw,
       channel = channel,
@@ -60,10 +60,15 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
     println("--->111result=$result")
   }
 
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(false, true)) {
       return
     }
     NativeLibrary.INSTANCE.closeLocalDevice(native)
+  }
+
+  actual fun publishSPP(): SPPServer {
+    val ptr = NativeLibrary.INSTANCE.publishSPP(native, -1) ?: TODO()
+    return SPPServer(ptr)
   }
 }

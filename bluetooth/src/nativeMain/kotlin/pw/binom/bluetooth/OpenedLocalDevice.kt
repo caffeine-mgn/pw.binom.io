@@ -39,7 +39,7 @@ actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Clo
   actual fun openSPP(removeAddress: Address, channel: Int): SPPConnection {
     ensureOpened()
     val connection = removeAddress.raw.usePinned { addressPinned ->
-      openSPP(
+      connectSPP(
         device = nativeDevice,
         removeDeviceAddress = addressPinned.addressOf(0).reinterpret(),
         channel = channel,
@@ -48,7 +48,7 @@ actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Clo
     return SPPConnection(connection)
   }
 
-  override fun close() {
+  actual override fun close() {
     if (!closed.compareAndSet(0, 1)) {
       return
     }
@@ -72,5 +72,10 @@ actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Clo
       TODO("--->111result=$result")
     }
     println("--->111result=$result")
+  }
+
+  actual fun publishSPP(): SPPServer {
+    val ptr = publishSPP(nativeDevice, -1) ?: TODO()
+    return SPPServer(ptr)
   }
 }

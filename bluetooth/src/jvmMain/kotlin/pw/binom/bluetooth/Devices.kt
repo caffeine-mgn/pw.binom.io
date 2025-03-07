@@ -7,13 +7,12 @@ actual object Devices {
     var ptr: Pointer? = NativeLibrary.INSTANCE.getLocalDevices()
     val list = ArrayList<LocalDevice>()
     while (ptr != Pointer.NULL && ptr != null) {
-      val r = NativeLibrary.NLocalDevice.ByReference(ptr!!)
+      val r = NativeLibrary.NLocalDevice.ByReference(ptr)
       val e = LocalDevice(ptr)
       ptr = r.next
-      NativeLibrary.INSTANCE.detachLocalDevices(e.nativeDevice)
       list += e
     }
-
+    NativeLibrary.INSTANCE.detachLocalDevices(ptr)
     return list
   }
 }

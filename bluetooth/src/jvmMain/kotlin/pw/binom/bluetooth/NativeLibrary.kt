@@ -64,7 +64,7 @@ internal interface NativeLibrary : Library {
     var address = ByteArray(6)
 
     @JvmField
-    var name = ByteArray(8)
+    var name = ByteArray(248)
 
     @JvmField
     var next: Pointer? = Pointer.NULL
@@ -114,15 +114,49 @@ internal interface NativeLibrary : Library {
     }
   }
 
+  open class NSPPConnection : Structure() {
+    @JvmField
+    var address = ByteArray(6)
+
+    @Override
+    override fun getFieldOrder(): List<String> =
+      listOf("address")
+
+    class ByReference : NSPPConnection, Structure.ByReference {
+      constructor() : super()
+      constructor(p: Pointer) : super() {
+        useMemory(p);
+        read();
+      }
+    }
+  }
+
+  open class NSPPServer : Structure() {
+    @JvmField
+    var address = ByteArray(6)
+
+    @Override
+    override fun getFieldOrder(): List<String> =
+      listOf("address")
+
+    class ByReference : NSPPServer, Structure.ByReference {
+      constructor() : super()
+      constructor(p: Pointer) : super() {
+        useMemory(p);
+        read();
+      }
+    }
+  }
+
   /**
    * @return pointer to [NLocalDevice]
    */
   fun getLocalDevices(): Pointer
 
   /**
-   * @param devices pointer to NLocalDevice
+   * @param devices pointer to [NLocalDevice]
    */
-  fun detachLocalDevices(devices: Pointer)
+  fun detachLocalDevices(devices: Pointer?)
 
   /**
    * @param device pointer to NLocalDevice
@@ -170,7 +204,7 @@ internal interface NativeLibrary : Library {
    * @param channel channel
    * @return pointer to [NSPPConnection]
    */
-  fun openSPP(
+  fun connectSPP(
     device: Pointer,
     removeDeviceAddress: ByteArray,
     channel: Int,
@@ -179,7 +213,7 @@ internal interface NativeLibrary : Library {
   /**
    * @param connection pointer to [NSPPConnection]
    */
-  fun closeSPP(connection: Pointer)
+  fun closeSPPConnection(connection: Pointer)
 
   /**
    * @param connection pointer to [NSPPConnection]
@@ -212,6 +246,25 @@ internal interface NativeLibrary : Library {
    * @return returns count of bytes was read
    */
   fun readFromSPP(connection: Pointer, data: ByteBuffer, offset: Int, dataSize: Int): Int
+
+  /**
+   * Publishing SSP service on device [device]
+   * @param device device for publishing service
+   * @return pointer to NSPPConnection
+   */
+  fun publishSPP(device: Pointer, port:Int): Pointer?
+
+  /**
+   * accept client by spp on from [server]
+   * @param server server for listening
+   * @return pointer to NSPPConnection
+   */
+  fun acceptSPPClient(server: Pointer): Pointer?
+
+  /**
+   * Close SPP server
+   */
+  fun closeSPPServer(device: Pointer)
 }
 
 fun ByteArray.asString(): String {
