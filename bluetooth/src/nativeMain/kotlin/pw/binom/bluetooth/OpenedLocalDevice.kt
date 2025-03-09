@@ -74,8 +74,8 @@ actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Clo
     println("--->111result=$result")
   }
 
-  actual fun publishSPP(): SPPServer {
-    val ptr = publishSPP(nativeDevice, -1) ?: TODO()
+  actual fun publishSPP(channel: Int): SPPServer {
+    val ptr = publishSPP(nativeDevice, channel) ?: TODO()
     return SPPServer(ptr)
   }
 }

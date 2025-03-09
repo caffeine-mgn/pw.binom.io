@@ -67,8 +67,8 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
     NativeLibrary.INSTANCE.closeLocalDevice(native)
   }
 
-  actual fun publishSPP(): SPPServer {
-    val ptr = NativeLibrary.INSTANCE.publishSPP(native, -1) ?: TODO()
+  actual fun publishSPP(channel: Int): SPPServer {
+    val ptr = NativeLibrary.INSTANCE.publishSPP(native, channel) ?: TODO()
     return SPPServer(ptr)
   }
 }

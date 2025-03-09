@@ -10,6 +10,67 @@
 #endif
 
 START_EXTERN
+void sdpRequest(const struct NOpennedDevice*device, unsigned char *remoteAddress){
+    #ifdef LINUX_TARGET
+    bdaddr_t adapter_addr;
+    copyAddressAndReverseBytes((unsigned char*)device->address, (unsigned char*)&adapter_addr);
+    bdaddr_t target;
+    copyAddressAndReverseBytes(remoteAddress, (unsigned char*)&target);
+
+    sdp_session_t *session = sdp_connect(&adapter_addr, &target, SDP_RETRY_IF_BUSY);
+    if (!session) {
+        perror("SDP connection");
+        return;
+    }
+
+    // Создаем SDP запрос
+    uuid_t svc_uuid;
+    sdp_list_t *response_list;
+    sdp_record_t *record;
+    sdp_list_t *proto_list;
+
+    sdp_uuid16_create(&svc_uuid, PUBLIC_BROWSE_GROUP);
+    sdp_list_t *search_list = sdp_list_append(NULL, &svc_uuid);
+    uint32_t range = 0x0000ffff;
+    sdp_list_t *attrid_list = sdp_list_append(NULL, &range);
+
+    // Выполняем запрос
+    if (sdp_service_search_attr_req(session, search_list, SDP_ATTR_REQ_RANGE, attrid_list, &response_list) < 0) {
+        perror("SDP search");
+        sdp_close(session);
+        return;
+    }
+
+    // Парсим результаты
+    for (sdp_list_t *r = response_list; r; r = r->next) {
+        record = (sdp_record_t *) r->data;
+        sdp_list_t *proto_list;
+
+        if (sdp_get_access_protos(record, &proto_list)) {
+            printf("Failed to get access protocols\n");
+            continue;
+        }
+
+        // Выводим информацию о сервисе
+        printf("Service found:\n");
+        for (sdp_list_t *p = proto_list; p; p = p->next) {
+            sdp_list_t *pds = (sdp_list_t *) p->data;
+            for (sdp_list_t *pd = pds; pd; pd = pd->next) {
+                sdp_data_t *d = (sdp_data_t *) pd->data;
+                printf("Protocol: %d\n", d->val.uint16);
+            }
+        }
+
+        sdp_list_free(proto_list, 0);
+    }
+
+    // Освобождаем ресурсы
+    sdp_list_free(response_list, 0);
+    sdp_list_free(search_list, 0);
+    sdp_list_free(attrid_list, 0);
+    sdp_close(session);
+    #endif
+}
 /*
 void searchServices(struct NOpennedDevice*device,signed char * removeAddress){
     if (!device){

@@ -18,11 +18,6 @@ class GetDevicesTest {
     self.open().use {
       println("found:\n${it.discover().joinToString("\n")}")
     }
-//    val self = e.find { it.address.toString() == selfDeviceAddress }!!
-//    self.open().use {
-//      println("111221isDiscoverable=${it.isDiscoverable()}")
-//      it.setDiscoverable(true)
-//    }
   }
 
 //  @Test
