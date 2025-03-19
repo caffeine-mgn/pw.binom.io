@@ -6,9 +6,9 @@ fun TargetConfig.config() {
   -"watchosArm64"
   -"watchosX64"
   -"watchosDeviceArm64"
-  -"wasmJs"
-  -"wasmWasi"
-  -"js"
+//  -"wasmJs"
+//  -"wasmWasi"
+//  -"js"
 }
 
 

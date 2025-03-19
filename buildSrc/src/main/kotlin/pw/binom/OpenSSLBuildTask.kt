@@ -105,9 +105,9 @@ abstract class OpenSSLBuildTask : DefaultTask() {
       }
     val exe = if (HostManager.hostIsMingw) ".exe" else ""
     val envs1 = HashMap(System.getenv())
-    envs1["CC"] = compiler.clangFile.path
-    envs1["CXX"] = compiler.clangFile.path
-    envs1["AR"] = linker.arFile.path
+    envs1["CC"] = compiler.clangFile.path.replace("\\","\\\\")
+    envs1["CXX"] = compiler.clangFile.path.replace("\\","\\\\")
+    envs1["AR"] = linker.arFile.path.replace("\\","\\\\")
     envs1["CPPFLAGS"] = compiler.args.map { "\"$it\"" }.joinToString(" ")
     if (target.get().family == Family.MINGW) {
       envs1["RC"] = "i686-w64-mingw32-windres"
@@ -152,11 +152,14 @@ abstract class OpenSSLBuildTask : DefaultTask() {
       makeArgs += "RCFLAGS="
     }
     makeArgs += "PROGRAMS="
+    logger.lifecycle("Running make$exe ${makeArgs.joinToString(" ")}")
     project.exec {
       it.workingDir = opensslBuildDir
       it.executable = "make$exe"
       it.args = listOf("-j", Runtime.getRuntime().availableProcessors().toString()) + makeArgs
       it.environment.putAll(envs1)
+      it.standardOutput = System.out
+      it.errorOutput = System.err
     }
 //    execute(
 //      args = listOf("make$exe", "-j", Runtime.getRuntime().availableProcessors().toString()) + makeArgs,
