@@ -1,14 +1,16 @@
 package pw.binom.wasm.runner
 
+import pw.binom.Console
 import pw.binom.collections.LinkedList
 import pw.binom.wasm.AbsHeapType
 import pw.binom.wasm.FunctionId
-import pw.binom.wasm.Primitive
 import pw.binom.wasm.node.*
 import pw.binom.wasm.node.inst.*
-import pw.binom.wasm.runner.cmd.CompareRunner
-import pw.binom.wasm.runner.cmd.MemoryRunner
-import pw.binom.wasm.runner.cmd.NumericRunner
+import pw.binom.wasm.node.inst.Ref
+import pw.binom.wasm.runner.cmd.*
+import pw.binom.wasm.runner.stack.BaseStack
+import pw.binom.wasm.runner.stack.Stack
+import pw.binom.wasm.text.writers.TextExpressionsVisitor
 
 class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private val importFunc = module.importSection.filterIsInstance<Import.Function>()
@@ -41,8 +43,25 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     }
     .toList()
 
+  private val types = TypeDictionary.create(module.typeSection)
+
   init {
-//    check(module.elementSection.size == tables.size)
+
+    module.dataSection.forEach {
+      val offset = it.expressions?.let {
+        runCmd(
+          startCmd = it.first!!,
+          locals = ArrayList(),
+          args = ArrayList(),
+          results = listOf(VType.Primitive(RType.Primitive.I32)),
+          functionId = FunctionId(0u),
+        ).single().asI32.value
+      } ?: 0
+      val target = memory[it.memoryId]
+      println("push data ${it.data.size} to offset ${offset}")
+      target.pushBytes(src = it.data, offset = offset.toUInt())
+    }
+
     module.elementSection.forEachIndexed { index, element ->
       when (element) {
         is Element.Type0 -> {
@@ -51,7 +70,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             startCmd = element.expressions.first!!,
             locals = ArrayList(),
             args = ArrayList(),
-            results = listOf(ValueType().also { it.number = NumberType(Primitive.I32) }),
+            results = listOf(VType.Primitive(RType.Primitive.I32)),
             functionId = FunctionId(0u),
           ).single().asI32.value
           check(offset >= 0)
@@ -60,6 +79,8 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             table[offset + functionIndex] = functionId
           }
         }
+
+        else -> TODO()
       }
     }
 
@@ -69,7 +90,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           startCmd = expressions.first!!,
           locals = ArrayList(),
           args = ArrayList(),
-          results = listOf(ValueType().also { it.number = NumberType(Primitive.I32) }),
+          results = listOf(VType.Primitive(RType.Primitive.I32)),
           functionId = FunctionId(0u),
         ).single().asI32.value
       } ?: 0
@@ -82,6 +103,20 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   }
 
   private val global3 = module.globalSection.map { v ->
+    val vtype = TypeDictionary.convert(v.type)
+    val value = runCmd(
+      startCmd = v.expressions.first!!,
+      locals = ArrayList(),
+      args = ArrayList(),
+      results = listOf(TypeDictionary.convert(v.type)),
+      functionId = FunctionId(0u),
+    ).single()
+    if (v.mutable) {
+      MutableVariable2Impl(value = value, type = vtype)
+    } else {
+      VariableImpl(value = value, type = vtype)
+    }
+    /*
     when {
       v.type.number != null -> {
         when (v.type.number!!.type) {
@@ -97,8 +132,26 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
         }
       }
 
-      else -> TODO()
+      v.type.ref != null -> {
+        val e = types[v.type.ref!!.ref!!.type!!]
+        val firstInitCmd = v.expressions.first!!
+        runCmd(
+          startCmd = firstInitCmd,
+          locals = ArrayList(),
+          args = ArrayList(),
+          results = listOf(TypeDictionary.convert(v.type)),
+          functionId = FunctionId(0u),
+        ).single().asI32.value
+        TODO()
+//        val instance = Instance.create(type = e, types = types)
+//        val ref = GlobalVarMutable.Ref()
+//        ref.ref = instance
+//        ref
+      }
+
+      else -> TODO("Unknown global variable type: $v")
     }
+    */
   }
 
   private val globals2 = module.importSection.asSequence()
@@ -137,45 +190,53 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   fun findFunction(name: String) =
     module.exportSection.find { it.name == name && it is Export.Function } as Export.Function?
 
-  fun runFunc(name: String, args: List<Variable>): List<Any?> {
+  fun runFunc(name: String, args: List<Variable2>): List<Any?> {
     val func = findFunction(name = name)
       ?: TODO("Function \"$name\" not found")
     return runFunc(id = func.id, args = args)
   }
 
-  fun runFunc(id: FunctionId, args: List<Variable>): List<Variable> {
+  fun runFunc(id: FunctionId, args: List<Variable2>): List<Value> {
     val functionIndex = id.id.toInt() - importFunc.size
     val typeIndex = module.functionSection[functionIndex]
-    val desc = module.typeSection[typeIndex].single!!.single!!.type as RecType.FuncType
+    val func = types.getRType(typeIndex) as RType.Function
+//    val desc = module.typeSection[typeIndex].single!!.single!!.type as RecType.FuncType
+    val desc = types.getRType(typeIndex) as RType.Function
     check(desc.args.size == args.size) { "desc.args.size=${desc.args.size}, args.size=${args.size}" }
     val code = module.codeSection[functionIndex]
-    val locals = ArrayList<Variable>()
-    code.locals.forEach {
-      repeat(it.count.toInt()) { _ ->
-        locals += Variable.create(it.type)
+    val locals = ArrayList<MutableValue2>()
+    code.locals.forEach { localType ->
+      val variableType = TypeDictionary.convert(localType.type)
+      val defaultValue = variableType.default
+      repeat(localType.count.toInt()) { _ ->
+        locals += MutableVariable2Impl(value = defaultValue, type = variableType)
+//        locals += Variable.create(it.type)
       }
     }
     return runCmd(
       startCmd = code.code.first!!,
       locals = locals,
       args = args.toMutableList(),
-      results = desc.results,
+      results = func.results,
       functionId = id,
     )
   }
 
   class Block1(val startIndex: Inst, val endIndex: Inst, val loop: Boolean)
 
-  private fun findEndBlock(startIndex: Inst): Inst {
+  private fun findEnd(startIndex: Inst, endIndex: Inst?, isStart: (Inst) -> Boolean, isEnd: (Inst) -> Boolean): Inst? {
     var depth = 1
     var cmd: Inst? = startIndex
     while (cmd != null) {
-      if (cmd is BlockStart) {
+      if (cmd == endIndex) {
+        return null
+      }
+      if (isStart(cmd)) {
         depth++
         cmd = cmd.next
         continue
       }
-      if (cmd is EndBlock) {
+      if (isEnd(cmd)) {
         depth--
         if (depth == 0) {
           return cmd
@@ -185,8 +246,24 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       }
       cmd = cmd.next
     }
-    TODO()
+    return null
   }
+
+  private fun findElseBlock(startIndex: Inst, endIndex: Inst) =
+    findEnd(
+      startIndex = startIndex,
+      endIndex = endIndex,
+      isStart = { it is BlockStart.IF },
+      isEnd = { it is ControlFlow.ELSE }
+    )
+
+  private fun findEndBlock(startIndex: Inst): Inst =
+    findEnd(
+      startIndex = startIndex,
+      endIndex = null,
+      isStart = { it is BlockStart },
+      isEnd = { it is EndBlock }
+    ) ?: TODO()
 
   private var stopped = false
   private fun callFunction(
@@ -195,57 +272,83 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   ) {
     if (functionId.id.toInt() in importFunc.indices) {
       val externalFun = importFunc[functionId.id.toInt()]
-      val functionType = module.typeSection[externalFun.index].single!!.single!!.type as RecType.FuncType
-      val l = LinkedList<Variable>()
+//      val functionType = module.typeSection[externalFun.index].single!!.single!!.type as RecType.FuncType
+      val functionType = types[externalFun.index].single!!.type as RecType.FuncType
+      val l = LinkedList<Value>()
       functionType.args.forEach {
-        val v = Variable.create(it)
-        v.popFromStack(stack)
-        l.addFirst(v)
+//        val v = Variable.create(it)
+//        v.popFromStack(stack)
+        val type = TypeDictionary.convert(it)
+        val value = stack.pop()
+        l.addFirst(value)
       }
       val impl = importFuncImpl[functionId.id.toInt()]
       impl(object : ExecuteContext {
         override val runner: Runner
           get() = this@Runner
-        override val args: List<Variable>
+        override val args: List<Value>
           get() = l
 
         override fun stop() {
           stopped = true
         }
 
-        override fun pushResult(value: Variable) {
-          value.pushToStack(stack)
+        override fun pushResult(value: Value) {
+          stack.push(value)
         }
       })
       return
     }
     val funcForCall = (functionId.id.toInt() - importFunc.size)
-    val desc =
-      module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
-    val l = LinkedList<Variable>()
-    desc.args.forEach { type ->
-      val e = Variable.create(type)
-      e.popFromStack(stack)
-      l.addFirst(e)
+    val funcDesc = types.getRType(module.functionSection[funcForCall]) as RType.Function
+//    val desc =
+//      module.typeSection[module.functionSection[funcForCall]].single!!.single!!.type as RecType.FuncType
+    val l = LinkedList<Variable2>()
+    funcDesc.args.forEach { type ->
+      l.addFirst(VariableImpl(stack.pop(), type))
     }
     runFunc(functionId, args = l).forEach {
-      it.pushToStack(stack)
+      stack.push(it)
     }
   }
 
   private fun runCmd(
     functionId: FunctionId,
     startCmd: Inst,
-    locals: MutableList<Variable>,
-    args: MutableList<Variable>,
-    results: List<ValueType>,
-  ): List<Variable> {
-    val stack = ArrayStack()
+    locals: MutableList<MutableValue2>,
+    args: MutableList<Variable2>,
+    results: List<VType>,
+  ): List<Value> {
+    val args = args.map {
+      MutableVariable2Impl(it.value, type = it.type)
+    }
+    val stack = BaseStack()
     val blocks = ArrayList<Block1>()
+//    if (functionId.id != 0u) {
+//      println("---===FUNC ${functionId.id}===---")
+//    }
     try {
       var cmd: Inst? = startCmd
+      val visitor = TextExpressionsVisitor(Console.std, false)
       while (!stopped && cmd != null) {
+//        println("CMD ${functionId.id}: $cmd")
+//        cmd.accept(visitor)
+//        println()
         when (cmd) {
+          is Compare -> cmd = CompareRunner.run(cmd = cmd, stack = stack)
+          is Convert -> cmd = ConvertRunner.run(cmd = cmd, stack = stack)
+          is Numeric -> cmd = NumericRunner.run(cmd = cmd, stack = stack)
+          is Const -> cmd = ConstRunner.run(cmd = cmd, stack = stack)
+          is Memory -> cmd = MemoryRunner.run(cmd = cmd, stack = stack, memory = memory)
+          is ArrayOp -> cmd =
+            ArrayOpRunner.run(cmd = cmd, stack = stack, types = types, dataSection = module.dataSection)
+
+          is BlockStart.TRY -> {
+            val endIndex = findEndBlock(startIndex = cmd.next!!)
+            blocks += Block1(startIndex = cmd, endIndex = endIndex, loop = false)
+            cmd = cmd.next
+          }
+
           is BlockStart.BLOCK -> {
             val endIndex = findEndBlock(startIndex = cmd.next!!)
             blocks += Block1(startIndex = cmd, endIndex = endIndex, loop = false)
@@ -258,8 +361,31 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             cmd = cmd.next
           }
 
+          is BlockStart.IF -> {
+            val endIndex = findEndBlock(startIndex = cmd.next!!)
+            val elseBlock = findElseBlock(
+              startIndex = cmd.next!!,
+              endIndex = endIndex,
+            )
+            if (stack.popI32() > 0) {
+              blocks += Block1(startIndex = cmd, endIndex = endIndex, loop = false)
+              cmd = cmd.next
+            } else {
+              if (elseBlock == null) {
+                cmd = endIndex.next
+              } else {
+                blocks += Block1(startIndex = elseBlock, endIndex = endIndex, loop = false)
+                cmd = elseBlock.next
+              }
+            }
+          }
+
+          is ControlFlow.ELSE -> {
+            cmd = blocks.removeLast().endIndex.next
+          }
+
           is Br.BR_IF -> {
-            if (stack.popI32() != 0) {
+            if (stack.popI32() > 0) {
               var block: Block1 = blocks.removeLast()
               var d = cmd.label.id
               while (d > 0u) {
@@ -303,51 +429,12 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             cmd = block.endIndex.next
           }
 
-          is I32Const -> {
-            stack.pushI32(cmd.value)
-            cmd = cmd.next
-          }
-
-          is I64Const -> {
-            stack.pushI64(cmd.value)
-            cmd = cmd.next
-          }
-
-          is LocalIndexArgument.SET -> {
-            try {
-              val e = cmd.id.id.toInt()
-              if (e in args.indices) {
-                args[e].popFromStack(stack)
-              } else {
-                locals[e - args.size].popFromStack(stack)
-              }
-              cmd = cmd.next
-            } catch (e: Throwable) {
-              throw e
-            }
-          }
-
-          is LocalIndexArgument.TEE -> {
-            val e = cmd.id.id.toInt()
-            if (e in args.indices) {
-              args[e].peekToStack(stack)
-            } else {
-              locals[e - args.size].peekToStack(stack)
-            }
-            cmd = cmd.next
-          }
-
-          is LocalIndexArgument.GET -> {
-            val e = cmd.id.id.toInt()
-            if (e in args.indices) {
-              args[e].pushToStack(stack)
-            } else {
-              locals[e - args.size].pushToStack(stack)
-            }
-
-//            stack.push(value)
-            cmd = cmd.next
-          }
+          is LocalIndexArgument -> cmd = LocalIndexArgumentRunner.run(
+            cmd = cmd,
+            stack = stack,
+            args = args,
+            locals = locals,
+          )
 
           is ControlFlow.RETURN -> {
             check(stack.size == results.size)
@@ -358,13 +445,15 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             TODO("UNREACHABLE")
           }
 
-          is CallFunction -> {
+          is Call.ById -> {
             callFunction(cmd.id, stack)
             cmd = cmd.next
           }
 
-          is CallIndirect -> {
+          is Call.Indirect -> {
             val tableIndex = stack.popI32()
+//            val type = module.typeSection[cmd.type].single!!.single!!.type as RecType.FuncType
+            val type = types[cmd.type].single!!.type as RecType.FuncType
             val table = tables[cmd.table.id.toInt()] as Table.FuncTable
             val functionId = table[tableIndex]
               ?: TODO("Function with index $tableIndex not defined!")
@@ -372,11 +461,18 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             cmd = cmd.next
           }
 
+          is Call.ByRef -> {
+            // TODO добавить валидацию
+            val func = stack.pop() as Value.Ref.RefFunction
+            callFunction(func.id, stack)
+            cmd = cmd.next
+          }
+
           is GlobalIndexArgument.GET -> {
             if (cmd.id.id.toInt() in globals2.indices) {
               globals2[cmd.id.id.toInt()].putInto(stack)
             } else {
-              global3[cmd.id.id.toInt() - globals2.size].putInto(stack)
+              stack.push(global3[cmd.id.id.toInt() - globals2.size].value)
             }
             cmd = cmd.next
           }
@@ -385,43 +481,40 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             if (cmd.id.id.toInt() in globals2.indices) {
               (globals2[cmd.id.id.toInt()] as GlobalVarMutable).setFrom(stack)
             } else {
-              (global3[cmd.id.id.toInt() - globals2.size] as GlobalVarMutable).setFrom(stack)
+              (global3[cmd.id.id.toInt() - globals2.size] as MutableValue2).value = stack.pop()//.setFrom(stack)
             }
-            cmd = cmd.next
-          }
-
-          is Compare -> CompareRunner.run(cmd = cmd, stack = stack, memory = memory)
-
-          is Convert.I32_WRAP_I64 -> {
-            stack.pushI32(stack.popI64().toInt())
-            cmd = cmd.next
-          }
-
-          is Convert.I64_EXTEND_U_I32 -> {
-            stack.pushI64(stack.popI32().toUInt().toULong().toLong())
             cmd = cmd.next
           }
 
           is Select -> {
             stack.select()
-//            val v = stack.popI32()
-//            val v2 = stack.pop()
-//            val v1 = stack.pop()
-//            if (v1::class != v2::class) {
-//              TODO()
-//            }
-//            stack.push(if (v != 0) v1 else v2)
             cmd = cmd.next
           }
 
-          is Numeric -> cmd = NumericRunner.run(cmd = cmd, stack = stack, memory = memory)
+          is SelectWithType -> {
+            if (cmd.types.isEmpty()) {
+              stack.select()
+            } else {
+              require(cmd.types.size == 1)
+              val v = stack.popI32()
+              val v2 = stack.pop()
+              val v1 = stack.pop()
+              val result = if (v != 0) v1 else v2
+              stack.push(
+                ValueConvert.convert(
+                  value = result,
+                  type = TypeDictionary.convert(cmd.types[0]),
+                  typeDictionary = types,
+                )
+              )
+            }
+            cmd = cmd.next
+          }
 
           is Drop -> {
             stack.drop()
             cmd = cmd.next
           }
-
-          is Memory -> cmd = MemoryRunner.run(cmd = cmd, stack = stack, memory = memory)
 
           is MemoryOp.Size -> {
             val mem = memory[cmd.id.raw.toInt()]
@@ -447,16 +540,125 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
             cmd = cmd.next
           }
 
+          is RefFunction -> {
+            stack.push(Value.Ref.RefFunction(cmd.id))
+            cmd = cmd.next
+          }
+
+          is Ref.Null -> {
+            stack.push(Value.Ref.NULL)
+            cmd = cmd.next
+          }
+
+          is RefAsNonNull -> {
+            val s = stack.peek()
+            require(s is Value.Ref.Array || s is Value.Ref.RefFunction || s is Instance)
+            cmd = cmd.next
+          }
+
+          is ArrayCopy -> {
+            if (cmd.from == cmd.to) {
+              val n = stack.pop() as Value.Primitive.I32
+              val s = stack.pop() as Value.Primitive.I32
+              val source = stack.pop() as Value.Ref.Array
+              val d = stack.pop() as Value.Primitive.I32
+              val dest = stack.pop() as Value.Ref.Array
+              repeat(n.value) {
+                dest.values[d.value + it] = source.values[s.value + it]
+              }
+//              val newArray = Value.Ref.Array(type = arr.type, values = ArrayList(arr.values))
+//              ValueHistory.self.add(newArray, "Копия", mapOf("from" to arr))
+//              stack.push(newArray)
+            } else {
+              TODO()
+            }
+            cmd = cmd.next
+          }
+
+          is Ref.Cast -> {
+            cmd = cmd.next
+          }
+
+          is StructNew -> {
+            val t = types.getRType(cmd.structTypeId) as RType.Ref.Object
+            val fields = t.fields.map {
+              stack.pop()
+            }
+            stack.push(
+              Instance.create(
+                type = t,
+                fields = fields.asReversed()
+              )
+            )
+            cmd = cmd.next
+          }
+
+          is StructOp.GC_STRUCT_GET -> {
+            val struct = stack.pop() as Instance
+            val tt = types.getRType(cmd.type) as RType.Ref.Object
+            if (!types.isParent(type = struct.type, parent = tt)) {
+              TODO()
+            }
+            stack.push(struct.fields[cmd.field.id.toInt()].value)
+            cmd = cmd.next
+          }
+
+          is StructOp.GC_STRUCT_GET_S -> {
+            val struct = stack.pop() as Instance
+            require(types.getRType(cmd.type) === struct.type)
+            stack.push(NumberUtils.getS(struct.fields[cmd.field.id.toInt()].value))
+            cmd = cmd.next
+          }
+
+          is StructOp.GC_STRUCT_GET_U -> {
+            val struct = stack.pop() as Instance
+            require(types.getRType(cmd.type) === struct.type)
+            stack.push(NumberUtils.getU(struct.fields[cmd.field.id.toInt()].value))
+            cmd = cmd.next
+          }
+
+          is StructOp.GC_STRUCT_SET -> {
+            val value = stack.pop()
+            val struct = stack.pop() as Instance
+            val field = struct.fields[cmd.field.id.toInt()]
+            require(field is Instance.MutableField)
+            field.value = value
+            cmd = cmd.next
+          }
+
+          is Ref.CastNull -> {
+            stack.push(stack.pop())
+            cmd = cmd.next
+          }
+
+          is RefIsNull -> {
+            val e = stack.pop()
+            if (e == Value.Ref.NULL) {
+              stack.pushI32(1)
+            } else {
+              stack.pushI32(0)
+            }
+            cmd = cmd.next
+          }
+
+          is ArrayLen -> {
+            val array = stack.pop() as Value.Ref.Array
+            stack.pushI32(array.values.size)
+            cmd = cmd.next
+          }
+
+          is ThrowTag -> {
+            throw WasmException(stack.pop())
+          }
+
           else -> TODO("Unknown ${cmd::class} ")
         }
       }
     } catch (e: Throwable) {
-      throw RuntimeException("Can't execute task", e)
+      throw RuntimeException("Can't execute task. Function ${functionId}", e)
     }
     return results.map {
-      val v = Variable.create(it)
-      v.popFromStack(stack)
-      v
+      stack.pop()
     }
   }
 }

@@ -31,13 +31,13 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
     return list
   }
 
-  actual fun openSPP(removeAddress: Address, channel: Int): SPPConnection {
+  actual fun openSPP(remoteAddress: Address, channel: Int): SPPConnection {
     ensureOpened()
     val connection = NativeLibrary.INSTANCE.connectSPP(
       device = native,
-      removeDeviceAddress = removeAddress.raw,
+      removeDeviceAddress = remoteAddress.raw,
       channel = channel,
-    ) ?: TODO("Can't open connection to $removeAddress")
+    ) ?: TODO("Can't open connection to $remoteAddress")
     return SPPConnection(connection)
   }
 
@@ -70,5 +70,18 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
   actual fun publishSPP(channel: Int): SPPServer {
     val ptr = NativeLibrary.INSTANCE.publishSPP(native, channel) ?: TODO()
     return SPPServer(ptr)
+  }
+
+  actual fun openL2CAP(
+    remoteAddress: Address,
+    psm: PSM,
+  ): SPPConnection {
+    ensureOpened()
+    val connection = NativeLibrary.INSTANCE.connectL2CAP(
+      device = native,
+      removeDeviceAddress = remoteAddress.raw,
+      psm = psm.value,
+    ) ?: TODO("Can't open connection to $remoteAddress")
+    return SPPConnection(connection)
   }
 }

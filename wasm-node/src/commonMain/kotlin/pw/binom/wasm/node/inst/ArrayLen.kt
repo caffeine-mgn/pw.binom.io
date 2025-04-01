@@ -6,4 +6,6 @@ class ArrayLen : Inst() {
   override fun accept(visitor: ExpressionsVisitor) {
     visitor.arrayLen()
   }
+
+  override fun toString(): String = "array.len"
 }

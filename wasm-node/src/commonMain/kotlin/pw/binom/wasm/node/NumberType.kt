@@ -3,7 +3,7 @@ package pw.binom.wasm.node
 import pw.binom.wasm.Primitive
 import pw.binom.wasm.visitors.ValueVisitor
 
-class NumberType(var type: Primitive) : ValueVisitor.NumberVisitor {
+data class NumberType(var type: Primitive) : ValueVisitor.NumberVisitor {
   override fun i32() {
     type = Primitive.I32
   }

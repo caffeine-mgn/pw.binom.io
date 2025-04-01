@@ -10,6 +10,7 @@ import java.lang.ref.Cleaner
 
 internal interface NativeLibrary : Library {
   companion object {
+    const val PSM_SDP = 0x0001
     fun <T> createCleaner(arg: T, func: (T) -> Unit): Cleaner {
       val c = Cleaner.create()
       c.register(arg) { func(arg) }
@@ -211,6 +212,18 @@ internal interface NativeLibrary : Library {
   ): Pointer?
 
   /**
+   * @param device pointer to [NOpennedDevice]
+   * @param removeDeviceAddress address to device
+   * @param channel channel
+   * @return pointer to [NSPPConnection]
+   */
+  fun connectL2CAP(
+    device: Pointer,
+    removeDeviceAddress: ByteArray,
+    psm: Int,
+  ): Pointer?
+
+  /**
    * @param connection pointer to [NSPPConnection]
    */
   fun closeSPPConnection(connection: Pointer)
@@ -252,7 +265,7 @@ internal interface NativeLibrary : Library {
    * @param device device for publishing service
    * @return pointer to NSPPConnection
    */
-  fun publishSPP(device: Pointer, port:Int): Pointer?
+  fun publishSPP(device: Pointer, port: Int): Pointer?
 
   /**
    * accept client by spp on from [server]

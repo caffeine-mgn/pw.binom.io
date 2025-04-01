@@ -1,8 +1,18 @@
 package pw.binom.wasm.runner
 
+import pw.binom.toByteArray
 import kotlin.test.Test
 
 class LongTest {
+  @Test
+  fun aaa(){
+
+    val e = "А".encodeToByteArray().map { it.toUByte() }.joinToString("-")
+    println(e)
+    val b = 'А'.code.toByteArray().map { it.toUByte() }.joinToString("-")
+    println(b)
+    println('А'.code)
+  }
   @Test
   fun test() {
     val max = 0b1111111111111111111111111111111111111111111111111111111111111111uL

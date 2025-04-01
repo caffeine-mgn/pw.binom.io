@@ -6,4 +6,6 @@ class Drop : Inst() {
   override fun accept(visitor: ExpressionsVisitor) {
     visitor.drop()
   }
+
+  override fun toString(): String = "drop"
 }

@@ -32,19 +32,19 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun const(value: Float) {
-    F32Const(value).add()
+    Const.F32Const(value).add()
   }
 
   override fun const(value: Double) {
-    F64Const(value).add()
+    Const.F64Const(value).add()
   }
 
   override fun const(value: Int) {
-    I32Const(value).add()
+    Const.I32Const(value).add()
   }
 
   override fun const(value: Long) {
-    I64Const(value).add()
+    Const.I64Const(value).add()
   }
 
   override fun controlFlow(opcode: UByte) {
@@ -256,21 +256,21 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun refNull(): ValueVisitor.HeapVisitor {
-    val e = Ref.NULL()
+    val e = Ref.Null()
     e.add()
     return e.heap
   }
 
   override fun call(function: FunctionId) {
-    CallFunction(function).add()
+    Call.ById(function).add()
   }
 
   override fun callIndirect(type: TypeId, table: TableId) {
-    CallIndirect(type = type, table = table).add()
+    Call.Indirect(type = type, table = table).add()
   }
 
   override fun call(typeRef: TypeId) {
-    CallType(typeRef).add()
+    Call.ByRef(typeRef).add()
   }
 
   override fun indexArgument(opcode: UByte, value: LocalId) {
@@ -314,10 +314,10 @@ class Expressions : ExpressionsVisitor {
 
   override fun ref(gcOpcode: UByte): ValueVisitor.HeapVisitor {
     val e = when (gcOpcode) {
-      Opcodes.GC_REF_CAST -> Ref.GC_REF_CAST()
-      Opcodes.GC_REF_TEST_NULL -> Ref.GC_REF_TEST_NULL()
-      Opcodes.GC_REF_TEST -> Ref.GC_REF_TEST()
-      Opcodes.GC_REF_CAST_NULL -> Ref.GC_REF_CAST_NULL()
+      Opcodes.GC_REF_CAST -> Ref.Cast()
+      Opcodes.GC_REF_TEST_NULL -> Ref.TestNull()
+      Opcodes.GC_REF_TEST -> Ref.Test()
+      Opcodes.GC_REF_CAST_NULL -> Ref.CastNull()
       else -> throw IllegalArgumentException()
     }
     e.add()
@@ -337,11 +337,11 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun newArray(type: TypeId, size: UInt) {
-    NewArray.Size(id = type, size = size).add()
+    ArrayOp.NewBySize(type = type, size = size).add()
   }
 
   override fun newArray(type: TypeId, data: DataId) {
-    NewArray.Data(id = type, data = data).add()
+    ArrayOp.NewByData(type = type, data = data).add()
   }
 
   override fun brOnCastFail(flags: UByte, label: LabelId): ExpressionsVisitor.BrOnCastFailVisitor {
@@ -355,7 +355,7 @@ class Expressions : ExpressionsVisitor {
   }
 
   override fun newArrayDefault(type: TypeId) {
-    NewArrayDefault(type).add()
+    ArrayOp.NewByDefault(type).add()
   }
 
   override fun arrayLen() {

@@ -1,5 +1,7 @@
 package pw.binom.wasm.runner
 
+import pw.binom.wasm.runner.stack.Stack
+
 interface GlobalVar {
   val s32: Int
     get() = TODO()
@@ -12,6 +14,8 @@ interface GlobalVar {
   val f32: Float
     get() = TODO()
   val f64: Double
+    get() = TODO()
+  val ref: Instance?
     get() = TODO()
 
   fun putInto(stack: Stack)
@@ -38,6 +42,18 @@ interface GlobalVarMutable : GlobalVar {
     set(value) = TODO()
 
   fun setFrom(stack: Stack)
+
+  class Ref(value: Int = 0) : GlobalVarMutable {
+    override var ref: Instance? = null
+    override fun setFrom(stack: Stack) {
+      TODO("Not yet implemented")
+    }
+
+    override fun putInto(stack: Stack) {
+      TODO("Not yet implemented")
+    }
+
+  }
 
   class S32(value: Int = 0) : GlobalVarMutable {
     override var s32: Int = value

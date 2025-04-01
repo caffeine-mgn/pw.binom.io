@@ -6,4 +6,6 @@ class RefIsNull : Inst() {
   override fun accept(visitor: ExpressionsVisitor) {
     visitor.refIsNull()
   }
+
+  override fun toString(): String = "ref.is_null"
 }

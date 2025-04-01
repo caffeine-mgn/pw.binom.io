@@ -11,17 +11,21 @@ sealed class LocalIndexArgument : Inst() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.indexArgument(opcode = Opcodes.GET_LOCAL, value = id)
     }
+    override fun toString(): String = "local.get ${id.id}"
   }
 
   data class SET(override val id: LocalId) : LocalIndexArgument() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.indexArgument(opcode = Opcodes.SET_LOCAL, value = id)
     }
+    override fun toString(): String = "local.set ${id.id}"
   }
 
   data class TEE(override val id: LocalId) : LocalIndexArgument() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.indexArgument(opcode = Opcodes.TEE_LOCAL, value = id)
     }
+
+    override fun toString(): String = "local.tee ${id.id}"
   }
 }

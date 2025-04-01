@@ -7,9 +7,17 @@ import pw.binom.wasm.visitors.TypeSectionVisitor.RecTypeVisitor
 import pw.binom.wasm.visitors.ValueVisitor
 import kotlin.js.JsName
 
-class RecType : RecTypeVisitor {
+class RecType : RecTypeVisitor, Type {
+
+  @JsName("recursiveF")
+  var recursive: Recursive? = null
+
+  @JsName("singleF")
+  var single: SubType? = null
+
   class Recursive : TypeSectionVisitor.RecursiveVisitor {
     val types = ArrayList<SubType>()
+
     override fun start() {
       types.clear()
       super.start()
@@ -61,7 +69,7 @@ class RecType : RecTypeVisitor {
     }
 
     override fun mutable(value: Boolean) {
-      this.mutable = mutable
+      this.mutable = value
     }
 
     fun accept(visitor: TypeSectionVisitor.ArrayVisitor) {
@@ -76,12 +84,13 @@ class RecType : RecTypeVisitor {
     }
   }
 
-  class Field(val type: StorageType, val mutable: Boolean)
+  data class Field(val type: StorageType, val mutable: Boolean)
 
   class StructType : TypeSectionVisitor.StructTypeVisitor, Composite() {
     var shared = false
     val fields = ArrayList<Field>()
     private var fieldType: StorageType? = null
+
     override fun start(shared: Boolean) {
       this.shared = shared
       fields.clear()
@@ -116,12 +125,16 @@ class RecType : RecTypeVisitor {
     override fun accept(visitor: TypeSectionVisitor.CompositeTypeVisitor) {
       accept(visitor.struct())
     }
+
+    override fun toString(): String =
+      "StructType(shared=$shared, fields=$fields, fieldType=$fieldType)"
   }
 
   class FuncType : TypeSectionVisitor.FuncTypeVisitor, Composite() {
     var args = ArrayList<ValueType>()
     var results = ArrayList<ValueType>()
     var shared = false
+
     override fun start(shared: Boolean) {
       this.shared = shared
       args.clear()
@@ -159,6 +172,7 @@ class RecType : RecTypeVisitor {
   class CompositeType : TypeSectionVisitor.CompositeTypeVisitor {
     var type: Composite? = null
 
+
     override fun array(): TypeSectionVisitor.ArrayVisitor {
       val e = ArrayType()
       type = e
@@ -180,6 +194,8 @@ class RecType : RecTypeVisitor {
     fun accept(visitor: TypeSectionVisitor.CompositeTypeVisitor) {
       type!!.accept(visitor)
     }
+
+    override fun toString(): String = "CompositeType(type=$type)"
   }
 
   class SubTypeWithParentType : TypeSectionVisitor.SubTypeWithParentVisitor {
@@ -187,6 +203,7 @@ class RecType : RecTypeVisitor {
 
     @JsName("typeF")
     var type: CompositeType? = null
+
 
     override fun start() {
       parents.clear()
@@ -215,12 +232,21 @@ class RecType : RecTypeVisitor {
       type!!.accept(visitor.type())
       visitor.end()
     }
+
+    override fun toString(): String =
+      "SubTypeWithParentType(parents=$parents, type=$type)"
   }
 
-  class SubType : TypeSectionVisitor.SubTypeVisitor {
-    var type: SubTypeWithParentType? = null
+  class SubType : TypeSectionVisitor.SubTypeVisitor, Type {
     var final: SubTypeWithParentType? = null
     var nonFinal: SubTypeWithParentType? = null
+
+    val struct
+      get() = final ?: nonFinal
+
+    val isFinalStruct
+      get() = final != null
+
 
     @JsName("singleF")
     var single: CompositeType? = null
@@ -250,13 +276,20 @@ class RecType : RecTypeVisitor {
         else -> throw IllegalStateException()
       }
     }
+
+    override fun toString(): String {
+      final?.let { return "SubType(final=$it)" }
+      nonFinal?.let { return "SubType(nonFinal=$it)" }
+      single?.let { return "SubType(single=$it)" }
+      return super.toString()
+    }
   }
 
-  @JsName("recursiveF")
-  var recursive: Recursive? = null
-
-  @JsName("singleF")
-  var single: SubType? = null
+  override fun toString(): String {
+    recursive?.let { return "RecType(recursive=$it)" }
+    single?.let { return "RecType(single=$it)" }
+    return "RecType()"
+  }
 
   override fun recursive(): TypeSectionVisitor.RecursiveVisitor {
     val e = Recursive()

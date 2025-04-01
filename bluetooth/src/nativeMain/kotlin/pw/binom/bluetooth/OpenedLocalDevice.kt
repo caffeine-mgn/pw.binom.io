@@ -2,12 +2,10 @@ package pw.binom.bluetooth
 
 import kotlinx.cinterop.*
 import platform.bluetooth.*
-import platform.posix.free
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
 import kotlin.concurrent.AtomicInt
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.ref.createCleaner
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Closeable {
@@ -36,14 +34,14 @@ actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Clo
     return list
   }
 
-  actual fun openSPP(removeAddress: Address, channel: Int): SPPConnection {
+  actual fun openSPP(remoteAddress: Address, channel: Int): SPPConnection {
     ensureOpened()
-    val connection = removeAddress.raw.usePinned { addressPinned ->
+    val connection = remoteAddress.raw.usePinned { addressPinned ->
       connectSPP(
         device = nativeDevice,
         removeDeviceAddress = addressPinned.addressOf(0).reinterpret(),
         channel = channel,
-      ) ?: TODO("Can't open connection to $removeAddress")
+      ) ?: TODO("Can't open connection to $remoteAddress")
     }
     return SPPConnection(connection)
   }
@@ -77,5 +75,16 @@ actual class OpenedLocalDevice(val nativeDevice: CPointer<NOpennedDevice>) : Clo
   actual fun publishSPP(channel: Int): SPPServer {
     val ptr = publishSPP(nativeDevice, channel) ?: TODO()
     return SPPServer(ptr)
+  }
+
+  actual fun openL2CAP(remoteAddress: Address, psm: PSM): SPPConnection {
+    val connection = remoteAddress.raw.usePinned { addressPinned ->
+      connectL2CAP(
+        device = nativeDevice,
+        removeDeviceAddress = addressPinned.addressOf(0).reinterpret(),
+        psm = psm.value,
+      )
+    } ?: TODO("Can't open L2CAP connection to $remoteAddress")
+    return SPPConnection(connection)
   }
 }

@@ -14,6 +14,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
   var exitCode = 0
     private set
 
+  @OptIn(ExperimentalStdlibApi::class)
   override fun func(module: String, field: String): ((ExecuteContext) -> Unit)? {
     if (module != "wasi_snapshot_preview1") {
       return null
@@ -40,7 +41,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
         }
 //              arrPtrPtr
 //              println()
-        e.pushResult(Variable.I32(ESUCCESS))
+        e.pushResult(Value.Primitive.I32(ESUCCESS))
 //              TODO()
       }
 
@@ -50,7 +51,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
         val bufferLen = args.map { it.encodeToByteArray().size + 1 }.sum()
         e.runner.memory[0].pushI32(value = args.size, offset = countPtr.toUInt(), align = 0u)
         e.runner.memory[0].pushI32(value = bufferLen, offset = bufferLenPtr.toUInt(), align = 0u)
-        e.pushResult(Variable.I32(ESUCCESS))
+        e.pushResult(Value.Primitive.I32(ESUCCESS))
       }
 
       "proc_exit" -> { e ->
@@ -68,7 +69,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
       "fd_fdstat_get" -> FUNC@{ env ->
         val fd = env.args[0].asI32.value // reading __wasi_fd_t
         if (fd != 1 && fd != 2) {
-          env.pushResult(Variable.I32(__WASI_EBADF))
+          env.pushResult(Value.Primitive.I32(__WASI_EBADF))
           return@FUNC
         }
         val resultPtr = env.args[1].asI32.value
@@ -88,7 +89,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
           offset = (resultPtr + Long.SIZE_BYTES * 2).toUInt(),
           align = 0u
         )
-        env.pushResult(Variable.I32(0))
+        env.pushResult(Value.Primitive.I32(0))
       }
 
       "fd_seek" -> { e ->
@@ -96,16 +97,19 @@ class WasiModule(val args: List<String>) : ImportResolver {
       }
 
       "random_get" -> { e ->
-        val a = e.args[0].asI32.value
-        val b = e.args[1].asI32.value
-        e.pushResult(Variable.I32(Random.nextInt()))
+        val address = e.args[0] as Value.Primitive.I32
+        val len = e.args[1] as Value.Primitive.I32
+        Random.nextBytes(len.value).forEachIndexed { index, byte ->
+          e.runner.memory[0].pushI8(value = byte, offset = (index + address.value).toUInt(), align = 1u)
+        }
+        e.pushResult(Value.Primitive.I32(0))
       }
 
       "fd_write" -> { e ->
         // The file descriptor
         val fd = e.args[0].asI32.value
         if (fd != 1 && fd != 2) {
-          e.pushResult(Variable.I32(__WASI_EBADF))
+          e.pushResult(Value.Primitive.I32(__WASI_EBADF))
         } else {
           val channel = when (fd) {
             1 -> Console.std
@@ -127,16 +131,25 @@ class WasiModule(val args: List<String>) : ImportResolver {
             val data = e.runner.memory[0].getBytes(
               offset = buffer,
               len = bufferLen,
-            ).decodeToString()
+            )
+//            println(data.toHexString())
+            val dataString = data.decodeToString()
             written += bufferLen
-            channel.append(data)
+            channel.append(dataString)
+//            val str2 = ByteArray(dataString.length) {
+//              dataString[it].code.toByte()
+//            }.decodeToString()
+//            data.forEach {
+//              Console.stdChannel.writeByte(it)
+//            }
+
           }
           e.runner.memory[0].pushI32(
             value = written,
             offset = nwritten.toUInt(),
             align = 0u,
           )
-          e.pushResult(Variable.I32(ESUCCESS))
+          e.pushResult(Value.Primitive.I32(ESUCCESS))
         }
 
       }

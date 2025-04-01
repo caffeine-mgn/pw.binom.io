@@ -8,204 +8,287 @@ sealed class Convert : Inst() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_WRAP_I64)
     }
+
+    override fun toString(): String = "I32_WRAP_I64"
   }
 
   class I32_TRUNC_S_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_TRUNC_S_F32)
     }
+
+    override fun toString(): String = "I32_TRUNC_S_F32"
   }
 
   class I32_TRUNC_U_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_TRUNC_U_F32)
     }
+
+    override fun toString(): String = "I32_TRUNC_U_F32"
   }
 
   class I32_TRUNC_S_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_TRUNC_S_F64)
     }
+
+    override fun toString(): String = "I32_TRUNC_S_F64"
   }
 
   class I32_TRUNC_U_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_TRUNC_U_F64)
     }
+
+    override fun toString(): String = "I32_TRUNC_U_F64"
   }
 
   class I64_EXTEND_S_I32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_EXTEND_S_I32)
     }
+
+    override fun toString(): String = "I64_EXTEND_S_I32"
   }
 
   class I64_EXTEND_U_I32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_EXTEND_U_I32)
     }
+
+    override fun toString(): String = "I64_EXTEND_U_I32"
   }
 
   class I64_TRUNC_S_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_TRUNC_S_F32)
     }
+
+    override fun toString(): String = "I64_TRUNC_S_F32"
   }
 
   class I64_TRUNC_U_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_TRUNC_U_F32)
     }
+
+    override fun toString(): String = "I64_TRUNC_U_F32"
   }
 
   class I64_TRUNC_S_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_TRUNC_S_F64)
     }
+
+    override fun toString(): String = "I64_TRUNC_S_F64"
   }
 
   class I64_TRUNC_U_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_TRUNC_U_F64)
     }
+
+    override fun toString(): String = "I64_TRUNC_U_F64"
   }
 
   class F32_CONVERT_S_I32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F32_CONVERT_S_I32)
     }
+
+    override fun toString(): String = "F32_CONVERT_S_I32"
   }
 
   class F32_CONVERT_U_I32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F32_CONVERT_U_I32)
     }
+
+    override fun toString(): String = "F32_CONVERT_U_I32"
   }
 
   class F32_CONVERT_S_I64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F32_CONVERT_S_I64)
     }
+
+    override fun toString(): String = "F32_CONVERT_S_I64"
   }
 
   class F32_CONVERT_U_I64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F32_CONVERT_U_I64)
     }
+
+    override fun toString(): String = "F32_CONVERT_U_I64"
   }
 
   class F32_DEMOTE_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F32_DEMOTE_F64)
     }
+
+    override fun toString(): String = "F32_DEMOTE_F64"
   }
 
   class F64_CONVERT_S_I32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F64_CONVERT_S_I32)
     }
+
+    override fun toString(): String = "F64_CONVERT_S_I32"
   }
 
   class F64_CONVERT_U_I32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F64_CONVERT_U_I32)
     }
+
+    override fun toString(): String = "F64_CONVERT_U_I32"
   }
 
   class F64_CONVERT_S_I64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F64_CONVERT_S_I64)
     }
+
+    override fun toString(): String = "F64_CONVERT_S_I64"
   }
 
   class F64_CONVERT_U_I64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F64_CONVERT_U_I64)
     }
+
+    override fun toString(): String = "F64_CONVERT_U_I64"
   }
 
   class F64_PROMOTE_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.F64_PROMOTE_F32)
     }
+
+    override fun toString(): String = "F64_PROMOTE_F32"
   }
 
   class I32_EXTEND8_S : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_EXTEND8_S)
     }
+
+    override fun toString(): String = "I32_EXTEND8_S"
   }
+
   class I32_EXTEND16_S : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I32_EXTEND16_S)
     }
+
+    override fun toString(): String = "I32_EXTEND16_S"
   }
+
   class I64_EXTEND8_S : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_EXTEND8_S)
     }
+
+    override fun toString(): String = "I64_EXTEND8_S"
   }
+
   class I64_EXTEND16_S : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_EXTEND16_S)
     }
+
+    override fun toString(): String = "I64_EXTEND16_S"
   }
+
   class I64_EXTEND32_S : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convert(Opcodes.I64_EXTEND32_S)
     }
+
+    override fun toString(): String = "I64_EXTEND32_S"
   }
 
   class GC_ANY_CONVERT_EXTERN : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.gcConvert(Opcodes.GC_ANY_CONVERT_EXTERN)
     }
+
+    override fun toString(): String = "GC_ANY_CONVERT_EXTERN"
   }
 
   class GC_EXTERN_CONVERT_ANY : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.gcConvert(Opcodes.GC_EXTERN_CONVERT_ANY)
     }
+
+    override fun toString(): String = "GC_EXTERN_CONVERT_ANY"
   }
 
-  class NUMERIC_I32S_CONVERT_SAT_F32: Convert() {
+  class NUMERIC_I32S_CONVERT_SAT_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I32S_CONVERT_SAT_F32)
     }
+
+    override fun toString(): String = "NUMERIC_I32S_CONVERT_SAT_F32"
   }
-  class NUMERIC_I32U_CONVERT_SAT_F32: Convert() {
+
+  class NUMERIC_I32U_CONVERT_SAT_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I32U_CONVERT_SAT_F32)
     }
+
+    override fun toString(): String = "NUMERIC_I32U_CONVERT_SAT_F32"
   }
-  class NUMERIC_I32S_CONVERT_SAT_F64: Convert() {
+
+  class NUMERIC_I32S_CONVERT_SAT_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I32S_CONVERT_SAT_F64)
     }
+
+    override fun toString(): String = "NUMERIC_I32S_CONVERT_SAT_F64"
   }
-  class NUMERIC_I32U_CONVERT_SAT_F64: Convert() {
+
+  class NUMERIC_I32U_CONVERT_SAT_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I32U_CONVERT_SAT_F64)
     }
+
+    override fun toString(): String = "NUMERIC_I32U_CONVERT_SAT_F64"
   }
-  class NUMERIC_I64S_CONVERT_SAT_F32: Convert() {
+
+  class NUMERIC_I64S_CONVERT_SAT_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I64S_CONVERT_SAT_F32)
     }
+
+    override fun toString(): String = "NUMERIC_I64S_CONVERT_SAT_F32"
   }
-  class NUMERIC_I64U_CONVERT_SAT_F32: Convert() {
+
+  class NUMERIC_I64U_CONVERT_SAT_F32 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I64U_CONVERT_SAT_F32)
     }
+
+    override fun toString(): String = "NUMERIC_I64U_CONVERT_SAT_F32"
   }
-  class NUMERIC_I64S_CONVERT_SAT_F64: Convert() {
+
+  class NUMERIC_I64S_CONVERT_SAT_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I64S_CONVERT_SAT_F64)
     }
+
+    override fun toString(): String = "NUMERIC_I64S_CONVERT_SAT_F64"
   }
-  class NUMERIC_I64U_CONVERT_SAT_F64: Convert() {
+
+  class NUMERIC_I64U_CONVERT_SAT_F64 : Convert() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.convertNumeric(Opcodes.NUMERIC_I64U_CONVERT_SAT_F64)
     }
+
+    override fun toString(): String = "NUMERIC_I64U_CONVERT_SAT_F64"
   }
 }

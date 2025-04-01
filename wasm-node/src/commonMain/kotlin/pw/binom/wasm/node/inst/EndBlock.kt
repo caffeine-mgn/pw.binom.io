@@ -6,4 +6,6 @@ class EndBlock : Inst() {
   override fun accept(visitor: ExpressionsVisitor) {
     visitor.endBlock()
   }
+
+  override fun toString(): String = "end"
 }

@@ -6,6 +6,37 @@ import pw.binom.wasm.Vector
 import pw.binom.wasm.visitors.ValueVisitor
 
 class ValueType : ValueVisitor {
+  companion object {
+    fun number(value: NumberType): ValueType {
+      val r = ValueType()
+      r.number = value
+      return r
+    }
+    fun abs(value: AbsHeapType): ValueType {
+      val r = ValueType()
+      r.abs = value
+      return r
+    }
+    fun ref(value: RefType): ValueType {
+      val r = ValueType()
+      r.ref = value
+      return r
+    }
+    fun vector(value: VectorType): ValueType {
+      val r = ValueType()
+      r.vector = value
+      return r
+    }
+  }
+
+  override fun toString(): String {
+    number?.let { return it.toString() }
+    abs?.let { return it.toString() }
+    ref?.let { return it.toString() }
+    vector?.let { return it.toString() }
+    return super.toString()
+  }
+
   var number: NumberType? = null
     set(value) {
       field = value

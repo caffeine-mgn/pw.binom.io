@@ -1,6 +1,8 @@
 package pw.binom.http.client
 
 import pw.binom.SafeException
+import pw.binom.http.client.io.AsyncInputNoClose
+import pw.binom.http.client.io.AsyncOutputNoClose
 import pw.binom.io.*
 import pw.binom.io.http.*
 import pw.binom.io.httpClient.protocol.v11.Http11

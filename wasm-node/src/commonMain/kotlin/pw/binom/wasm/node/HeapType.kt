@@ -5,6 +5,19 @@ import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.ValueVisitor
 
 class HeapType : ValueVisitor.HeapVisitor {
+  companion object {
+    fun type(value: TypeId): HeapType {
+      val r = HeapType()
+      r.type = value
+      return r
+    }
+    fun abs(value: AbsHeapType): HeapType {
+      val r = HeapType()
+      r.abs = value
+      return r
+    }
+  }
+
   var abs: AbsHeapType? = null
     set(value) {
       field = value
@@ -19,6 +32,7 @@ class HeapType : ValueVisitor.HeapVisitor {
         abs = null
       }
     }
+
 
   override fun type(type: AbsHeapType) {
     abs = type
@@ -37,5 +51,11 @@ class HeapType : ValueVisitor.HeapVisitor {
       type != null -> visitor.type(type!!)
       else -> throw IllegalStateException()
     }
+  }
+
+  override fun toString(): String {
+    abs?.let { return "HeapType(abs=$abs)" }
+    type?.let { return "HeapType(type=$type)" }
+    return "HeapType()"
   }
 }

@@ -79,6 +79,7 @@ fun KotlinNativeTarget.useNativeBluetooth() {
     compileFile(file("${buildFile.parentFile}/src/native/cpp/spp.cpp"))
     compileFile(file("${buildFile.parentFile}/src/native/cpp/services.cpp"))
     compileFile(file("${buildFile.parentFile}/src/native/cpp/utils.cpp"))
+    compileFile(file("${buildFile.parentFile}/src/native/cpp/spd.cpp"))
   }
 
   val staticBuildTask =

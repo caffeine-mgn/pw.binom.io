@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string.h>
 #include "utils.h"
+#include <stdio.h>
 
 #ifdef LINUX_TARGET
 #include <bluetooth/bluetooth.h>
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <bluetooth/sdp.h>
 #include <bluetooth/sdp_lib.h>
+#include <bluetooth/l2cap.h>
 #endif
 #ifdef WINDOWS_TARGET
 #include <winsock2.h>
@@ -21,6 +23,7 @@
 
 #ifdef LINUX_TARGET
 #define SPP_SERVICE_UUID "00001101-0000-1000-8000-00805F9B34FB"
+#define SOCKET int
 #endif
 #ifdef WINDOWS_TARGET
 // UUID для RFCOMM
@@ -30,35 +33,111 @@ static const GUID RFCOMM_PROTOCOL_UUID1 = { 0x00000003, 0x0000, 0x1000, {0x80, 0
 static const GUID SPP_PROTOCOL_UUID1 = { 0x00001101, 0x0000, 0x1000, { 0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB } };
 #endif
 
-START_EXTERN
-const struct NSPPConnection *connectSPP(
-    struct NOpennedDevice *device,
-    unsigned char *removeDeviceAddress,
-    int channel) {
-    if (!device){
-        return NULL;
-    }
-    if (!removeDeviceAddress){
-        return NULL;
-    }
+SOCKET createSocketL2CAP(){
 #ifdef LINUX_TARGET
-    // Создание RFCOMM-сокета
-    int sock = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
-    if (sock < 0) {
-        return NULL;
+    return socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_L2CAP);
+#endif
+#ifdef WINDOWS_TARGET
+    SOCKET s = socket(AF_BTH, SOCK_STREAM, BTHPROTO_L2CAP);
+    if (s == INVALID_SOCKET){
+        return -1;
+    }
+    return s;
+#endif
+}
+
+SOCKET createSocketRFCOMM(){
+#ifdef LINUX_TARGET
+    return socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+#endif
+#ifdef WINDOWS_TARGET
+    return socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+#endif
+}
+
+void closeSocket(SOCKET sock){
+#ifdef LINUX_TARGET
+    close(sock);
+#endif
+#ifdef WINDOWS_TARGET
+    closesocket(sock);
+#endif
+}
+
+int bindDeviceL2CAP(SOCKET sock, struct NOpennedDevice *device, int psm){
+#ifdef LINUX_TARGET
+    fprintf(stdout,"bindDeviceL2CAP #1\n");
+    fflush(stdout);
+    struct sockaddr_l2 local_addr = {0};
+    local_addr.l2_family = AF_BLUETOOTH;
+    local_addr.l2_psm = htobs(psm);
+    fprintf(stdout,"bindDeviceL2CAP #2\n");
+    fflush(stdout);
+    copyAddressAndReverseBytes((unsigned char*)&device->address,(unsigned char*)&local_addr.l2_bdaddr);// Адрес локального адаптера
+    fprintf(stdout,"bindDeviceL2CAP #3\n");
+    fflush(stdout);
+    if (bind(sock, (struct sockaddr *)&local_addr, sizeof(local_addr)) < 0) {
+        fprintf(stdout,"bindDeviceL2CAP #4 errno=%d\n", errno);
+        fflush(stdout);
+        return 0;
+    }
+    fprintf(stdout,"bindDeviceL2CAP #5\n");
+    fflush(stdout);
+#endif
+#ifdef WINDOWS_TARGET
+
+    SOCKADDR_BTH localAddr = {0};
+    localAddr.addressFamily = AF_BTH;
+    localAddr.btAddr = 0; // Локальный адрес (0 для любого адаптера)
+    localAddr.port = psm; // PSM для пользовательского протокола
+
+    // Привязка сокета к выбранному адаптеру
+    copyAddressAndReverseBytes(device->address, (unsigned char*)localAddr.btAddr); // Используем адрес выбранного адаптера
+
+    if (bind(sock, (SOCKADDR*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
+        return 0;
     }
 
+#endif
+    return 1;
+}
+
+int bindDevice(SOCKET sock, struct NOpennedDevice *device){
+#ifdef LINUX_TARGET
+    fprintf(stdout,"bindDevice #1\n");
+    fflush(stdout);
     struct sockaddr_rc local_addr = {0};
     local_addr.rc_family = AF_BLUETOOTH;
-
+    fprintf(stdout,"bindDevice #2\n");
+    fflush(stdout);
     copyAddressAndReverseBytes((unsigned char*)&device->address,(unsigned char*)&local_addr.rc_bdaddr);// Адрес локального адаптера
-
+    fprintf(stdout,"bindDevice #3\n");
+    fflush(stdout);
     if (bind(sock, (struct sockaddr *)&local_addr, sizeof(local_addr)) < 0) {
-        close(sock);
-        return NULL;
+        fprintf(stdout,"bindDevice #4 errno=%d\n", errno);
+        fflush(stdout);
+        return 0;
+    }
+    fprintf(stdout,"bindDevice #5\n");
+    fflush(stdout);
+#endif
+#ifdef WINDOWS_TARGET
+    // Привязка сокета к выбранному адаптеру
+    SOCKADDR_BTH localAddr = { 0 };
+    localAddr.addressFamily = AF_BTH;
+    copyAddressAndReverseBytes(device->address, (unsigned char*)localAddr.btAddr); // Используем адрес выбранного адаптера
+    localAddr.port = BT_PORT_ANY; // Любой порт
+
+    if (bind(sock, (SOCKADDR*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
+        return 0;
     }
 
+#endif
+    return 1;
+}
 
+int internal_connectToSpp(SOCKET sock, unsigned char *removeDeviceAddress,int channel){
+#ifdef LINUX_TARGET
     // Настройка адреса для подключения
     struct sockaddr_rc addr = {0};
     addr.rc_family = AF_BLUETOOTH;
@@ -66,56 +145,160 @@ const struct NSPPConnection *connectSPP(
     copyAddressAndReverseBytes(removeDeviceAddress,(unsigned char*)&addr.rc_bdaddr);
 
     if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        close(sock);
-        return NULL;
+        return 0;
     }
-    struct NSPPConnection*result = (struct NSPPConnection*) malloc(sizeof(struct NSPPConnection));
-    result->socketId = sock;
-    memcpy(result->address, removeDeviceAddress, 6);
-    return result;
 #endif
 #ifdef WINDOWS_TARGET
-    // Создание сокета
-    SOCKET sock = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
-    if (sock == INVALID_SOCKET) {
-        // WSAGetLastError()
-        // WSACleanup();
-        return NULL;
-    }
-
-    // Привязка сокета к выбранному адаптеру
-    SOCKADDR_BTH localAddr = { 0 };
-    localAddr.addressFamily = AF_BTH;
-    copyAddressAndReverseBytes(removeDeviceAddress, (unsigned char*)localAddr.btAddr); // Используем адрес выбранного адаптера
-    localAddr.port = BT_PORT_ANY; // Любой порт
-
-    if (bind(sock, (SOCKADDR*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
-        // WSAGetLastError()
-        closesocket(sock);
-        WSACleanup();
-        return NULL;
-    }
-
     // Настройка адреса Bluetooth устройства
     SOCKADDR_BTH addr;
     memset(&addr, 0, sizeof(addr));
     addr.addressFamily = AF_BTH;
-    addr.btAddr = 0x00066608C457; // Замените на адрес вашего Bluetooth устройства
     addr.serviceClassId = RFCOMM_PROTOCOL_UUID1;
     addr.port = channel; // RFCOMM канал (обычно 1)
+    copyAddressAndReverseBytes(removeDeviceAddress, (unsigned char*)addr.btAddr);
+    // Подключение к устройству
+    if (connect(sock, (SOCKADDR*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+
+        return 0;
+    }
+#endif
+    return 1;
+}
+
+int internal_connectToL2CAP(SOCKET sock, unsigned char *removeDeviceAddress, int psm){
+#ifdef LINUX_TARGET
+    // Настройка адреса для подключения
+    struct sockaddr_l2 addr = {0};
+    addr.l2_family = AF_BLUETOOTH;
+    addr.l2_psm = htobs(psm); // PSM для SDP
+    copyAddressAndReverseBytes(removeDeviceAddress, (unsigned char*)&addr.l2_bdaddr);
+    fprintf(stdout,"internal_connectToL2CAP #1\n");
+    fflush(stdout);
+    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        fprintf(stdout,"internal_connectToL2CAP #2 errno=%d\n", errno);
+        fflush(stdout);
+        return 0;
+    }
+    fprintf(stdout,"internal_connectToL2CAP #3\n");
+    fflush(stdout);
+#endif
+#ifdef WINDOWS_TARGET
+    // Настройка адреса Bluetooth устройства
+    SOCKADDR_BTH addr = {0};
+    addr.addressFamily = AF_BTH;
+    addr.port = psm; // PSM для SDP
+    copyAddressAndReverseBytes(removeDeviceAddress, (unsigned char*)addr.btAddr);
 
     // Подключение к устройству
     if (connect(sock, (SOCKADDR*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-        // WSAGetLastError()
-        closesocket(sock);
-        WSACleanup();
+        return 0;
+    }
+#endif
+    return 1;
+}
+
+START_EXTERN
+const struct NSPPConnection *connectToBluetooth(
+    struct NOpennedDevice *device,
+    unsigned char *removeDeviceAddress,
+    int protocol,
+    int channel) {
+    if (!device){
+        return NULL;
+    }
+    if (!removeDeviceAddress){
+        return NULL;
+    }
+    // Создание RFCOMM-сокета
+    int sock = createSocketRFCOMM();
+    if (sock < 0) {
+        return NULL;
+    }
+    if (!bindDevice(sock, device)){
+        closeSocket(sock);
+        return NULL;
+    }
+    // Настройка адреса для подключения
+    if (!internal_connectToSpp(sock, removeDeviceAddress, channel)){
+        closeSocket(sock);
         return NULL;
     }
     struct NSPPConnection*result = (struct NSPPConnection*) malloc(sizeof(struct NSPPConnection));
     result->socketId = sock;
     memcpy(result->address, removeDeviceAddress, 6);
     return result;
-#endif
+};
+
+EXTERN_DLL_EXPORT const struct NSPPConnection *connectSPP(
+    struct NOpennedDevice *device,
+    unsigned char *removeDeviceAddress,
+    int channel){
+    if (!device){
+        return NULL;
+    }
+    if (!removeDeviceAddress){
+        return NULL;
+    }
+    // Создание RFCOMM-сокета
+    int sock = createSocketRFCOMM();
+    if (sock < 0) {
+        return NULL;
+    }
+    if (!bindDevice(sock, device)){
+        closeSocket(sock);
+        return NULL;
+    }
+    // Настройка адреса для подключения
+    if (!internal_connectToSpp(sock, removeDeviceAddress, channel)){
+        closeSocket(sock);
+        return NULL;
+    }
+    struct NSPPConnection*result = (struct NSPPConnection*) malloc(sizeof(struct NSPPConnection));
+    result->socketId = sock;
+    memcpy(result->address, removeDeviceAddress, 6);
+    return result;
+};
+
+EXTERN_DLL_EXPORT const struct NSPPConnection *connectL2CAP(
+    struct NOpennedDevice *device,
+    unsigned char *removeDeviceAddress,
+    int psm){
+    if (!device){
+        fprintf(stdout,"connectL2CAP #1\n");
+        fflush(stdout);
+        return NULL;
+    }
+    if (!removeDeviceAddress){
+        fprintf(stdout,"connectL2CAP #2\n");
+        fflush(stdout);
+        return NULL;
+    }
+    // Создание RFCOMM-сокета
+    int sock = createSocketL2CAP();
+    if (sock < 0) {
+        fprintf(stdout,"connectL2CAP #3\n");
+        fflush(stdout);
+        return NULL;
+    }
+    if (!bindDeviceL2CAP(sock, device, psm)){
+        fprintf(stdout,"connectL2CAP #4\n");
+        fflush(stdout);
+        closeSocket(sock);
+        return NULL;
+    }
+    // Настройка адреса для подключения
+    if (!internal_connectToL2CAP(sock, removeDeviceAddress, psm)){
+        fprintf(stdout,"connectL2CAP #5\n");
+        fflush(stdout);
+        closeSocket(sock);
+        return NULL;
+    }
+    fprintf(stdout,"connectL2CAP #6\n");
+    fflush(stdout);
+    struct NSPPConnection*result = (struct NSPPConnection*) malloc(sizeof(struct NSPPConnection));
+    result->socketId = sock;
+    memcpy(result->address, removeDeviceAddress, 6);
+    return result;
 };
 
 EXTERN_DLL_EXPORT int writeToSPP(const struct NSPPConnection *connection, signed char* data,int offset, int dataSize){

@@ -9,6 +9,8 @@
 #include <winsock2.h>
 #endif
 
+#define PSM_SDP 0x0001
+
 START_EXTERN
 
 struct NSPPConnection {
@@ -32,10 +34,15 @@ struct NSPPServer {
 #endif
 };
 
-const struct NSPPConnection *connectSPP(
+EXTERN_DLL_EXPORT const struct NSPPConnection *connectSPP(
     struct NOpennedDevice *device,
     unsigned char *removeDeviceAddress,
     int channel);
+
+EXTERN_DLL_EXPORT const struct NSPPConnection *connectL2CAP(
+    struct NOpennedDevice *device,
+    unsigned char *removeDeviceAddress,
+    int psm);
 
 EXTERN_DLL_EXPORT void closeSPPConnection(const struct NSPPConnection *connection);
 EXTERN_DLL_EXPORT int writeToSPP(const struct NSPPConnection *connection, signed char* data,int offset, int dataSize);

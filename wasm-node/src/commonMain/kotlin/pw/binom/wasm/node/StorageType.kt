@@ -8,6 +8,14 @@ class StorageType : StorageVisitor {
   var valueVisitor: ValueType? = null
   var packPrimitive: PackPrimitive? = null
 
+  override fun toString(): String {
+    valueVisitor?.ref?.let { return "StorageType(ref=$it)" }
+    valueVisitor?.number?.let { return "StorageType(number=$it)" }
+    valueVisitor?.abs?.let { return "StorageType(abs=$it)" }
+    valueVisitor?.vector?.let { return "StorageType(vector=$it)" }
+    return super.toString()
+  }
+
   private val packVisitor = object : StorageVisitor.PackVisitor {
     override fun i8() {
       packPrimitive = PackPrimitive.I8

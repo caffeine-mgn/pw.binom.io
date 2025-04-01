@@ -7,4 +7,6 @@ data class RefFunction(var id: FunctionId) : Inst() {
   override fun accept(visitor: ExpressionsVisitor) {
     visitor.ref(id)
   }
+
+  override fun toString(): String = "ref.func ${id.id}"
 }

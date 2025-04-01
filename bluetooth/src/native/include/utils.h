@@ -26,5 +26,4 @@
 void copyAddressAndReverseBytes(unsigned char *from, unsigned char *to);
 #endif
 
-
 #endif

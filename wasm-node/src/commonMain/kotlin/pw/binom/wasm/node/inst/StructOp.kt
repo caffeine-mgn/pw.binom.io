@@ -18,6 +18,7 @@ sealed class StructOp : Inst() {
         field = field,
       )
     }
+    override fun toString(): String = "struct.set ${type.value} ${field.id}"
   }
 
   data class GC_STRUCT_GET(override val type: TypeId, override val field: FieldId) : StructOp() {
@@ -28,6 +29,8 @@ sealed class StructOp : Inst() {
         field = field,
       )
     }
+
+    override fun toString(): String = "struct.get ${type.value} ${field.id}"
   }
 
   data class GC_STRUCT_GET_S(override val type: TypeId, override val field: FieldId) : StructOp() {
@@ -38,6 +41,7 @@ sealed class StructOp : Inst() {
         field = field,
       )
     }
+    override fun toString(): String = "struct.get_s ${type.value} ${field.id}"
   }
 
   data class GC_STRUCT_GET_U(override val type: TypeId, override val field: FieldId) : StructOp() {
@@ -48,5 +52,6 @@ sealed class StructOp : Inst() {
         field = field,
       )
     }
+    override fun toString(): String = "struct.get_u ${type.value} ${field.id}"
   }
 }

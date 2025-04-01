@@ -10,7 +10,7 @@ interface ImportResolver {
 
 interface ExecuteContext {
   val runner: Runner
-  val args: List<Variable>
-  fun pushResult(value: Variable)
+  val args: List<Value>
+  fun pushResult(value: Value)
   fun stop()
 }

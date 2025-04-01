@@ -7,35 +7,41 @@ import pw.binom.wasm.visitors.ExpressionsVisitor
 sealed class Ref : Inst() {
   abstract var heap: HeapType
 
-  class NULL : Ref() {
+  class Null : Ref() {
     override var heap = HeapType()
     override fun accept(visitor: ExpressionsVisitor) {
       heap.accept(visitor.refNull())
     }
+
+    override fun toString(): String = "ref.null"
   }
 
-  class GC_REF_CAST : Ref() {
+  class Cast : Ref() {
     override var heap = HeapType()
     override fun accept(visitor: ExpressionsVisitor) {
       heap.accept(visitor.ref(Opcodes.GC_REF_CAST))
     }
+
+    override fun toString(): String = "ref.cast"
   }
 
-  class GC_REF_TEST_NULL : Ref() {
+  class TestNull : Ref() {
     override var heap = HeapType()
     override fun accept(visitor: ExpressionsVisitor) {
       heap.accept(visitor.ref(Opcodes.GC_REF_TEST_NULL))
     }
   }
 
-  class GC_REF_TEST : Ref() {
+  class Test : Ref() {
     override var heap = HeapType()
     override fun accept(visitor: ExpressionsVisitor) {
       heap.accept(visitor.ref(Opcodes.GC_REF_TEST))
     }
+
+    override fun toString(): String = "ref.test"
   }
 
-  class GC_REF_CAST_NULL : Ref() {
+  class CastNull : Ref() {
     override var heap = HeapType()
     override fun accept(visitor: ExpressionsVisitor) {
       heap.accept(visitor.ref(Opcodes.GC_REF_CAST_NULL))

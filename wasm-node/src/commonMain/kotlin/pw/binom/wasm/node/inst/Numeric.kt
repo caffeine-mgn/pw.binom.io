@@ -5,16 +5,19 @@ import pw.binom.wasm.visitors.ExpressionsVisitor
 
 sealed class Numeric : Inst() {
   class I32_CLZ : Numeric() {
+    override fun toString(): String = "I32_CLZ"
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_CLZ)
     }
   }
   class I32_CTZ : Numeric() {
+    override fun toString(): String = "I32_CTZ"
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_CTZ)
     }
   }
   class I32_POPCNT : Numeric() {
+    override fun toString(): String = "I32_POPCNT"
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_POPCNT)
     }
@@ -23,13 +26,17 @@ sealed class Numeric : Inst() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_ADD)
     }
+
+    override fun toString(): String = "i32.add"
   }
   class I32_SUB : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_SUB)
     }
+    override fun toString(): String = "i32.sub"
   }
   class I32_MUL : Numeric() {
+    override fun toString(): String = "i32.mul"
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_MUL)
     }
@@ -38,61 +45,74 @@ sealed class Numeric : Inst() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_DIV_S)
     }
+    override fun toString(): String = "I32_DIV_S"
   }
   class I32_DIV_U : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_DIV_U)
     }
+    override fun toString(): String = "I32_DIV_U"
   }
   class I32_REM_S : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_REM_S)
     }
+    override fun toString(): String = "I32_REM_S"
   }
   class I32_REM_U : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_REM_U)
     }
+    override fun toString(): String = "I32_REM_U"
   }
   class I32_AND : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_AND)
     }
+    override fun toString(): String = "I32_AND"
   }
   class I32_OR : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_OR)
     }
+    override fun toString(): String = "I32_OR"
   }
   class I32_XOR : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_XOR)
     }
+
+    override fun toString(): String = "I32_XOR"
   }
   class I32_SHL : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_SHL)
     }
+    override fun toString(): String = "I32_SHL"
   }
   class I32_SHR_S : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_SHR_S)
     }
+    override fun toString(): String = "I32_SHR_S"
   }
   class I32_SHR_U : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_SHR_U)
     }
+    override fun toString(): String = "I32_SHR_U"
   }
   class I32_ROTL : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_ROTL)
     }
+    override fun toString(): String = "I32_ROTL"
   }
   class I32_ROTR : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_ROTR)
     }
+    override fun toString(): String = "I32_ROTR"
   }
   class I64_CLZ : Numeric() {
     override fun accept(visitor: ExpressionsVisitor) {
@@ -300,11 +320,13 @@ sealed class Numeric : Inst() {
     }
   }
   class F64_MUL : Numeric() {
+    override fun toString(): String = "F64_MUL"
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_CLZ)
     }
   }
   class F64_DIV : Numeric() {
+    override fun toString(): String = "F64_DIV"
     override fun accept(visitor: ExpressionsVisitor) {
       visitor.numeric(Opcodes.I32_CLZ)
     }
