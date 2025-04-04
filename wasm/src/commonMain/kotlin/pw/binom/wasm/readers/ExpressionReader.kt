@@ -156,7 +156,8 @@ object ExpressionReader {
       Opcodes.I64_STORE16,
       Opcodes.I64_STORE32,
         -> {
-        var align = input.v32u()
+        val firstByte = input.i8s()
+        var align = input.v32u(firstByte)
         val memoryId: MemoryId
         when {
           POW_2_6 < align && align < POW_2_7 -> {
@@ -171,7 +172,7 @@ object ExpressionReader {
 
         visitor.memory(
           opcode = opcode,
-          align = align,
+          align = if (align == 0u) 1u else align,
           offset = offset,
           memoryId = memoryId,
         )

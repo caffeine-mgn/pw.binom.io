@@ -1,9 +1,8 @@
 package pw.binom.wasm.runner
 
+const val PAGE_SIZE = 65536u
+/*
 class MemorySpaceByteArray(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) : MemorySpace {
-  companion object {
-    const val PAGE_SIZE = 65536u
-  }
 
   override val limit
     get() = data.size.toUInt()
@@ -45,3 +44,4 @@ class MemorySpaceByteArray(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) :
 
   override fun getI8(offset: UInt) = data[offset.toInt()]
 }
+*/

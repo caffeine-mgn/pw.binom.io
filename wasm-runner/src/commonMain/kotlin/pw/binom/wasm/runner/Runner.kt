@@ -2,6 +2,8 @@ package pw.binom.wasm.runner
 
 import pw.binom.Console
 import pw.binom.collections.LinkedList
+import pw.binom.fromBytes
+import pw.binom.reverse
 import pw.binom.wasm.AbsHeapType
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.node.*
@@ -46,8 +48,10 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private val types = TypeDictionary.create(module.typeSection)
 
   init {
-
     module.dataSection.forEach {
+      if (!it.active) {
+        return@forEach
+      }
       val offset = it.expressions?.let {
         runCmd(
           startCmd = it.first!!,
@@ -58,7 +62,6 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
         ).single().asI32.value
       } ?: 0
       val target = memory[it.memoryId]
-      println("push data ${it.data.size} to offset ${offset}")
       target.pushBytes(src = it.data, offset = offset.toUInt())
     }
 
@@ -84,22 +87,6 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       }
     }
 
-    module.dataSection.forEach { data ->
-      val offset = data.expressions?.let { expressions ->
-        runCmd(
-          startCmd = expressions.first!!,
-          locals = ArrayList(),
-          args = ArrayList(),
-          results = listOf(VType.Primitive(RType.Primitive.I32)),
-          functionId = FunctionId(0u),
-        ).single().asI32.value
-      } ?: 0
-      val memIndex = (data.memoryId?.raw ?: 0u).toInt()
-      val mem = memory[memIndex]
-      data.data.forEachIndexed { index, byte ->
-        mem.pushI8(value = byte, offset = (index + offset).toUInt(), align = 1u)
-      }
-    }
   }
 
   private val global3 = module.globalSection.map { v ->
@@ -331,9 +318,10 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
       var cmd: Inst? = startCmd
       val visitor = TextExpressionsVisitor(Console.std, false)
       while (!stopped && cmd != null) {
-//        println("CMD ${functionId.id}: $cmd")
-//        cmd.accept(visitor)
-//        println()
+        if (functionId.id == 31u) {
+          cmd.accept(visitor)
+          println()
+        }
         when (cmd) {
           is Compare -> cmd = CompareRunner.run(cmd = cmd, stack = stack)
           is Convert -> cmd = ConvertRunner.run(cmd = cmd, stack = stack)
@@ -437,12 +425,19 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
           )
 
           is ControlFlow.RETURN -> {
-            check(stack.size == results.size)
+            if (stack.size < results.size) {
+              ValueHistory.self.print(stack.peek())
+              throw IllegalStateException("functionId=$functionId, stack.size=${stack.size}, results.size=${results.size}")
+            }
             break
           }
 
           is ControlFlow.UNREACHABLE -> {
             TODO("UNREACHABLE")
+          }
+
+          is ControlFlow.NOP -> {
+            cmd = cmd.next
           }
 
           is Call.ById -> {
@@ -518,7 +513,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 
           is MemoryOp.Size -> {
             val mem = memory[cmd.id.raw.toInt()]
-            stack.pushI32((mem.limit / MemorySpaceByteArray.PAGE_SIZE).toInt())
+            stack.pushI32((mem.limit / PAGE_SIZE).toInt())
             cmd = cmd.next
           }
 
@@ -649,6 +644,18 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 
           is ThrowTag -> {
             throw WasmException(stack.pop())
+          }
+
+          is Ref.Test -> {
+            val instance = stack.pop() as Instance
+            val e = TypeDictionary.convert(cmd.heap, false) as VType.Ref
+            val refType = types.getRType(e.id) as RType.Ref.Object
+            val result = types.isParent(
+              type = instance.type,
+              parent = refType
+            )
+            stack.pushI32(if (result) 1 else 0)
+            cmd = cmd.next
           }
 
           else -> TODO("Unknown ${cmd::class} ")

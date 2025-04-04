@@ -116,7 +116,10 @@ object ArrayOpRunner {
             Value.Ref.NULL
           }
 
-          is VType.Ref2 -> Value.Ref.NULL
+          is VType.RefAbs -> {
+            require(tt.nullable)
+            Value.Ref.NULL
+          }
         }
         val res = ArrayList<Value>(size)
         repeat(size) {

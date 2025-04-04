@@ -3,6 +3,7 @@ package pw.binom.wasm.runner
 import pw.binom.*
 import pw.binom.io.ByteBuffer
 import pw.binom.io.holdState
+import pw.binom.wasm.runner.MemorySpace.Companion.calculateOffset
 
 class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) : MemorySpace {
   companion object {
@@ -23,6 +24,45 @@ class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) 
     }
   }
 
+  override fun pushI8(value: Byte, offset: UInt, align: UInt) {
+    MemoryHistory.push(from = offset, to = offset, "push8 Установка на $offset байтов")
+    data[offset.toInt()] = value
+  }
+
+  override fun pushBytes(src: ByteArray, offset: UInt, srcOffset: Int, srcLength: Int) {
+    data.holdState {
+      MemoryHistory.push(from = offset, to = offset + srcLength.toUInt(), "push bytes Установка на $offset байтов")
+      data.position = offset.toInt()
+      data.write(data = src, offset = srcOffset, length = srcLength)
+    }
+  }
+
+  override fun pushI16(value: Short, offset: UInt, align: UInt) {
+    data.holdState {
+      val offset = calculateOffset(offset, align)
+      MemoryHistory.push(from = offset, to = offset + 2u, "push16 Установка на $offset значения $value")
+      data.position = offset.toInt()
+      data.writeShort(value.reverse())
+    }
+  }
+
+  override fun pushI32(value: Int, offset: UInt, align: UInt) {
+    data.holdState {
+      val offset = calculateOffset(offset, align)
+      MemoryHistory.push(from = offset, to = offset + 4u, "push32 Установка на $offset значения $value")
+      data.position = offset.toInt()
+      data.writeInt(value.reverse())
+    }
+  }
+  override fun pushI64(value: Long, offset: UInt, align: UInt) {
+    data.holdState {
+      val offset = calculateOffset(offset, align)
+      MemoryHistory.push(from = offset, to = offset + 8u, "push64 Установка на $offset значения $value")
+      data.position = offset.toInt()
+      data.writeLong(value.reverse())
+    }
+  }
+
   override fun getBytes(dest: ByteArray, offset: UInt, destOffset: Int, len: Int) {
     data.holdState {
       data.position = offset.toInt()
@@ -30,41 +70,18 @@ class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) 
     }
   }
 
-  override fun pushI8(value: Byte, offset: UInt, align: UInt) {
-    data[offset.toInt()] = value
-  }
-
-  override fun pushBytes(src: ByteArray, offset: UInt, srcOffset: Int, srcLength: Int) {
-    data.holdState {
-      data.position = offset.toInt()
-      data.write(data = src, offset = srcOffset, length = srcLength)
-    }
-  }
-
   override fun getI8(offset: UInt) = data[offset.toInt()]
 
-  override fun getI32(offset: UInt): Int =
+  override fun getI32(offset: UInt, align: UInt): Int =
     data.holdState {
+      val offset = calculateOffset(offset, align)
       data.position = offset.toInt()
-      data.readInt().reverse()
-    }
-
-  override fun pushI32(value: Int, offset: UInt, align: UInt) {
-    data.holdState {
-      data.position = offset.toInt()
-      data.writeInt(value.reverse())
-    }
-  }
+      data.readInt()
+    }.reverse()
 
   override fun getI64(offset: UInt): Long = data.holdState {
     data.position = offset.toInt()
     data.readLong().reverse()
   }
 
-  override fun pushI64(value: Long, offset: UInt, align: UInt) {
-    data.holdState {
-      data.position = offset.toInt()
-      data.writeLong(value.reverse())
-    }
-  }
 }

@@ -34,7 +34,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
           e.runner.memory[0].pushI32(
             value = cursor.toInt(),
             offset = cursor2.toUInt(),
-            align = 0u,
+            align = 1u,
           )
           cursor2 += Int.SIZE_BYTES
           cursor += (mem.size + 1).toUInt()
@@ -49,8 +49,8 @@ class WasiModule(val args: List<String>) : ImportResolver {
         val countPtr = e.args[0].asI32.value
         val bufferLenPtr = e.args[1].asI32.value
         val bufferLen = args.map { it.encodeToByteArray().size + 1 }.sum()
-        e.runner.memory[0].pushI32(value = args.size, offset = countPtr.toUInt(), align = 0u)
-        e.runner.memory[0].pushI32(value = bufferLen, offset = bufferLenPtr.toUInt(), align = 0u)
+        e.runner.memory[0].pushI32(value = args.size, offset = countPtr.toUInt(), align = 1u)
+        e.runner.memory[0].pushI32(value = bufferLen, offset = bufferLenPtr.toUInt(), align = 1u)
         e.pushResult(Value.Primitive.I32(ESUCCESS))
       }
 
@@ -77,17 +77,17 @@ class WasiModule(val args: List<String>) : ImportResolver {
         env.runner.memory[0].pushI64(
           value = __WASI_FILETYPE_CHARACTER_DEVICE.toLong(),
           offset = (resultPtr + Long.SIZE_BYTES * 0).toUInt(),
-          align = 0u
+          align = 1u
         )
         env.runner.memory[0].pushI64(
           value = __WASI_RIGHTS_FD_WRITE.toLong(),
           offset = (resultPtr + Long.SIZE_BYTES * 1).toUInt(),
-          align = 0u
+          align = 1u
         )
         env.runner.memory[0].pushI64(
           value = 0,
           offset = (resultPtr + Long.SIZE_BYTES * 2).toUInt(),
-          align = 0u
+          align = 1u
         )
         env.pushResult(Value.Primitive.I32(0))
       }
@@ -126,8 +126,8 @@ class WasiModule(val args: List<String>) : ImportResolver {
           val len = Int.SIZE_BYTES * 2
           var written = 0
           repeat(iovsLen) { count ->
-            val buffer = e.runner.memory[0].getI32((iovs + count * len).toUInt()).toUInt()
-            val bufferLen = e.runner.memory[0].getI32((iovs + count * len + Int.SIZE_BYTES).toUInt())
+            val buffer = e.runner.memory[0].getI32((iovs + count * len).toUInt(),1u).toUInt()
+            val bufferLen = e.runner.memory[0].getI32((iovs + count * len + Int.SIZE_BYTES).toUInt(),1u)
             val data = e.runner.memory[0].getBytes(
               offset = buffer,
               len = bufferLen,
@@ -147,7 +147,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
           e.runner.memory[0].pushI32(
             value = written,
             offset = nwritten.toUInt(),
-            align = 0u,
+            align = 1u,
           )
           e.pushResult(Value.Primitive.I32(ESUCCESS))
         }

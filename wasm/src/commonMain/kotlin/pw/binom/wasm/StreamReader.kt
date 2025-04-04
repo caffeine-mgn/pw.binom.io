@@ -125,7 +125,7 @@ class StreamReader(
     }
   }
 
-  override fun i8s(): Byte = readByte(buffer)
+  override fun i8s(): Byte = this.readByte()
   override fun i8u() = i8s().toUByte()
 
   override fun skipOther() {

@@ -11,7 +11,7 @@ class TextValueVisitor(val sb: Appendable) : ValueVisitor {
     TextRefVisitor(sb)
 
   override fun refType(type: AbsHeapType) {
-    TODO()
+    sb.append(type.code)
   }
 
   override fun vecType(): ValueVisitor.VectorVisitor {

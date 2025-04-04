@@ -4,41 +4,68 @@ import pw.binom.eachByteIndexed
 import pw.binom.fromBytes
 
 interface MemorySpace {
+
+  companion object {
+    fun calculateOffset(offset:UInt,align:UInt):UInt{
+      if (align == 0u) {
+        throw IllegalArgumentException("Align must be positive.");
+      }
+
+      val remainder = offset % align
+
+      if (remainder != 0u) {
+        val quotient = offset / align
+        return (quotient + 1u) * align
+      } else {
+        return offset
+      }
+    }
+  }
+
   val limit: UInt
 
   fun grow(mem: UInt): UInt?
   fun pushI8(value: Byte, offset: UInt, align: UInt)
   fun getI8(offset: UInt): Byte
 
+  fun pushI16(value: Short, offset: UInt, align: UInt) // {
+//    val offset = calculateOffset(offset,align)
+//    value.eachByteIndexed { byte, index ->
+//      pushI8(value = byte, offset = offset + (1u - index.toUInt()), align = 1u)
+//    }
+//  }
 
-  fun pushI16(value: Short, offset: UInt, align: UInt) {
-    value.eachByteIndexed { byte, index ->
-      pushI8(value = byte, offset = offset + (1u - index.toUInt()), align = 1u)
+  fun getI16(offset: UInt, align: UInt) :Short{
+    val offset = calculateOffset(offset,align)
+    return Short.fromBytes { index ->
+      getI8(offset + (1u - index.toUInt()))
     }
   }
 
-  fun getI16(offset: UInt) = Short.fromBytes { index ->
-    getI8(offset + (1u - index.toUInt()))
-  }
-
-  fun getI32(offset: UInt): Int = Int.fromBytes { index ->
-    getI8(offset + (3u - index.toUInt()))
-  }
-  fun pushI32(value: Int, offset: UInt, align: UInt) {
-    value.eachByteIndexed { byte, index ->
-      pushI8(value = byte, offset + (3u - index.toUInt()), align = 1u)
-    }
-  }
+  fun getI32(offset: UInt, align: UInt): Int // {
+//    val offset = calculateOffset(offset,align)
+//    return Int.fromBytes { index ->
+//      getI8(offset + (3u - index.toUInt()))
+//    }
+//  }
+//
+  fun pushI32(value: Int, offset: UInt, align: UInt) // {
+//    val offset = calculateOffset(offset,align)
+//    value.eachByteIndexed { byte, index ->
+//      pushI8(value = byte, offset + (3u - index.toUInt()), align = 1u)
+//    }
+//  }
 
   fun getI64(offset: UInt): Long = Long.fromBytes { index ->
     getI8(offset + (7u - index.toUInt()))
   }
 
-  fun pushI64(value: Long, offset: UInt, align: UInt) {
-    value.eachByteIndexed { byte, index ->
-      pushI8(value = byte, offset + (7u - index.toUInt()), align = 1u)
-    }
-  }
+  fun pushI64(value: Long, offset: UInt, align: UInt) // {
+//    val offset = calculateOffset(offset,align)
+//    value.eachByteIndexed { byte, index ->
+//      pushI8(value = byte, offset + (7u - index.toUInt()), align = 1u)
+//    }
+//  }
 
   fun pushBytes(src: ByteArray, offset: UInt, srcOffset: Int = 0, srcLength: Int = src.size - srcOffset)
   fun pushBytesWithZero(value: ByteArray, offset: UInt) {

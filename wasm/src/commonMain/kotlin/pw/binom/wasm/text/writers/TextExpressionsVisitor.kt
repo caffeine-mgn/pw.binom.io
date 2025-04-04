@@ -87,7 +87,18 @@ class TextExpressionsVisitor(
 
   override fun convertNumeric(numOpcode: UByte) {
     printPadding()
-    TODO()
+    val opName = when (numOpcode) {
+      Opcodes.NUMERIC_I32S_CONVERT_SAT_F32 -> "i32.trunc_sat_f32_s"
+      Opcodes.NUMERIC_I32U_CONVERT_SAT_F32 -> "i32.trunc_sat_f32_u"
+      Opcodes.NUMERIC_I32S_CONVERT_SAT_F64 -> "i32.trunc_sat_f64_s"
+      Opcodes.NUMERIC_I32U_CONVERT_SAT_F64 -> "i32.trunc_sat_f64_u"
+      Opcodes.NUMERIC_I64S_CONVERT_SAT_F32 -> "i64.trunc_sat_f32_s"
+      Opcodes.NUMERIC_I64U_CONVERT_SAT_F32 -> "i64.trunc_sat_f32_u"
+      Opcodes.NUMERIC_I64S_CONVERT_SAT_F64 -> "i64.trunc_sat_f64_s"
+      Opcodes.NUMERIC_I64U_CONVERT_SAT_F64 -> "i64.trunc_sat_f64_u"
+      else -> TODO()
+    }
+    sb.append(opName)
   }
 
   override fun structNew(type: TypeId) {
@@ -104,6 +115,11 @@ class TextExpressionsVisitor(
     printPadding()
     sb.append("ref.is_null")
   }
+
+  override fun memorySize(id: MemoryId) {
+    sb.append("memory.size")
+  }
+
 
   override fun structOp(gcOpcode: UByte, type: TypeId, field: FieldId) {
     printPadding()

@@ -2,11 +2,8 @@ package pw.binom.wasm.runner.cmd
 
 import pw.binom.wasm.node.inst.Inst
 import pw.binom.wasm.node.inst.Memory
-import pw.binom.wasm.runner.MemorySpace
-import pw.binom.wasm.runner.Value
-import pw.binom.wasm.runner.ValueHistory
+import pw.binom.wasm.runner.*
 import pw.binom.wasm.runner.stack.Stack
-import pw.binom.wasm.runner.get
 
 object MemoryRunner {
   fun run(cmd: Memory, stack: Stack, memory: List<MemorySpace>): Inst? {
@@ -19,9 +16,20 @@ object MemoryRunner {
         val offset = stack.pop() as Value.Primitive.I32
         val mem = memory[cmd.memoryId]
         val address = cmd.offset + offset.value.toUInt()
-        val value = Value.Primitive.I32(mem.getI32(address))
-        ValueHistory.self.add(value, "Считано из памяти. cmd.offset=${cmd.offset}, offset=${offset.value}", mapOf("offset" to offset))
+        val intValue = mem.getI32(offset = address, align = cmd.align)
+        val value = Value.Primitive.I32(intValue)
+        ValueHistory.self.add(
+          value,
+          "Считано из памяти. cmd.offset=${cmd.offset}, offset=${offset.value}",
+          mapOf("offset" to offset)
+        )
         stack.push(value)
+        println("i32.load. address: $address, Value: $value")
+        val memHistory=MemoryHistory[address]
+        println("Memory history [${memHistory.size}]:")
+        memHistory.forEach {
+          println(it)
+        }
         cmd.next
       }
 
@@ -30,7 +38,7 @@ object MemoryRunner {
         val offset = stack.popI32()
         val mem = memory[cmd.memoryId]
         val address = cmd.offset + offset.toUInt()
-        val value = mem.getI16(address).toInt()
+        val value = mem.getI16(address,cmd.align).toInt()
         stack.pushI32(value)
         cmd.next
       }
@@ -106,7 +114,7 @@ object MemoryRunner {
         val offset = stack.popI32()
         val mem = memory[cmd.memoryId]
         val address = cmd.offset + offset.toUInt()
-        val value = mem.getI32(address).toLong()
+        val value = mem.getI32(address,cmd.align).toLong()
         stack.pushI64(value)
         cmd.next
       }
@@ -115,7 +123,7 @@ object MemoryRunner {
         val offset = stack.popI32()
         val mem = memory[cmd.memoryId]
         val address = cmd.offset + offset.toUInt()
-        val value = mem.getI32(address).toUInt().toLong()
+        val value = mem.getI32(address,cmd.align).toUInt().toLong()
         stack.pushI64(value)
         cmd.next
       }

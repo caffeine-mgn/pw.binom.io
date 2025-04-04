@@ -3,10 +3,7 @@ package pw.binom.wasm.runner
 import pw.binom.wasm.PackPrimitive
 import pw.binom.wasm.Primitive
 import pw.binom.wasm.TypeId
-import pw.binom.wasm.node.RecType
-import pw.binom.wasm.node.StorageType
-import pw.binom.wasm.node.Type
-import pw.binom.wasm.node.ValueType
+import pw.binom.wasm.node.*
 import kotlin.coroutines.*
 
 class TypeDictionary(val list: List<RecType.SubType>, val list2: List<RType>) {
@@ -45,6 +42,26 @@ class TypeDictionary(val list: List<RecType.SubType>, val list2: List<RType>) {
       }
     }
 
+    fun convert(type: HeapType, nullable: Boolean): VType {
+      return when {
+        type.type != null -> {
+          VType.Ref(
+            id = type.type!!,
+            nullable = nullable,
+          )
+        }
+
+        type.abs != null -> {
+          VType.RefAbs(
+            type = type.abs!!,
+            nullable = nullable,
+          )
+        }
+
+        else -> TODO("$type")
+      }
+    }
+
     fun convert(type: StorageType): VType =
       when {
         type.valueVisitor != null -> convert(type = type.valueVisitor!!)
@@ -71,23 +88,17 @@ class TypeDictionary(val list: List<RecType.SubType>, val list2: List<RType>) {
         type.ref != null -> {
           when {
             type.ref!!.heapRef != null -> {
-              when {
-                type.ref!!.heapRef!!.type != null -> {
-                  VType.Ref(
-                    id = type.ref!!.heapRef!!.type!!,
-                    nullable = type.ref!!.isNullable
-                  )
-                }
-                else -> TODO("$type")
-              }
+              convert(
+                type=type.ref!!.heapRef!!,
+                nullable = type.ref!!.isNullable
+              )
             }
-
             else -> TODO("$type")
           }
         }
 
         type.abs != null -> {
-          VType.Ref2(type.abs!!)
+          VType.RefAbs(type.abs!!, nullable = false)
         }
 
         else -> TODO("$type")

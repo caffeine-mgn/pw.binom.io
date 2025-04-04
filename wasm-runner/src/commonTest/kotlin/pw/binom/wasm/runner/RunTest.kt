@@ -45,6 +45,7 @@ class RunTest {
 //    val filePath = "/home/subochev/tmp/wasm-test/c/dot.wasm"
 //    val filePath = "/home/subochev/tmp/wasm-test/c/dot-wasi.wasm"
 //    val filePath = "/home/subochev/tmp/wasm-test/c/binary-trees.wasm"
+//    val filePath = "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/developmentExecutable/kotlin/www-wasm-wasi.wasm"
     val filePath =
       "/home/subochev/tmp/wasm-test/build/compileSync/wasmWasi/main/productionExecutable/optimized/www-wasm-wasi.wasm"
 //    val filePath =
@@ -54,11 +55,11 @@ class RunTest {
     }
 //    module.codeSection[module.functionSection[8].value.toInt()].code.accept(TextExpressionsVisitor(Console.std))
 //    module.codeSection[6].code.accept(TextExpressionsVisitor(Console.std))
-    module.codeSection.forEachIndexed { index, it ->
-      println("------$index------")
-      it.code.accept(TextExpressionsVisitor(Console.std))
-      println("------$index------")
-    }
+//    module.codeSection.forEachIndexed { index, it ->
+//      println("------$index------")
+//      it.code.accept(TextExpressionsVisitor(Console.std))
+//      println("------$index------")
+//    }
     val wasiModule = WasiModule(listOf("project.wasm", "9"))
     val resolver = object : ImportResolver {
       override fun func(module: String, field: String): ((ExecuteContext) -> Unit)? =

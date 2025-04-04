@@ -1,5 +1,5 @@
 package pw.binom.wasm.runner
-
+/*
 import pw.binom.memory.ForeignMemory
 import pw.binom.wasm.runner.MemorySpaceByteBuffer.Companion.PAGE_SIZE
 
@@ -47,3 +47,4 @@ class MemorySpaceByMemory(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) : 
     )
   }
 }
+*/

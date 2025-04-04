@@ -24,7 +24,7 @@ sealed interface VType {
       get() = if (nullable) Value.Ref.NULL else Value.Ref.INVALID
   }
 
-  data class Ref2(val type: AbsHeapType) : VType {
+  data class RefAbs(val type: AbsHeapType, val nullable: Boolean) : VType {
     override val default: Value
       get() = Value.Ref.NULL
   }
