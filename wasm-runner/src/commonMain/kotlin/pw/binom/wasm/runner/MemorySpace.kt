@@ -1,7 +1,7 @@
 package pw.binom.wasm.runner
 
-import pw.binom.eachByteIndexed
 import pw.binom.fromBytes
+import pw.binom.wasm.MemoryId
 
 interface MemorySpace {
 
@@ -80,3 +80,6 @@ interface MemorySpace {
     return result
   }
 }
+
+operator fun List<MemorySpace>.get(index: MemoryId) =
+  this[index.raw.toInt()]

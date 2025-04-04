@@ -25,13 +25,11 @@ class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) 
   }
 
   override fun pushI8(value: Byte, offset: UInt, align: UInt) {
-    MemoryHistory.push(from = offset, to = offset, "push8 Установка на $offset байтов")
     data[offset.toInt()] = value
   }
 
   override fun pushBytes(src: ByteArray, offset: UInt, srcOffset: Int, srcLength: Int) {
     data.holdState {
-      MemoryHistory.push(from = offset, to = offset + srcLength.toUInt(), "push bytes Установка на $offset байтов")
       data.position = offset.toInt()
       data.write(data = src, offset = srcOffset, length = srcLength)
     }
@@ -40,7 +38,6 @@ class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) 
   override fun pushI16(value: Short, offset: UInt, align: UInt) {
     data.holdState {
       val offset = calculateOffset(offset, align)
-      MemoryHistory.push(from = offset, to = offset + 2u, "push16 Установка на $offset значения $value")
       data.position = offset.toInt()
       data.writeShort(value.reverse())
     }
@@ -49,7 +46,6 @@ class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) 
   override fun pushI32(value: Int, offset: UInt, align: UInt) {
     data.holdState {
       val offset = calculateOffset(offset, align)
-      MemoryHistory.push(from = offset, to = offset + 4u, "push32 Установка на $offset значения $value")
       data.position = offset.toInt()
       data.writeInt(value.reverse())
     }
@@ -57,7 +53,6 @@ class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) 
   override fun pushI64(value: Long, offset: UInt, align: UInt) {
     data.holdState {
       val offset = calculateOffset(offset, align)
-      MemoryHistory.push(from = offset, to = offset + 8u, "push64 Установка на $offset значения $value")
       data.position = offset.toInt()
       data.writeLong(value.reverse())
     }

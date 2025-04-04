@@ -5,17 +5,13 @@ object NumberUtils {
     is Value.Primitive.F32 -> TODO()
     is Value.Primitive.F64 -> TODO()
     is Value.Primitive.I16 -> {
-      val e = Value.Primitive.I32(value.value.toUInt().toInt())
-      ValueHistory.self.add(e, "Преобразование", mapOf("from" to value))
-      e
+      Value.Primitive.I32(value.value.toUInt().toInt())
     }
 
     is Value.Primitive.I32 -> value
     is Value.Primitive.I64 -> value
     is Value.Primitive.I8 -> {
-      val e = Value.Primitive.I32(value.value.toUInt().toInt())
-      ValueHistory.self.add(e, "Преобразование", mapOf("from" to value))
-      e
+      Value.Primitive.I32(value.value.toUInt().toInt())
     }
 
     Value.Ref.INVALID -> TODO()
@@ -26,17 +22,13 @@ object NumberUtils {
     is Value.Primitive.F32 -> TODO()
     is Value.Primitive.F64 -> TODO()
     is Value.Primitive.I16 -> {
-      val e = Value.Primitive.I32(value.value.toInt())
-      ValueHistory.self.add(e, "Преобразование", mapOf("from" to value))
-      e
+      Value.Primitive.I32(value.value.toInt())
     }
 
     is Value.Primitive.I32 -> value
     is Value.Primitive.I64 -> value
     is Value.Primitive.I8 -> {
-      val e = Value.Primitive.I32(value.value.toInt())
-      ValueHistory.self.add(e, "Преобразование", mapOf("from" to value))
-      e
+      Value.Primitive.I32(value.value.toInt())
     }
 
     Value.Ref.INVALID -> TODO()

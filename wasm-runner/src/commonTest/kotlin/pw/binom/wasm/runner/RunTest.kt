@@ -61,8 +61,9 @@ class RunTest {
 //      println("------$index------")
 //    }
     val wasiModule = WasiModule(listOf("project.wasm", "9"))
+    val pipelineModule = BinomPipeLineModule("Hello world!".encodeToByteArray())
     val resolver = object : ImportResolver {
-      override fun func(module: String, field: String): ((ExecuteContext) -> Unit)? =
+      override fun func(module: String, field: String, type: RType.Function): ((ExecuteContext) -> Unit)? =
         when (module) {
           "binom" -> when (field) {
             "print" -> { e ->
@@ -100,27 +101,24 @@ class RunTest {
               Unit
             }
 
-            else -> TODO("Unknown $field for module $module")
+            else -> null
           }
 
-          else -> TODO("Unknown $module")
+          else -> null
         }
     }
-    val valueHistory = ValueHistory()
-    valueHistory.use {
-      val runner = Runner(module, wasiModule + resolver + CLangEnv())
-      val startFuncId = runner.findFunction("fff")?.id ?: runner.findFunction("_initialize")?.id
-      ?: TODO("Can't find start function")
+    val runner = Runner(module, wasiModule + resolver + CLangEnv() + pipelineModule)
+    val startFuncId = runner.findFunction("fff")?.id ?: runner.findFunction("_initialize")?.id
+    ?: TODO("Can't find start function")
 //    val startFuncName = "fff"
-      val startFuncName = "_initialize"
+    val startFuncName = "_initialize"
 
 
-      val result =
-        runner.runFunc(startFuncId, args = listOf())
+    val result =
+      runner.runFunc(startFuncId, args = listOf())
 
-      println("result: $result")
-      println("Exist code: ${wasiModule.exitCode}")
-    }
+    println("result: $result")
+    println("Exist code: ${wasiModule.exitCode}")
 //    println("start: ${module.startFunctionId}")
   }
 }

@@ -9,8 +9,8 @@ class CompositeImportResolver(val list: Sequence<ImportResolver>) : ImportResolv
   override fun memory(module: String, field: String, inital: UInt, max: UInt?): MemorySpace? =
     list.mapNotNull { it.memory(module = module, field = field, inital = inital, max = max) }.firstOrNull()
 
-  override fun func(module: String, field: String): ((ExecuteContext) -> Unit)? =
-    list.mapNotNull { it.func(module = module, field = field) }.firstOrNull()
+  override fun func(module: String, field: String, type: RType.Function): ((ExecuteContext) -> Unit)? =
+    list.mapNotNull { it.func(module = module, field = field, type = type) }.firstOrNull()
 }
 
 operator fun ImportResolver.plus(other: ImportResolver): ImportResolver =

@@ -3,7 +3,6 @@ package pw.binom.wasm.runner.cmd
 import pw.binom.wasm.node.inst.Inst
 import pw.binom.wasm.node.inst.Numeric
 import pw.binom.wasm.runner.Value
-import pw.binom.wasm.runner.ValueHistory
 import pw.binom.wasm.runner.stack.Stack
 
 object NumericRunner {
@@ -41,7 +40,6 @@ object NumericRunner {
         val a = stack.pop() as Value.Primitive.I32
         val b = stack.pop() as Value.Primitive.I32
         val e = Value.Primitive.I32(b.value + a.value)
-        ValueHistory.self.add(e, "Сумма", mapOf("a" to a, "b" to b))
         stack.push(e)
         cmd.next
       }

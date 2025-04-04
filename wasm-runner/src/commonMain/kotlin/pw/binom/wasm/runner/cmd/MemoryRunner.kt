@@ -18,18 +18,7 @@ object MemoryRunner {
         val address = cmd.offset + offset.value.toUInt()
         val intValue = mem.getI32(offset = address, align = cmd.align)
         val value = Value.Primitive.I32(intValue)
-        ValueHistory.self.add(
-          value,
-          "Считано из памяти. cmd.offset=${cmd.offset}, offset=${offset.value}",
-          mapOf("offset" to offset)
-        )
         stack.push(value)
-        println("i32.load. address: $address, Value: $value")
-        val memHistory=MemoryHistory[address]
-        println("Memory history [${memHistory.size}]:")
-        memHistory.forEach {
-          println(it)
-        }
         cmd.next
       }
 

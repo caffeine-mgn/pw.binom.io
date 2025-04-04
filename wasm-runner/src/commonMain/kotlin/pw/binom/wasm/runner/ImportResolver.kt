@@ -5,7 +5,7 @@ import pw.binom.wasm.node.ValueType
 interface ImportResolver {
   fun global(module: String, field: String, type: ValueType, mutable: Boolean): GlobalVar? = null
   fun memory(module: String, field: String, inital: UInt, max: UInt?): MemorySpace? = null
-  fun func(module: String, field: String): ((ExecuteContext) -> Unit)? = null
+  fun func(module: String, field: String, type: RType.Function): ((ExecuteContext) -> Unit)? = null
 }
 
 interface ExecuteContext {

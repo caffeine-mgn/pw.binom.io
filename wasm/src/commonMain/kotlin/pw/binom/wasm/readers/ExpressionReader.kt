@@ -43,21 +43,8 @@ object ExpressionReader {
       }
       visitor.afterOperation()
       val size = input.globalCursor - before
-      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
-
-        if (readOpCount == BAD_OP || BAD_OP == ALL) {
-          println(
-            "READ #$readOpCount SIZE: $size, opcode: 0x${
-              opcode.toString(16).padStart(2, '0')
-            } on 0x${opcodeStart.toString(16)}\n"
-          )
-        }
-      }
       if (lastWriteOpSize != size) {
 //        TODO("Invalid operation size! $readOpCount, opcode: 0x${opcode.toString(16)}, should be $size, but got $lastWriteOpSize")
-      }
-      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
-
       }
       readOpCount++
     }
@@ -250,13 +237,7 @@ object ExpressionReader {
       }
 
       Opcodes.I64_CONST -> {
-        if (readOpCount == BAD_OP || BAD_OP == ALL) {
-          println()
-        }
         val value = input.v64s()
-        if (readOpCount == BAD_OP || BAD_OP == ALL) {
-//          println("reading i64s $value")
-        }
         visitor.const(value)
       }
 
@@ -267,15 +248,7 @@ object ExpressionReader {
 
       Opcodes.I32_CONST -> {
         input as StreamReader
-        val start = input.globalCursor
-        if (readOpCount == BAD_OP) {
-          println("")
-        }
         val value = input.v32s()
-        if (readOpCount == BAD_OP) {
-          println("reading i32 $value")
-          println("INT from $start to ${input.globalCursor - start}")
-        }
         visitor.const(value)
       }
 
@@ -433,12 +406,6 @@ object ExpressionReader {
 
   private fun gc(input: WasmInput, visitor: ExpressionsVisitor) {
     val opcode = input.i8u()
-    if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
-      if (readOpCount == BAD_OP || writeOpCount == ALL) {
-        println("GC OPCODE 0x${opcode.toUByte().toString(16)}")
-      }
-    }
-//    println("OPCODE GC $opcode (0x${opcode.toString(16)}) ${Codes.gcCodes[opcode]}")
     when (opcode) {
       Opcodes.GC_STRUCT_NEW -> visitor.structNew(type = TypeId(input.v32u()))
       Opcodes.GC_STRUCT_NEW_DEFAULT -> visitor.structNewDefault(type = TypeId(input.v32u()))

@@ -132,7 +132,6 @@ class StreamReader(
     if (remaining == UInt.MAX_VALUE || remaining == 0u) {
       return
     }
-    println("-------skiping $remaining bytes-------")
     val r = remaining
     try {
       skip(remaining.toLong(), buffer)

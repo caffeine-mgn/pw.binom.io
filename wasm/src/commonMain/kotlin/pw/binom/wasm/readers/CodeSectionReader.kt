@@ -10,9 +10,6 @@ import pw.binom.wasm.visitors.CodeSectionVisitor
 const val ALL = -1
 const val NONE = -2
 
-val BAD_FUNCTION_BLOCK = NONE
-val BAD_OP = NONE
-
 var readOpCount = 0
 var readFunctionCount = 0
 var writeFunctionCount = 0
@@ -55,9 +52,6 @@ object CodeSectionReader {
       val before = input.globalCursor
       readOpCount = 0
       ExpressionReader.readExpressions(input = sectionInput, visitor = visitor.code())
-      if (readFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
-        println("READ FUNCTION $readFunctionCount size: $sizeInBytes. codeSize: ${input.globalCursor - before} on 0x${cur.toString(16)}")
-      }
     }
     visitor.end()
   }

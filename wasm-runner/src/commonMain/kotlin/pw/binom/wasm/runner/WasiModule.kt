@@ -15,7 +15,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
     private set
 
   @OptIn(ExperimentalStdlibApi::class)
-  override fun func(module: String, field: String): ((ExecuteContext) -> Unit)? {
+  override fun func(module: String, field: String, type: RType.Function): ((ExecuteContext) -> Unit)? {
     if (module != "wasi_snapshot_preview1") {
       return null
     }
@@ -62,7 +62,6 @@ class WasiModule(val args: List<String>) : ImportResolver {
       }
 
       "fd_close" -> { e ->
-        println()
         TODO()
       }
 
@@ -93,7 +92,7 @@ class WasiModule(val args: List<String>) : ImportResolver {
       }
 
       "fd_seek" -> { e ->
-        println()
+        TODO()
       }
 
       "random_get" -> { e ->
@@ -155,11 +154,11 @@ class WasiModule(val args: List<String>) : ImportResolver {
       }
 
       else -> { e ->
-        println()
+        TODO()
         TODO("Unsupported call $module -> $field")
       }
 //            else -> TODO("Unknown $field for module $module")
     }
-    return super.func(module, field)
+    return super.func(module, field, type)
   }
 }

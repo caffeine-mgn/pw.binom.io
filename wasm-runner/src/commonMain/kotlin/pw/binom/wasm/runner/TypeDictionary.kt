@@ -24,7 +24,6 @@ class TypeDictionary(val list: List<RecType.SubType>, val list2: List<RType>) {
 
       suspend fun getType(typeId: TypeId): RType =
         if (typeId.value.toInt() >= internalTypes.size) {
-          println("Type $typeId not found. Await it...")
           suspendCoroutine {
             waiters.getOrPut(typeId) { ArrayList() }.add(it)
           }

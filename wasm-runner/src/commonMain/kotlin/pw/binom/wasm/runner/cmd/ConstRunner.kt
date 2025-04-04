@@ -3,7 +3,6 @@ package pw.binom.wasm.runner.cmd
 import pw.binom.wasm.node.inst.Const
 import pw.binom.wasm.node.inst.Inst
 import pw.binom.wasm.runner.Value
-import pw.binom.wasm.runner.ValueHistory
 import pw.binom.wasm.runner.stack.Stack
 
 object ConstRunner {
@@ -14,7 +13,6 @@ object ConstRunner {
       is Const.I32Const -> Value.Primitive.I32(cmd.value)
       is Const.I64Const -> Value.Primitive.I64(cmd.value)
     }
-    ValueHistory.self.add(value, "Константа")
     stack.push(value)
     return cmd.next
   }

@@ -17,7 +17,6 @@ object ArrayOpRunner {
         val struct = stack.pop() as Value.Ref.Array
         require(types.getRType(cmd.type) === struct.type)
         if (index.value >= struct.values.size) {
-          ValueHistory.self.print(title = "index", value = index)
           TODO("Индекс элемента выходит за границы. Размер массива ${struct.values.size}. Запрошенный индекс ${index.value}")
         }
         stack.push(struct.values[index.value])
@@ -55,9 +54,7 @@ object ArrayOpRunner {
           }
 
           RType.Primitive.I32 -> { offset ->
-            val e = Value.Primitive.I32(Int.fromBytes(data, offset).reverse())
-            ValueHistory.self.add(e, "Считано из data секции для массива")
-            e
+            Value.Primitive.I32(Int.fromBytes(data, offset).reverse())
           }
 
           RType.Primitive.I64 -> TODO()
@@ -101,9 +98,7 @@ object ArrayOpRunner {
               RType.Primitive.F64 -> Value.Primitive.F64(0.0)
               RType.Primitive.I16 -> Value.Primitive.I16(0)
               RType.Primitive.I32 -> {
-                val e = Value.Primitive.I32(0)
-                ValueHistory.self.add(e, "Инициализация по умолчанию для массива")
-                e
+                Value.Primitive.I32(0)
               }
 
               RType.Primitive.I64 -> Value.Primitive.I64(0)

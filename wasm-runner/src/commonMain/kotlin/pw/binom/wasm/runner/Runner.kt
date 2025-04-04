@@ -17,13 +17,6 @@ import pw.binom.wasm.text.writers.TextExpressionsVisitor
 class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private val importFunc = module.importSection.filterIsInstance<Import.Function>()
 
-  private val importFuncImpl = importFunc.map {
-    importResolver.func(
-      module = it.module,
-      field = it.field
-    ) ?: TODO()
-  }
-
   private val tables: List<Table> = module.tableSection.map {
     if (it.type.refNullAbs == AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF) {
       Table.FuncTable(size = (it.max ?: it.min).toInt())
@@ -46,6 +39,14 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
     .toList()
 
   private val types = TypeDictionary.create(module.typeSection)
+
+  private val importFuncImpl = importFunc.map {
+    importResolver.func(
+      module = it.module,
+      field = it.field,
+      type = types.getRType(it.index) as RType.Function,
+    ) ?: TODO("Function ${it.module}::${it.field} not found")
+  }
 
   init {
     module.dataSection.forEach {
@@ -316,12 +317,7 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 //    }
     try {
       var cmd: Inst? = startCmd
-      val visitor = TextExpressionsVisitor(Console.std, false)
       while (!stopped && cmd != null) {
-        if (functionId.id == 31u) {
-          cmd.accept(visitor)
-          println()
-        }
         when (cmd) {
           is Compare -> cmd = CompareRunner.run(cmd = cmd, stack = stack)
           is Convert -> cmd = ConvertRunner.run(cmd = cmd, stack = stack)
@@ -426,7 +422,6 @@ class Runner(private val module: WasmModule, importResolver: ImportResolver) {
 
           is ControlFlow.RETURN -> {
             if (stack.size < results.size) {
-              ValueHistory.self.print(stack.peek())
               throw IllegalStateException("functionId=$functionId, stack.size=${stack.size}, results.size=${results.size}")
             }
             break

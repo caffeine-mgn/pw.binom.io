@@ -106,15 +106,6 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun afterOperation() {
-    if (writeFunctionCount == BAD_FUNCTION_BLOCK || BAD_FUNCTION_BLOCK == ALL) {
-      if (writeOpCount == BAD_OP || BAD_OP == ALL || true) {
-        println("WRITE OPCODE #$readOpCount SIZE: ${out.size}")
-      }
-
-    }
-    if (writeFunctionCount == BAD_FUNCTION_BLOCK || writeFunctionCount == ALL) {
-      writeOpCount++
-    }
     lastWriteOpSize = out.size
     out.moveTo(originalOut)
   }
@@ -332,9 +323,6 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
   }
 
   override fun const(value: Int) {
-    if (writeOpCount == BAD_OP) {
-      println("writing i32 $value")
-    }
     out.i8u(Opcodes.I32_CONST)
     out.v32s(value)
 //    out.i32s(value)
@@ -342,9 +330,6 @@ class ExpressionsWriter(out1: WasmOutput) : ExpressionsVisitor {
 
   override fun const(value: Long) {
     out.i8u(Opcodes.I64_CONST)
-    if (writeOpCount == BAD_OP || BAD_OP == ALL) {
-//      println("writing v64s $value")
-    }
     out.v64s(value)
   }
 
