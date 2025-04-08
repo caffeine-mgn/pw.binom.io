@@ -7,15 +7,13 @@ import pw.binom.wasm.runner.stack.Stack
 
 object ConvertRunner {
   fun run(cmd: Convert, stack: Stack): Inst? {
-    return when (cmd) {
+    val u = when (cmd) {
       is Convert.I32_WRAP_I64 -> {
         stack.pushI32(stack.popI64().toInt())
-        cmd.next
       }
 
       is Convert.I64_EXTEND_U_I32 -> {
         stack.pushI64(stack.popI32().toUInt().toULong().toLong())
-        cmd.next
       }
 
       is Convert.F32_CONVERT_S_I32 -> TODO()
@@ -34,7 +32,6 @@ object ConvertRunner {
       is Convert.I32_EXTEND8_S -> {
         val x = stack.popI32()
         stack.pushI32((x and 0xFF).toByte().toInt())
-        cmd.next
       }
 
       is Convert.I32_TRUNC_S_F32 -> TODO()
@@ -46,7 +43,6 @@ object ConvertRunner {
       is Convert.I64_EXTEND8_S -> TODO()
       is Convert.I64_EXTEND_S_I32 -> {
         stack.pushI64(stack.popI32().toLong())
-        cmd.next
       }
       is Convert.I64_TRUNC_S_F32 -> TODO()
       is Convert.I64_TRUNC_S_F64 -> TODO()
@@ -61,5 +57,6 @@ object ConvertRunner {
       is Convert.NUMERIC_I64U_CONVERT_SAT_F32 -> TODO()
       is Convert.NUMERIC_I64U_CONVERT_SAT_F64 -> TODO()
     }
+    return cmd.next
   }
 }

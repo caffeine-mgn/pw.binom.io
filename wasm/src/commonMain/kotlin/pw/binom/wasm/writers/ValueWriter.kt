@@ -19,16 +19,16 @@ class ValueWriter(private val out: WasmOutput) :
 
   // ValueVisitor.RefVisitor
 
-  override fun refNull(type: AbsHeapType) {
+  override fun refNull(type: AbsoluteHeapType) {
     type(type)
   }
 
-  override fun refType(type: AbsHeapType) {
+  override fun refType(type: AbsoluteHeapType) {
     when (type) {
-      AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> out.i8u(Types.TYPE_REF_ABS_HEAP_FUNC_REF)
-      AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN -> out.i8u(Types.TYPE_REF_EXTERN_REF)
-      AbsHeapType.TYPE_REF_ABS_HEAP_NONE -> out.i8u(Types.TYPE_REF_ABS_HEAP_NONE)
-      AbsHeapType.TYPE_REF_ABS_HEAP_ANY -> out.i8u(Types.TYPE_REF_ABS_HEAP_ANY)
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> out.i8u(Types.TYPE_REF_ABS_HEAP_FUNC_REF)
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_EXTERN -> out.i8u(Types.TYPE_REF_EXTERN_REF)
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_NONE -> out.i8u(Types.TYPE_REF_ABS_HEAP_NONE)
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_ANY -> out.i8u(Types.TYPE_REF_ABS_HEAP_ANY)
       else -> TODO()
     }
   }
@@ -45,18 +45,18 @@ class ValueWriter(private val out: WasmOutput) :
 
   // ValueVisitor.HeapVisitor
 
-  override fun type(type: AbsHeapType) {
+  override fun type(type: AbsoluteHeapType) {
     val byte = when (type) {
-      AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC -> Types.TYPE_REF_ABS_HEAP_NO_FUNC
-      AbsHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN -> Types.TYPE_REF_ABS_HEAP_NO_EXTERN
-      AbsHeapType.TYPE_REF_ABS_HEAP_NONE -> Types.TYPE_REF_ABS_HEAP_NONE
-      AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> Types.TYPE_REF_ABS_HEAP_FUNC_REF
-      AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN -> Types.TYPE_REF_ABS_HEAP_EXTERN
-      AbsHeapType.TYPE_REF_ABS_HEAP_ANY -> Types.TYPE_REF_ABS_HEAP_ANY
-      AbsHeapType.TYPE_REF_ABS_HEAP_EQ -> Types.TYPE_REF_ABS_HEAP_EQ
-      AbsHeapType.TYPE_REF_ABS_HEAP_I31 -> Types.TYPE_REF_ABS_HEAP_I31
-      AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT -> Types.TYPE_REF_ABS_HEAP_STRUCT
-      AbsHeapType.TYPE_REF_ABS_HEAP_ARRAY -> Types.TYPE_REF_ABS_HEAP_ARRAY
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_NO_FUNC -> Types.TYPE_REF_ABS_HEAP_NO_FUNC
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN -> Types.TYPE_REF_ABS_HEAP_NO_EXTERN
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_NONE -> Types.TYPE_REF_ABS_HEAP_NONE
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_FUNC_REF -> Types.TYPE_REF_ABS_HEAP_FUNC_REF
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_EXTERN -> Types.TYPE_REF_ABS_HEAP_EXTERN
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_ANY -> Types.TYPE_REF_ABS_HEAP_ANY
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_EQ -> Types.TYPE_REF_ABS_HEAP_EQ
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_I31 -> Types.TYPE_REF_ABS_HEAP_I31
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_STRUCT -> Types.TYPE_REF_ABS_HEAP_STRUCT
+      AbsoluteHeapType.TYPE_REF_ABS_HEAP_ARRAY -> Types.TYPE_REF_ABS_HEAP_ARRAY
     }
     out.i8u(byte)
   }

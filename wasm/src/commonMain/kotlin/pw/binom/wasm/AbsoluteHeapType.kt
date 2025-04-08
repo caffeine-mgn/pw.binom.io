@@ -1,6 +1,6 @@
 package pw.binom.wasm
 
-enum class AbsHeapType(val code:String) {
+enum class AbsoluteHeapType(val code:String) {
   TYPE_REF_ABS_HEAP_NO_FUNC("TYPE_REF_ABS_HEAP_NO_FUNC"),
   TYPE_REF_ABS_HEAP_NO_EXTERN("TYPE_REF_ABS_HEAP_NO_EXTERN"),
   TYPE_REF_ABS_HEAP_NONE("none"),

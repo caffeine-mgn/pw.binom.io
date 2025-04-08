@@ -1,6 +1,6 @@
 package pw.binom.wasm.runner
 
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.TypeId
 
 sealed interface VType {
@@ -24,7 +24,7 @@ sealed interface VType {
       get() = if (nullable) Value.Ref.NULL else Value.Ref.INVALID
   }
 
-  data class RefAbs(val type: AbsHeapType, val nullable: Boolean) : VType {
+  data class RefAbsolute(val type: AbsoluteHeapType, val nullable: Boolean) : VType {
     override val default: Value
       get() = Value.Ref.NULL
   }

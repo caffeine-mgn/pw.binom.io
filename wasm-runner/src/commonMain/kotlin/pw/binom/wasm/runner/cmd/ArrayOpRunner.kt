@@ -4,7 +4,6 @@ import pw.binom.fromBytes
 import pw.binom.reverse
 import pw.binom.wasm.node.DataSection
 import pw.binom.wasm.node.inst.ArrayOp
-import pw.binom.wasm.node.inst.Compare
 import pw.binom.wasm.node.inst.Inst
 import pw.binom.wasm.runner.*
 import pw.binom.wasm.runner.stack.Stack
@@ -111,7 +110,7 @@ object ArrayOpRunner {
             Value.Ref.NULL
           }
 
-          is VType.RefAbs -> {
+          is VType.RefAbsolute -> {
             require(tt.nullable)
             Value.Ref.NULL
           }

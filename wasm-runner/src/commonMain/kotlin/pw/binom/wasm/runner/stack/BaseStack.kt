@@ -1,6 +1,5 @@
 package pw.binom.wasm.runner.stack
 
-import pw.binom.wasm.runner.Ref
 import pw.binom.wasm.runner.Value
 
 class BaseStack : Stack {

@@ -37,9 +37,9 @@ object NumericRunner {
       is Numeric.F64_SUB -> TODO()
       is Numeric.F64_TRUNC -> TODO()
       is Numeric.I32_ADD -> {
-        val a = stack.pop() as Value.Primitive.I32
-        val b = stack.pop() as Value.Primitive.I32
-        val e = Value.Primitive.I32(b.value + a.value)
+        val a = stack.popI32()
+        val b = stack.popI32()
+        val e = Value.Primitive.I32(b + a)
         stack.push(e)
         cmd.next
       }

@@ -7,7 +7,7 @@ import pw.binom.wasm.runner.MemorySpace.Companion.calculateOffset
 
 class MemorySpaceByteBuffer(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) : MemorySpace {
   companion object {
-    const val PAGE_SIZE = 65536u
+    const val PAGE_SIZE = 65_536u
   }
 
   private var data = ByteBuffer(minSize)

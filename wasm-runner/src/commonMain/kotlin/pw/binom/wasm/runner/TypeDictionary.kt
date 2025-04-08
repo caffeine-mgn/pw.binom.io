@@ -51,7 +51,7 @@ class TypeDictionary(val list: List<RecType.SubType>, val list2: List<RType>) {
         }
 
         type.abs != null -> {
-          VType.RefAbs(
+          VType.RefAbsolute(
             type = type.abs!!,
             nullable = nullable,
           )
@@ -97,7 +97,7 @@ class TypeDictionary(val list: List<RecType.SubType>, val list2: List<RType>) {
         }
 
         type.abs != null -> {
-          VType.RefAbs(type.abs!!, nullable = false)
+          VType.RefAbsolute(type.abs!!, nullable = false)
         }
 
         else -> TODO("$type")

@@ -1,10 +1,7 @@
 package pw.binom.wasm.runner
 
-import pw.binom.Console
 import pw.binom.collections.LinkedList
-import pw.binom.fromBytes
-import pw.binom.reverse
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.FunctionId
 import pw.binom.wasm.node.*
 import pw.binom.wasm.node.inst.*
@@ -12,13 +9,12 @@ import pw.binom.wasm.node.inst.Ref
 import pw.binom.wasm.runner.cmd.*
 import pw.binom.wasm.runner.stack.BaseStack
 import pw.binom.wasm.runner.stack.Stack
-import pw.binom.wasm.text.writers.TextExpressionsVisitor
 
 class Runner(private val module: WasmModule, importResolver: ImportResolver) {
   private val importFunc = module.importSection.filterIsInstance<Import.Function>()
 
   private val tables: List<Table> = module.tableSection.map {
-    if (it.type.refNullAbs == AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF) {
+    if (it.type.refNullAbs == AbsoluteHeapType.TYPE_REF_ABS_HEAP_FUNC_REF) {
       Table.FuncTable(size = (it.max ?: it.min).toInt())
     } else {
       TODO()

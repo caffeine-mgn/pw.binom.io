@@ -1,6 +1,6 @@
 package pw.binom.wasm.visitors
 
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.TypeId
 
 interface ValueVisitor {
@@ -13,7 +13,7 @@ interface ValueVisitor {
       val SKIP = object : HeapVisitor {}
     }
 
-    fun type(type: AbsHeapType) {}
+    fun type(type: AbsoluteHeapType) {}
     fun type(type: TypeId) {}
   }
 
@@ -43,11 +43,11 @@ interface ValueVisitor {
 
     fun ref(): HeapVisitor = HeapVisitor.SKIP
     fun refNull(): HeapVisitor = HeapVisitor.SKIP
-    fun refNull(type: AbsHeapType) {}
+    fun refNull(type: AbsoluteHeapType) {}
   }
 
   fun numType(): NumberVisitor = NumberVisitor.SKIP
   fun refType(): RefVisitor = RefVisitor.SKIP
-  fun refType(type: AbsHeapType){}
+  fun refType(type: AbsoluteHeapType){}
   fun vecType(): VectorVisitor = VectorVisitor.SKIP
 }

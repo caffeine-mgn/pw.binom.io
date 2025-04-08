@@ -70,6 +70,10 @@ value class PosixPermissions(internal val mode: UInt) {
     internal const val OWNER_EXECUTE = 64u // 1000000
     internal const val OWNER_WRITE = 128u // 10000000
     internal const val OWNER_READ = 256u // 100000000
+
+    /**
+     * File can be deleted only if his owner
+     */
     internal const val STICKY_BIT = 512u // 1000000000
     internal const val GROUP_EXECUTE_PERMISSION = 1024u // 10000000000
     internal const val USER_EXECUTE_PERMISSION = 2048u // 100000000000

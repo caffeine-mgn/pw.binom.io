@@ -1,6 +1,5 @@
 package pw.binom.wasm.runner
 
-import pw.binom.wasm.node.Type
 import pw.binom.wasm.runner.stack.Stack
 
 interface Variable2 {

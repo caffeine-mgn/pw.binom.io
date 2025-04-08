@@ -1,6 +1,6 @@
 package pw.binom.wasm.node
 
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.Primitive
 import pw.binom.wasm.Vector
 import pw.binom.wasm.visitors.ValueVisitor
@@ -12,7 +12,7 @@ class ValueType : ValueVisitor {
       r.number = value
       return r
     }
-    fun abs(value: AbsHeapType): ValueType {
+    fun abs(value: AbsoluteHeapType): ValueType {
       val r = ValueType()
       r.abs = value
       return r
@@ -46,7 +46,7 @@ class ValueType : ValueVisitor {
         vector = null
       }
     }
-  var abs: AbsHeapType? = null
+  var abs: AbsoluteHeapType? = null
     set(value) {
       field = value
       if (value != null) {
@@ -86,7 +86,7 @@ class ValueType : ValueVisitor {
     return e
   }
 
-  override fun refType(type: AbsHeapType) {
+  override fun refType(type: AbsoluteHeapType) {
     abs = type
   }
 

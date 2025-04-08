@@ -1,6 +1,6 @@
 package pw.binom.wasm.node
 
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.visitors.ValueVisitor
 import kotlin.js.JsName
 
@@ -18,7 +18,7 @@ class RefType : ValueVisitor.RefVisitor {
       return r
     }
 
-    fun refNullAbs(value: AbsHeapType): RefType {
+    fun refNullAbs(value: AbsoluteHeapType): RefType {
       val r = RefType()
       r.refNullAbs = value
       return r
@@ -44,7 +44,7 @@ class RefType : ValueVisitor.RefVisitor {
         refNullAbs = null
       }
     }
-  var refNullAbs: AbsHeapType? = null
+  var refNullAbs: AbsoluteHeapType? = null
     set(value) {
       field = value
       if (value != null) {
@@ -86,7 +86,7 @@ class RefType : ValueVisitor.RefVisitor {
     return e
   }
 
-  override fun refNull(type: AbsHeapType) {
+  override fun refNull(type: AbsoluteHeapType) {
     refNullAbs = type
     ref = null
     refNull = null

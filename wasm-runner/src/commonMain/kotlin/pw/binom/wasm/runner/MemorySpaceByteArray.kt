@@ -1,6 +1,6 @@
 package pw.binom.wasm.runner
 
-const val PAGE_SIZE = 65536u
+const val PAGE_SIZE = 65_536u
 /*
 class MemorySpaceByteArray(val minSize: Int, val maxSize: Int = Int.MAX_VALUE) : MemorySpace {
 

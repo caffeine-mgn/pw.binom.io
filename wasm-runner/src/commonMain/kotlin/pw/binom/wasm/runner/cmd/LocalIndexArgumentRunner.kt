@@ -2,8 +2,6 @@ package pw.binom.wasm.runner.cmd
 
 import pw.binom.wasm.node.inst.Inst
 import pw.binom.wasm.node.inst.LocalIndexArgument
-import pw.binom.wasm.node.inst.Memory
-import pw.binom.wasm.runner.MemorySpace
 import pw.binom.wasm.runner.MutableValue2
 import pw.binom.wasm.runner.stack.Stack
 

@@ -1,6 +1,6 @@
 package pw.binom.wasm.node
 
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.ValueVisitor
 
@@ -11,14 +11,14 @@ class HeapType : ValueVisitor.HeapVisitor {
       r.type = value
       return r
     }
-    fun abs(value: AbsHeapType): HeapType {
+    fun abs(value: AbsoluteHeapType): HeapType {
       val r = HeapType()
       r.abs = value
       return r
     }
   }
 
-  var abs: AbsHeapType? = null
+  var abs: AbsoluteHeapType? = null
     set(value) {
       field = value
       if (value != null) {
@@ -34,7 +34,7 @@ class HeapType : ValueVisitor.HeapVisitor {
     }
 
 
-  override fun type(type: AbsHeapType) {
+  override fun type(type: AbsoluteHeapType) {
     abs = type
     this.type = null
   }

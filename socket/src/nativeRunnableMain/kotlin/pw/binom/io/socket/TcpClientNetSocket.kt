@@ -10,7 +10,7 @@ import pw.binom.io.InHeap
 
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual open class TcpClientNetSocket(init: Boolean) : TcpClientSocket, NetSocket,AbstractTcpSocket(init) {
+actual open class TcpClientNetSocket(init: Boolean) : TcpClientSocket, NetSocket, AbstractTcpSocket(init) {
 
   actual constructor() : this(true)
 

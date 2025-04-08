@@ -1,11 +1,11 @@
 package pw.binom.wasm.text.writers
 
-import pw.binom.wasm.AbsHeapType
+import pw.binom.wasm.AbsoluteHeapType
 import pw.binom.wasm.TypeId
 import pw.binom.wasm.visitors.ValueVisitor
 
 class TextHeapVisitor(val sb: Appendable, val nullable: Boolean) : ValueVisitor.HeapVisitor {
-  override fun type(type: AbsHeapType) {
+  override fun type(type: AbsoluteHeapType) {
     sb.append(type.code)
   }
 

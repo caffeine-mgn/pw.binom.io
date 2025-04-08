@@ -122,6 +122,9 @@ kotlin {
       api(project(":thread"))
       api(project(":testing"))
     }
+//    wasmWasiMain.dependencies {
+//      api(project(":wasm-wasi"))
+//    }
     val jvmLikeMain by creating {
       dependsOn(commonMain.get())
     }

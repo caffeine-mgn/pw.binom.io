@@ -32,7 +32,5 @@ class Instance(val type: RType.Ref.Object, val fields: List<Field>):Value.Ref {
     override fun toString(): String = "MutableFieldImpl(value=$value)"
   }
 
-  override fun toString(): String {
-    return "Instance(fields=$fields)"
-  }
+  override fun toString(): String = "Instance(fields=$fields)"
 }

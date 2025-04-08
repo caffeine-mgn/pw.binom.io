@@ -1,7 +1,6 @@
 package pw.binom.wasm
 
 import pw.binom.io.Input
-import pw.binom.wasm.readers.readOpCount
 import pw.binom.wasm.visitors.ExpressionsVisitor
 import pw.binom.wasm.visitors.StorageVisitor
 import pw.binom.wasm.visitors.ValueVisitor
@@ -74,16 +73,16 @@ fun WasmInput.readHeapType(
 }
 
 fun WasmInput.readAbsHeapType(byte: UByte = i8u()) = when (byte) {
-  Types.TYPE_REF_ABS_HEAP_NO_FUNC -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
-  Types.TYPE_REF_ABS_HEAP_NO_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN
-  Types.TYPE_REF_ABS_HEAP_NONE -> AbsHeapType.TYPE_REF_ABS_HEAP_NONE
-  Types.TYPE_REF_ABS_HEAP_FUNC_REF -> AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF
-  Types.TYPE_REF_ABS_HEAP_EXTERN -> AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN
-  Types.TYPE_REF_ABS_HEAP_ANY -> AbsHeapType.TYPE_REF_ABS_HEAP_ANY
-  Types.TYPE_REF_ABS_HEAP_EQ -> AbsHeapType.TYPE_REF_ABS_HEAP_EQ
-  Types.TYPE_REF_ABS_HEAP_I31 -> AbsHeapType.TYPE_REF_ABS_HEAP_I31
-  Types.TYPE_REF_ABS_HEAP_STRUCT -> AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT
-  Types.TYPE_REF_ABS_HEAP_ARRAY -> AbsHeapType.TYPE_REF_ABS_HEAP_ARRAY
+  Types.TYPE_REF_ABS_HEAP_NO_FUNC -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_NO_FUNC
+  Types.TYPE_REF_ABS_HEAP_NO_EXTERN -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_NO_EXTERN
+  Types.TYPE_REF_ABS_HEAP_NONE -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_NONE
+  Types.TYPE_REF_ABS_HEAP_FUNC_REF -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_FUNC_REF
+  Types.TYPE_REF_ABS_HEAP_EXTERN -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_EXTERN
+  Types.TYPE_REF_ABS_HEAP_ANY -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_ANY
+  Types.TYPE_REF_ABS_HEAP_EQ -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_EQ
+  Types.TYPE_REF_ABS_HEAP_I31 -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_I31
+  Types.TYPE_REF_ABS_HEAP_STRUCT -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_STRUCT
+  Types.TYPE_REF_ABS_HEAP_ARRAY -> AbsoluteHeapType.TYPE_REF_ABS_HEAP_ARRAY
   else -> TODO()
 }
 
@@ -119,11 +118,11 @@ fun WasmInput.readValueType(byte: UByte = i8u(), visitor: ValueVisitor) =
 
     Types.TYPE_VEC_V128 -> readVecType(byte = byte, visitor = visitor.vecType())
 
-    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_FUNC_REF)
-    Types.TYPE_REF_EXTERN_REF -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_EXTERN)
-    Types.TYPE_REF_ABS_HEAP_NONE -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_NONE)
-    Types.TYPE_REF_ABS_HEAP_ANY -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_ANY)
-    Types.TYPE_REF_ABS_HEAP_STRUCT -> visitor.refType(AbsHeapType.TYPE_REF_ABS_HEAP_STRUCT)
+    Types.TYPE_REF_ABS_HEAP_FUNC_REF -> visitor.refType(AbsoluteHeapType.TYPE_REF_ABS_HEAP_FUNC_REF)
+    Types.TYPE_REF_EXTERN_REF -> visitor.refType(AbsoluteHeapType.TYPE_REF_ABS_HEAP_EXTERN)
+    Types.TYPE_REF_ABS_HEAP_NONE -> visitor.refType(AbsoluteHeapType.TYPE_REF_ABS_HEAP_NONE)
+    Types.TYPE_REF_ABS_HEAP_ANY -> visitor.refType(AbsoluteHeapType.TYPE_REF_ABS_HEAP_ANY)
+    Types.TYPE_REF_ABS_HEAP_STRUCT -> visitor.refType(AbsoluteHeapType.TYPE_REF_ABS_HEAP_STRUCT)
 
     Types.TYPE_REF_NULL -> readHeapType(visitor = visitor.refType().refNull())
     Types.TYPE_REF -> readHeapType(visitor = visitor.refType().ref())

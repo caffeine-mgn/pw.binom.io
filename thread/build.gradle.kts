@@ -39,6 +39,9 @@ kotlin {
       api(project(":metric"))
       api(project(":io"))
     }
+//    wasmWasiMain.dependencies {
+//      api(project(":wasm-wasi"))
+//    }
     /*
     nativeMain {
       dependsOn(commonMain.get())
