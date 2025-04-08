@@ -51,6 +51,10 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef APPLE_TARGET
+#include <sys/statvfs.h>
+#endif
+
 #ifdef WINDOWS_TARGET
 #include <fileapi.h>
 #endif
@@ -76,6 +80,20 @@ int64_t internal_get_free_space(const char* path){
     }
     return freeSpace;
 #endif
+#ifdef APPLE_TARGET
+struct statvfs fsInfo;
+
+    // Получаем информацию о файловой системе по указанному пути
+    if (statvfs(path, &fsInfo) != 0) {
+//        perror("Ошибка при получении информации о файловой системе");
+        return 0; // Возвращаем -1 в случае ошибки
+    }
+
+    // Вычисляем свободное пространство в байтах
+    long long freeSpace = (long long)fsInfo.f_bfree * fsInfo.f_frsize;
+
+    return freeSpace;
+#endif
 }
 
 int64_t internal_get_available_space(const char* path){
@@ -93,6 +111,20 @@ int64_t internal_get_available_space(const char* path){
     }
     return availableSpace;
 #endif
+#ifdef APPLE_TARGET
+    struct statvfs buf;
+
+    if (statvfs(path, &buf) != 0) {
+//        perror("Error getting filesystem statistics");
+        return 0; // Возвращаем -1 в случае ошибки
+    }
+
+    // f_frsize или f_bsize может быть использовано для размера блока,
+    // но обычно f_frsize предпочтительнее, если он не нулевой.
+    long long blockSize = buf.f_frsize ? buf.f_frsize : buf.f_bsize;
+
+    return (long long)buf.f_bavail * blockSize;
+#endif
 }
 
 int64_t internal_get_total_space(const char* path){
@@ -109,6 +141,17 @@ int64_t internal_get_total_space(const char* path){
         return 0;
     }
     return availableSpace;
+#endif
+#ifdef APPLE_TARGET
+    struct statvfs fsinfo;
+
+    if (statvfs(path, &fsinfo) != 0) {
+//        perror("Error getting filesystem info");
+        return 0; // Возвращаем 0 в случае ошибки
+    }
+
+    // Общий размер диска = блоки * размер блока
+    return fsinfo.f_blocks * fsinfo.f_frsize;
 #endif
 }
 
