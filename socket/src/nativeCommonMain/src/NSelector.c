@@ -1,4 +1,5 @@
-#include <malloc.h>
+//#include <malloc.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "../include/NSelector.h"
 #include "../include/definition.h"

@@ -146,7 +146,7 @@ int64_t internal_get_total_space(const char* path){
     struct statvfs fsinfo;
 
     if (statvfs(path, &fsinfo) != 0) {
-//        perror("Error getting filesystem info");
+//        perror("Error getti11ng filesys111tem info");
         return 0; // Возвращаем 0 в случае ошибки
     }
 

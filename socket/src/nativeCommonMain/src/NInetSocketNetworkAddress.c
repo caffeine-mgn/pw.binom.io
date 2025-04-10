@@ -2,7 +2,8 @@
 #include "../include/definition.h"
 #include "../include/Network.h"
 
-#include <malloc.h>
+//#include <malloc.h>
+#include <stdlib.h>
 
 #if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
 
@@ -198,7 +199,7 @@ int NInetSocketNetworkAddress_getHostString(struct NInetSocketNetworkAddress *pt
 int NInetSocketNetworkAddress_getHost(struct NInetSocketNetworkAddress *ptr, struct NNetworkAddress *dest)
 {
     struct sockaddr_in *addr = (struct sockaddr_in *)ptr->data;
-    printf("NInetSocketNetworkAddress_getHost  sin_family=%d   size=%d\n", (int)addr->sin_family, (int)ptr->size);
+    //printf("NInetSocketNetworkAddress_getHost  sin_family=%d   size=%d\n", (int)addr->sin_family, (int)ptr->size);
     switch (addr->sin_family)
     {
     case AF_INET:

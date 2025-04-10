@@ -100,14 +100,18 @@ abstract class OpenSSLBuildTask : DefaultTask() {
         KonanTarget.LINUX_X64,
         KonanTarget.LINUX_ARM64,
           -> "linux-x86_64-clang"
+        KonanTarget.MACOS_ARM64->"darwin64-arm64"
+        KonanTarget.MACOS_X64->"darwin64-x86_64"
 
         else -> TODO("Not supported yet")
       }
     val exe = if (HostManager.hostIsMingw) ".exe" else ""
     val envs1 = HashMap(System.getenv())
     envs1["CC"] = compiler.clangFile.path.replace("\\","\\\\")
-    envs1["CXX"] = compiler.clangFile.path.replace("\\","\\\\")
+    envs1["CXX"] = envs1["CC"]
     envs1["AR"] = linker.arFile.path.replace("\\","\\\\")
+    envs1["RANLIB"] = envs1["AR"]
+    envs1["RC"] = envs1["AR"]
     envs1["CPPFLAGS"] = compiler.args.map { "\"$it\"" }.joinToString(" ")
     if (target.get().family == Family.MINGW) {
       envs1["RC"] = "i686-w64-mingw32-windres"

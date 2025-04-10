@@ -6,6 +6,7 @@ import kotlinx.cinterop.*
 import platform.env.common.*
 import platform.posix.*
 import pw.binom.collections.defaultMutableMap
+import platform.env.mac.*
 
 actual fun Environment.getEnvs(): Map<String, String> {
   val out = defaultMutableMap<String, String>()
@@ -47,7 +48,15 @@ actual val Environment.currentTimeMillis: Long
   }
 
 actual val Environment.currentExecutionPath: String
-  get() = TODO()
+  get() =memScoped {
+    val size = alloc<IntVar>()
+    size.value = 0
+
+    internal_getExecutablePath(null,size.ptr)
+    val arr = allocArray<ByteVar>(size.value)
+    internal_getExecutablePath(arr, size.ptr)
+    arr.toKString()
+  }
 
 actual val Environment.currentTimeNanoseconds: Long
   get() = memScoped {

@@ -1,8 +1,22 @@
 ---
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 //#if (__APPLE__)
 extern char **environ;
 //#endif
 
 char** internal_getEnvs(){
     return environ;
+}
+
+int internal_getExecutablePath(char* path, int *size){
+#ifdef __APPLE__
+    uint32_t size2 = *size;
+    int ret = _NSGetExecutablePath(path, &size2);
+    *size = size2;
+    return ret;
+#else
+    return -1;
+#endif
 }

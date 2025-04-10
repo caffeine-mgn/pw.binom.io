@@ -4,5 +4,9 @@
 #include <unistd.h>
 
 int internal_pipe2(int pipefd[2], int flags){
+#if defined(__APPLE__)
+    return pipe(pipefd);
+#else
     return pipe2(pipefd, flags);
+#endif
 }

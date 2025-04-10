@@ -147,6 +147,9 @@ kotlin {
     val epollLikeTest by creating {
       dependsOn(nativeRunnableTest)
     }
+    macosMain {
+      dependsOn(epollLikeMain)
+    }
     val linuxMain by getting
     linuxMain {
       dependsOn(epollLikeMain)

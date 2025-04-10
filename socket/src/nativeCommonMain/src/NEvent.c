@@ -1,4 +1,5 @@
-#include <malloc.h>
+//#include <malloc.h>
+#include <stdlib.h>
 #include "../include/wepoll.h"
 #include "../include/NEvent.h"
 #include "../include/definition.h"

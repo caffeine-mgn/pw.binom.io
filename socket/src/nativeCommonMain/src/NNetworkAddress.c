@@ -2,7 +2,8 @@
 #include "../include/definition.h"
 #include "../include/Network.h"
 
-#include <malloc.h>
+//#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if defined(LINUX_LIKE_TARGET) || defined(__APPLE__)
