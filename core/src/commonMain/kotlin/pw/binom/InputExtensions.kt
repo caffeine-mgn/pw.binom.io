@@ -54,6 +54,7 @@ fun Input.readInt(buffer: ByteBuffer): Int {
 
 fun Input.readShort(buffer: ByteBuffer): Short {
     buffer.reset(0, 2)
+    readFully(buffer)
     return Short.fromBytes(buffer[0], buffer[1])
 }
 

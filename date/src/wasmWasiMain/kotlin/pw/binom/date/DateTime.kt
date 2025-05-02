@@ -1,15 +1,16 @@
 package pw.binom.date
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.TimeSource
 
 actual value class DateTime(val milliseconds: Long): Comparable<DateTime> {
   actual companion object {
-    private val markNow = TimeSource.Monotonic.markNow()
+//    private val markNow = TimeSource.Monotonic.markNow()
     actual val systemZoneOffset: Int
       get() = 0
     actual val nowTime: Long
-      get() = markNow.elapsedNow().inWholeMilliseconds
+      get() = __wasm_import_now().nanoseconds.inWholeMilliseconds
 
     actual fun internalOf(
       year: Int,

@@ -29,7 +29,7 @@ abstract class AbstractKeccakMessageDigest : MessageDigest {
   }
 
   override fun update(input: ByteArray, offset: Int, len: Int) {
-    if (len == 0) {
+    if (len <= 0) {
       return
     }
     input.usePinned { i ->
@@ -40,7 +40,7 @@ abstract class AbstractKeccakMessageDigest : MessageDigest {
   }
 
   override fun update(buffer: ByteBuffer) {
-    if (buffer.remaining <= 0) {
+    if (!buffer.hasRemaining) {
       return
     }
     ctx.usePinned { b ->

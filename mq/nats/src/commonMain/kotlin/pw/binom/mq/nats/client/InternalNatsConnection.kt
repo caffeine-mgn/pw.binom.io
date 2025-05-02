@@ -172,10 +172,8 @@ class InternalNatsConnection private constructor(
     )
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
   private suspend fun parseHMsg(msgText: String): NatsMessageImpl2 {
     val items = msgText.split(' ', limit = 6)
-    println("Nats START LINE: $items")
     var cursor = 1
     val subject = items[cursor++]
     val sid = items[cursor++]
@@ -269,6 +267,8 @@ class InternalNatsConnection private constructor(
         writer.flush()
         return
       }
+    } catch (e: StreamClosedException) {
+      onDisconnect()
     } finally {
       writeLock.unlock()
     }
