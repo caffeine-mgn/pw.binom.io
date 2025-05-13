@@ -1,4 +1,4 @@
-package pw.binom.strong.web.server
+package pw.binom.strong.web.server.properties
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -7,7 +7,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
-class ExternalWebServerProperties(
+data class ExternalWebServerProperties(
   val port: Int? = null,
   @SerialName("bind-addresses")
   val bindAddresses: List<String> = emptyList(),

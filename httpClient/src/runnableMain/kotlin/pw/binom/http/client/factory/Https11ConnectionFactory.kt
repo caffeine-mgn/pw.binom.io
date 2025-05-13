@@ -14,7 +14,7 @@ class Https11ConnectionFactory(
   val trustManager: TrustManager = TrustManager.TRUST_ALL,
   val sslBufferSize: Int = DEFAULT_BUFFER_SIZE,
   val autoFlushSize: Int = DEFAULT_BUFFER_SIZE,
-  val fallback: HttpConnectionFactory = HttpConnectionFactory.NOT_SUPPORTED,
+  val fallback: HttpConnectionFactory = Http11ConnectionFactory(),
 ) : HttpConnectionFactory {
 
     private val sslContext: SSLContext by lazy {

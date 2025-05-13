@@ -7,7 +7,7 @@ import pw.binom.io.AsyncCloseable
 import pw.binom.io.useAsync
 import kotlin.jvm.JvmInline
 
-class PooledAsyncPreparedStatement2(val pool: AsyncConnectionPoolImpl, val sql: String) : AsyncCloseable {
+class PooledAsyncPreparedStatement2(val pool: AbstractAsyncConnectionPool, val sql: String) : AsyncCloseable {
   override suspend fun asyncClose() {
     pool.free(sql)
   }

@@ -25,7 +25,7 @@ kotlin {
       api(kotlin("test-common"))
       api(project(":file"))
       api(kotlin("test-annotations-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.core)
     }
     jvmTest {
       dependsOn(commonTest.get())

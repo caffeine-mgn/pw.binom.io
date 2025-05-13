@@ -6,7 +6,6 @@ import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpHandlerChain
 import pw.binom.io.httpServer.HttpServer2
 import pw.binom.io.httpServer.HttpServerExchange
-import pw.binom.io.socket.DomainNetworkAddress
 import pw.binom.io.socket.DomainSocketAddress
 import pw.binom.io.socket.InetSocketAddress
 import pw.binom.logger.Logger
@@ -19,6 +18,7 @@ import pw.binom.strong.inject
 import pw.binom.strong.injectServiceList
 import pw.binom.strong.map
 import pw.binom.strong.properties.injectProperty
+import pw.binom.strong.web.server.properties.WebServerProperties
 
 class WebServerService {
   private val listenJob = ArrayList<Job>()
@@ -70,6 +70,12 @@ class WebServerService {
 
       try {
         val bindAddresses = ArrayList<InetSocketAddress>()
+        val singlePort =
+          when {
+            webServerProperties.port != null -> webServerProperties.port!!
+            webServerProperties.port == null && webServerProperties.bindAddresses.isEmpty() -> 8080
+            else -> null
+          }
         webServerProperties.bindAddresses.forEach {
           val items = it.split(':', limit = 2)
           bindAddresses +=
@@ -78,12 +84,7 @@ class WebServerService {
               port = items[1].toInt(),
             ).resolve()
         }
-        val singlePort =
-          when {
-            webServerProperties.port != null -> webServerProperties.port!!
-            webServerProperties.port == null && webServerProperties.bindAddresses.isEmpty() -> 8080
-            else -> null
-          }
+
         if (singlePort != null) {
           bindAddresses +=
             InetSocketAddress.resolve(

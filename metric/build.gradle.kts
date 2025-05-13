@@ -7,13 +7,14 @@ plugins {
 apply<pw.binom.KotlinConfigPlugin>()
 apply<pw.binom.plugins.ConfigPublishPlugin>()
 kotlin {
+  androidTarget()
   allTargets{
 //    config()
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
-      api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
+      api(libs.binom.atomic)
     }
     jsMain {
       dependsOn(commonMain.get())

@@ -1,5 +1,5 @@
 package pw.binom.concurrency
-
+/*
 import pw.binom.atomic.AtomicInt
 import pw.binom.atomic.AtomicLong
 import kotlin.contracts.ExperimentalContracts
@@ -87,3 +87,4 @@ inline fun <T> ReentrantSpinLock.synchronize(duration: Duration, func: () -> T):
         unlock()
     }
 }
+*/

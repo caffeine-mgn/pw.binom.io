@@ -10,6 +10,7 @@ import org.gradle.api.tasks.TaskAction
 
 class AndroidSupportPlugin : Plugin<Project> {
   override fun apply(target: Project) {
+
     val generateTask = target.tasks.registerTask("GenerateManifest", GenerateManifestTask::class.java)
     generateTask.configure {
       it.manifestFile.set(target.buildDir.resolve("androidManifest/AndroidManifest.xml"))
@@ -23,9 +24,13 @@ class AndroidSupportPlugin : Plugin<Project> {
       buildToolsVersion("30.0.2")
 
       defaultConfig {
-        it.testInstrumentationRunner("android.support.test.runner.AndroidJUnitRunner")
-        it.minSdkVersion(28)
-        it.targetSdkVersion(30)
+        namespace="pw.binom.io.${target.name.replace('-','_')}"
+        this.testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+//        it.testInstrumentationRunner("android.support.test.runner.AndroidJUnitRunner")
+//        it.minSdkVersion(28)
+//        it.targetSdkVersion(30)
+//        this.targetSdkVersion(30)
+        this.minSdk=28
 //            versionCode(1)
 //            versionName("1.0.0")
       }

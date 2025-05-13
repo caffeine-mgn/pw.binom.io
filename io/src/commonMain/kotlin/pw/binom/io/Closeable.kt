@@ -1,8 +1,10 @@
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 package pw.binom.io
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.internal.InlineOnly
 
 fun interface Closeable {
   fun close()
@@ -114,6 +116,7 @@ private inline fun appendException(root: Throwable?, e: Throwable): Throwable =
   (root ?: RuntimeException("Can't close all closable elements")).apply { addSuppressed(e) }
 
 @OptIn(ExperimentalContracts::class)
+@InlineOnly
 inline fun <T : Closeable, R> T.use(func: (T) -> R): R {
   contract {
     callsInPlace(func, InvocationKind.EXACTLY_ONCE)

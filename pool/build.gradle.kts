@@ -18,7 +18,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":io"))
-      api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
+      api(libs.binom.atomic)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))

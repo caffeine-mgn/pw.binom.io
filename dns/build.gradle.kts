@@ -17,12 +17,12 @@ kotlin {
     commonMain.dependencies {
       api(project(":core"))
       api(project(":network"))
-      api("pw.binom:bitarray:${pw.binom.Versions.BITARRAY_VERSION}")
+      api(libs.binom.bitarray)
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))

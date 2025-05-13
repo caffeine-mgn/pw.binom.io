@@ -39,6 +39,7 @@ kotlin {
       nodejs()
   }
    */
+  androidTarget()
   allTargets{
     config()
   }

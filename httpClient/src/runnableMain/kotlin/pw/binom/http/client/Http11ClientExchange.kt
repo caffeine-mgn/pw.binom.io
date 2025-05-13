@@ -9,7 +9,8 @@ import pw.binom.io.httpClient.protocol.v11.Http11
 
 class Http11ClientExchange(
   private val input: AsyncBufferedAsciiInputReader,
-  output: AsyncOutput,
+  private val output: AsyncOutput,
+  private val rawOutput: AsyncOutput,
   private val onClose: suspend (Boolean) -> Unit,
 ) : HttpClientExchange {
   private var state = State.SENDING_REQUEST
@@ -20,13 +21,18 @@ class Http11ClientExchange(
     CLOSED,
   }
 
-  private var outputWrapper = AsyncOutputNoClose(output)
+  fun toRaw(): Pair<AsyncInput, AsyncOutput> {
+    state = State.CLOSED
+    return input to rawOutput
+  }
+
+//  private var outputWrapper = AsyncOutputNoClose(output)
   private var inputWrapper: AsyncInputNoClose? = null// = AsyncInputNoClose(input)
 
   override fun getOutput(): AsyncOutput = when (state) {
     State.RECEIVING_RESPONSE -> throw IllegalStateException("Request already sent")
     State.CLOSED -> throw IllegalStateException("Request already closed")
-    State.SENDING_REQUEST -> outputWrapper
+    State.SENDING_REQUEST -> output
   }
 
   override suspend fun getInput(): AsyncInput = when (state) {

@@ -12,9 +12,9 @@ actual class SelectorKey(val native: SelectionKey, actual val selector: Selector
     InternalLog.file("SelectorKey").prefix { "SelectorKey(${System.identityHashCode(native.selector())}) " }
 
   init {
-    SelectorMBeanImpl.selectorMapLock.synchronize {
-      SelectorMBeanImpl.selectorMap[this] = true
-    }
+//    SelectorMBeanImpl.selectorMapLock.synchronize {
+//      SelectorMBeanImpl.selectorMap[this] = true
+//    }
   }
 
   actual override fun close() {

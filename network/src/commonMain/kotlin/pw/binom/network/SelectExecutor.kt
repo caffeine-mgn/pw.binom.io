@@ -14,10 +14,11 @@ object SelectExecutor {
     isSelectorClosed: () -> Boolean,
     submitTask: (() -> Unit) -> Unit,
     exceptionHandler: UncaughtExceptionHandler? = null,
+    selectTimeout: Duration = Duration.INFINITE,
   ) {
     while (!isSelectorClosed()) {
       val now = TimeSource.Monotonic.markNow()
-      selector.select(timeout = Duration.INFINITE) { event ->
+      selector.select(timeout = selectTimeout) { event ->
         logger.info(method = "startSelecting") { "Event.flags: ${event.flags}, event.key.readFlags: ${event.key.readFlags}" }
         try {
           val attachment = event.key.attachment ?: return@select

@@ -81,8 +81,8 @@ kotlin {
       dependencies {
         api(kotlin("test-common"))
         api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+        api(libs.kotlinx.coroutines.core)
+        api(libs.kotlinx.coroutines.test)
       }
     }
     jvmTest.dependencies {

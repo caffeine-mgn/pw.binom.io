@@ -5,8 +5,10 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.Closeable
 import pw.binom.io.ClosedException
+import java.nio.channels.SelectionKey
 import java.nio.channels.SocketChannel
 import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.time.Duration
@@ -17,6 +19,7 @@ private val SELECTOR_LOGGER = InternalLog.file("Selector")
 actual class Selector : Closeable {
   private val native = JvmSelector.open()
   private val lock = ReentrantLock()
+  private val selectorWater = AtomicBoolean(false)
 
   private val eventImpl =
     object : pw.binom.io.socket.Event {
@@ -39,7 +42,23 @@ actual class Selector : Closeable {
       SELECTOR_LOGGER.info(method = "attach") { "Socket ${System.identityHashCode(socket.native)} already attached" }
       return existKey.attachment() as SelectorKey
     }
-    val jvmKey = socket.native.register(native, 0, null)
+    val jvmKey = try {
+      val op = if (socket.native.validOps() and SelectionKey.OP_ACCEPT != 0) {
+        SelectionKey.OP_ACCEPT
+      } else {
+        SelectionKey.OP_WRITE
+      }
+      selectorWater.set(true)
+      native.wakeup()
+      val key = try {
+        socket.native.register(native, op, null)
+      } finally {
+        selectorWater.set(false)
+      }
+      key
+    } catch (e: Throwable) {
+      throw e
+    }
     val binomKey = SelectorKey(native = jvmKey, selector = this)
     jvmKey.attach(binomKey)
     SELECTOR_LOGGER.info(method = "attach") { "Socket ${System.identityHashCode(socket.native)} attached success" }
@@ -59,6 +78,9 @@ actual class Selector : Closeable {
     timeout: Duration,
     selectedKeys: SelectedKeys,
   ) {
+    while (selectorWater.get()) {
+      Thread.yield()
+    }
     lock.withLock {
       selectedKeys.lock.withLock {
         selectedKeys.errors.clear()
@@ -92,6 +114,9 @@ actual class Selector : Closeable {
     timeout: Duration,
     eventFunc: (pw.binom.io.socket.Event) -> Unit,
   ) {
+    while (selectorWater.get()) {
+      Thread.yield()
+    }
     lock.withLock {
       SELECTOR_LOGGER.info(method = "select") { "Selecting...." }
       val selected =
@@ -103,7 +128,7 @@ actual class Selector : Closeable {
         }
       SELECTOR_LOGGER.info(method = "select") { "Selecting completed. Events count: $selected" }
       native.selectedKeys().forEach { nativeKey ->
-        val binomKey = nativeKey.attachment() as SelectorKey
+        val binomKey = (nativeKey.attachment() as SelectorKey?) ?: return@forEach
         eventImpl.internalKey = binomKey
         when {
           !nativeKey.isValid -> {

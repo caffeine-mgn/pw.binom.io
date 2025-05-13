@@ -9,6 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+  androidTarget()
   allTargets {
     config()
     -"js"
@@ -22,14 +23,14 @@ kotlin {
         api(kotlin("stdlib-common"))
         api(project(":thread"))
         api(project(":concurrency"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+        api(libs.kotlinx.coroutines.core)
       }
     }
     val commonTest by getting {
       dependencies {
         api(kotlin("test-common"))
         api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+        api(libs.kotlinx.coroutines.test)
       }
     }
 

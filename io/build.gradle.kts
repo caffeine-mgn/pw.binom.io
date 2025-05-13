@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pw.binom.publish.allTargets
 import pw.binom.publish.applyDefaultHierarchyBinomTemplate
 
@@ -14,6 +15,16 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   compilerOptions {
     freeCompilerArgs.add("-Xexpect-actual-classes")
+  }
+  androidTarget{
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_1_8)
+    }
+  }
+  jvm {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_1_8)
+    }
   }
   allTargets {
     config()
@@ -38,7 +49,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":metric"))
       api(project(":memory"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.core)
     }
     val nonJvmMain by getting
 //    val commonWasmMain by getting {
@@ -60,7 +71,7 @@ kotlin {
         api(kotlin("test-common"))
         api(project(":testing"))
         api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+        api(libs.kotlinx.coroutines.test)
       }
     }
     val jvmTest by getting {

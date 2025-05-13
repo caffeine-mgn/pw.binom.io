@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import kotlinx.coroutines.withTimeoutOrNull
 import pw.binom.pool.ObjectPool
 import pw.binom.pool.using
 import pw.binom.toByteArray
@@ -61,11 +62,13 @@ interface AsyncOutput : AsyncCloseable, AsyncFlushable {
     while (data.remaining > 0) {
       val wrote = write(data)
       if (wrote.isNotAvailable) {
-        if (writeSize == 0) {
-          throw StreamClosedException()
-        } else {
+        if (writeSize != 0) {
           throw PackageBreakException("Can't write data. $writeSize bytes was sent")
         }
+        if (wrote.isEof) {
+          throw IllegalStateException("Stream is empty")
+        }
+        throw StreamClosedException()
       }
       writeSize += wrote.length
     }

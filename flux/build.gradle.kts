@@ -40,7 +40,7 @@ kotlin {
       dependencies {
         api(project(":core"))
         api(project(":httpServer"))
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+        api(libs.kotlinx.serialization.core)
       }
     }
     /*
@@ -77,7 +77,7 @@ kotlin {
     commonTest.dependencies {
         api(kotlin("test-common"))
         api(kotlin("test-annotations-common"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
     }
     /*
     val jvmTest by getting {

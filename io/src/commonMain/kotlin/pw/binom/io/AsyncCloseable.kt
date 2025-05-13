@@ -1,6 +1,8 @@
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 package pw.binom.io
 
 import kotlin.contracts.ExperimentalContracts
+import kotlin.internal.InlineOnly
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
@@ -18,6 +20,7 @@ fun interface AsyncCloseable {
     }
 }
 
+@InlineOnly
 @OptIn(ExperimentalContracts::class)
 suspend inline fun <T : AsyncCloseable, R> T.useAsync(func: (T) -> R): R {
   contract {

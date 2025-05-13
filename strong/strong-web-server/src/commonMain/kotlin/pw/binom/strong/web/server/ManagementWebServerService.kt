@@ -18,6 +18,7 @@ import pw.binom.strong.inject
 import pw.binom.strong.injectServiceList
 import pw.binom.strong.map
 import pw.binom.strong.properties.injectProperty
+import pw.binom.strong.web.server.properties.WebServerProperties
 
 class ManagementWebServerService {
   private val listenJob = ArrayList<Job>()

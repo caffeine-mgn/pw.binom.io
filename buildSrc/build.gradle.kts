@@ -17,6 +17,7 @@ plugins {
   kotlin("jvm") version "2.1.0"
   id("com.github.gmazzo.buildconfig") version "5.5.1"
 }
+
 val kotlinVersion = kotlin.coreLibrariesVersion
 val ionspinBignumVersion = project.property("ionspin_bignum.version") as String
 val kotlinxCoroutinesVersion = project.property("kotlinx_coroutines.version") as String
@@ -60,7 +61,7 @@ dependencies {
   api("pw.binom:binom-publish:0.1.23")
 //  api("com.jakewharton.cite:cite-gradle-plugin:0.2.0")
 //    api("com.android.library:com.android.library.gradle.plugin:7.2.0")
-  api("com.android.tools.build:gradle:4.2.1")
+  api("com.android.tools.build:gradle:8.6.1")
   api("com.google.gms:google-services:4.3.5")
   api("org.jmailen.gradle:kotlinter-gradle:3.14.0")
 }

@@ -9,6 +9,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+  androidTarget()
   allTargets {
     -"wasmWasi"
     -"wasmJs"
@@ -39,7 +40,7 @@ kotlin {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
       api(project(":httpServer"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))

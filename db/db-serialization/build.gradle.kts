@@ -23,7 +23,7 @@ kotlin {
       api(project(":db"))
       api(project(":collections"))
       api(project(":db:db-serialization-annotations"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.core)
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
@@ -31,7 +31,7 @@ kotlin {
       api(project(":db:sqlite"))
       api(project(":network"))
       api(project(":db:postgresql-async"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))

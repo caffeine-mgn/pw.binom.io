@@ -22,6 +22,7 @@ fun KotlinNativeTarget.useNativeUtils() {
 }
 
 kotlin {
+  androidTarget()
   allTargets{
     config()
   }
@@ -39,7 +40,7 @@ kotlin {
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
       api(project(":httpServer"))
       api(project(":testing"))
     }

@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
 import pw.binom.kotlin.clang.compileTaskName
@@ -24,6 +25,11 @@ fun KotlinNativeTarget.useIconvUtils() {
 }
 
 kotlin {
+  androidTarget {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_1_8)
+    }
+  }
   allTargets {
     config()
   }

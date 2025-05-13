@@ -15,10 +15,10 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(kotlin("stdlib-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.core)
+      api(libs.kotlinx.coroutines.test)
     }
     wasmJsMain.dependencies {
       api(kotlin("test-wasm-js"))

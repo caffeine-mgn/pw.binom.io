@@ -223,6 +223,13 @@ interface Headers : Map<String, List<String>> {
       }
       return BearerAuth(authorization.removePrefix("${BearerAuth.PREFIX} "))
     }
+
+  operator fun plus(headers: Headers): Headers {
+    val new = HashHeaders2()
+    new += this
+    new += headers
+    return headers
+  }
 }
 
 /**

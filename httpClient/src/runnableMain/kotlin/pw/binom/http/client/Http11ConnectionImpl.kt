@@ -89,34 +89,38 @@ class Http11ConnectionImpl(
             state = HttpConnection.State.BUSY
             lastActive = DateTime.now
             Http11ClientExchange(
-                input = channel.reader, output = outputStream, onClose = { isError ->
-                    when {
-                        state == HttpConnection.State.CLOSED -> channel.asyncCloseAnyway()
-                        keepAlive && !isError -> when {
-                            outputStream === EmptyAsyncOutput -> state = HttpConnection.State.READY
-                            (outputStream as? AsyncContentLengthOutput)?.isFull == true -> {
-                                state = HttpConnection.State.READY
-                                pushBack(this@Http11ConnectionImpl)
-                            }
-
-                            outputStream is AsyncChunkedOutput -> {
-                                outputStream.asyncClose()
-                                state = HttpConnection.State.READY
-                                pushBack(this@Http11ConnectionImpl)
-                            }
-
-                            else -> {
-                                state = HttpConnection.State.CLOSED
-                                channel.asyncCloseAnyway()
-                            }
-                        }
-
-                        else -> {
-                            state = HttpConnection.State.CLOSED
-                            channel.asyncCloseAnyway()
-                        }
+              input = channel.reader,
+              output = outputStream,
+              rawOutput=channel.writer,
+              onClose = { isError ->
+                when {
+                  state == HttpConnection.State.CLOSED -> channel.asyncCloseAnyway()
+                  keepAlive && !isError -> when {
+                    outputStream === EmptyAsyncOutput -> state = HttpConnection.State.READY
+                    (outputStream as? AsyncContentLengthOutput)?.isFull == true -> {
+                      state = HttpConnection.State.READY
+                      pushBack(this@Http11ConnectionImpl)
                     }
-                })
+
+                    outputStream is AsyncChunkedOutput -> {
+                      outputStream.asyncClose()
+                      state = HttpConnection.State.READY
+                      pushBack(this@Http11ConnectionImpl)
+                    }
+
+                    else -> {
+                      state = HttpConnection.State.CLOSED
+                      channel.asyncCloseAnyway()
+                    }
+                  }
+
+                  else -> {
+                    state = HttpConnection.State.CLOSED
+                    channel.asyncCloseAnyway()
+                  }
+                }
+              }
+            )
         }
     }
 

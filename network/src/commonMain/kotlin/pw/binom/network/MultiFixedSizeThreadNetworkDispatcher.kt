@@ -8,20 +8,27 @@ import pw.binom.io.socket.Selector
 import pw.binom.thread.FixedThreadExecutorService
 import pw.binom.thread.Thread
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 
-class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkManager(), Closeable {
+class MultiFixedSizeThreadNetworkDispatcher(
+  threadSize: Int,
+  selectTimeout: Duration = Duration.INFINITE,
+) : AbstractNetworkManager(), Closeable {
   override val selector = Selector()
   val taskCount: Int
     get() = threads.taskCount
+
   init {
     require(threadSize > 0) { "threadSize should be more than 0" }
   }
+
   private val threads = FixedThreadExecutorService(threadSize)
   private val selectThread = Thread {
     SelectExecutor.startSelecting(
       selector = selector,
       isSelectorClosed = { closed.getValue() },
       submitTask = threads::submit,
+      selectTimeout = selectTimeout,
     )
   }
   private val closed = AtomicBoolean(false)
@@ -54,6 +61,7 @@ class MultiFixedSizeThreadNetworkDispatcher(threadSize: Int) : AbstractNetworkMa
     selectThread.join()
     selector.close()
   }
+
   init {
     selectThread.start()
   }

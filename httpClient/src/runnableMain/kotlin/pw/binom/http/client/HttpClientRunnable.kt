@@ -6,6 +6,7 @@ import pw.binom.collections.LinkedList
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.date.DateTime
+import pw.binom.http.client.factory.Http11ConnectionFactory
 import pw.binom.http.client.factory.HttpConnectionFactory
 import pw.binom.http.client.factory.NetSocketFactory
 import pw.binom.io.http.Headers
@@ -15,8 +16,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+@OptIn(DelicateCoroutinesApi::class)
 class HttpClientRunnable(
-  private val factory: HttpConnectionFactory,
+  private val factory: HttpConnectionFactory = Http11ConnectionFactory(),
   private val idleTimeout: Duration = 1.minutes,
   private val source: NetSocketFactory,
   idleCoroutineContext: CoroutineContext = EmptyCoroutineContext,
@@ -86,7 +88,7 @@ class HttpClientRunnable(
     if (!closed.compareAndSet(false, true)) {
       return
     }
-    thread?.cancel()
+    thread?.cancelAndJoin()
     lock.synchronize {
       val l = connections.asSequence().flatMap { it.value.asSequence() }.toList()
       connections.clear()

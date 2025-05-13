@@ -17,7 +17,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(kotlin("stdlib-common"))
-      api("pw.binom:atomic:${pw.binom.Versions.ATOMIC_VERSION}")
+      api(libs.binom.atomic)
     }
     /*
     val jvmLikeMain by creating {

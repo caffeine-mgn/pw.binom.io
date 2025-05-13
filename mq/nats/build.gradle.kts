@@ -28,14 +28,14 @@ kotlin {
       api(project(":network"))
       api(project(":socket"))
       api(project(":coroutines"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-      api("org.jetbrains.kotlinx:kotlinx-serialization-json:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+      api(libs.kotlinx.coroutines.core)
+      api(libs.kotlinx.serialization.json)
     }
     commonTest.dependencies {
       api(project(":testing"))
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))

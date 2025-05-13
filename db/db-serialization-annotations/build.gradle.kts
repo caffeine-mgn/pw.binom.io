@@ -23,7 +23,7 @@ kotlin {
     val commonMain by getting {
       dependencies {
         api(kotlin("stdlib-common"))
-        api("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+        api(libs.kotlinx.serialization.core)
       }
     }
     val commonTest by getting {

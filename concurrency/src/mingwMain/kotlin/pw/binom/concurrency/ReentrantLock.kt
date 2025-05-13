@@ -54,9 +54,9 @@ actual class ReentrantLock : Lock {
     actual fun await() {
       while (true) {
         val r = SleepConditionVariableCS(native.ptr, lock.ptr, checkTime.convert())
-        if (Worker.current?.isInterrupted == true) {
-          throw InterruptedException()
-        }
+//        if (Worker.current?.isInterrupted == true) {
+//          throw InterruptedException()
+//        }
         if (r == 0) {
           val e = GetLastError()
           if (e != ERROR_TIMEOUT.convert<DWORD>() && e != 0.convert<DWORD>()) {

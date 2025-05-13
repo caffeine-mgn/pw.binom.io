@@ -11,7 +11,7 @@ import pw.binom.db.async.AsyncStatement
 import pw.binom.io.useAsync
 import kotlin.time.DurationUnit
 
-class PooledAsyncConnectionImpl(override val pool: AsyncConnectionPoolImpl, val connection: AsyncConnection) :
+class PooledAsyncConnectionImpl(override val pool: AbstractAsyncConnectionPool, val connection: AsyncConnection) :
   PooledAsyncConnection, AsyncConnection by connection {
   private val createdPreparedStatement =
     defaultMutableMap<String, AsyncPreparedStatement>().useName("PooledAsyncConnectionImpl.createdPreparedStatement")

@@ -16,7 +16,7 @@ import pw.binom.db.async.pool.PooledAsyncConnection
 import pw.binom.io.useAsync
 
 internal class DBAccessImpl(
-  val context: DBContextImpl,
+  val context: AbstractDBContext,
   val con: PooledAsyncConnection,
   val sql: SQLSerialization,
 ) : DBAccess {

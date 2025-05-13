@@ -12,6 +12,7 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+  androidTarget()
   allTargets {
     config()
     -"js"
@@ -28,7 +29,7 @@ kotlin {
       api(project(":collections"))
       api(project(":socket"))
       api(kotlin("stdlib-common"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.core)
     }
 
     commonTest.dependencies {
@@ -37,7 +38,7 @@ kotlin {
       api(project(":date"))
       api(project(":charset"))
       api(project(":coroutines"))
-      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+      api(libs.kotlinx.coroutines.test)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))

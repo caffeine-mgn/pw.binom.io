@@ -6,11 +6,12 @@ import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
 
 class NativeNetChannelFactory(val manager: NetworkManager) : NetSocketFactory {
-    override suspend fun connect(host: String, port: Int): AsyncChannel =
-        manager.tcpConnect(
-            DomainSocketAddress(
-                host = host,
-                port = port,
-            ).resolve()
-        )
+  override suspend fun connect(host: String, port: Int): AsyncChannel {
+    val address = DomainSocketAddress(
+      host = host,
+      port = port,
+    ).resolve()
+    val channel = manager.tcpConnect(address)
+    return channel
+  }
 }

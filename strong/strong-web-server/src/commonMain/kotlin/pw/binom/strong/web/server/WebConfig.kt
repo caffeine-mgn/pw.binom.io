@@ -3,6 +3,7 @@ package pw.binom.strong.web.server
 import pw.binom.strong.Strong
 import pw.binom.strong.bean
 import pw.binom.strong.properties.StrongProperties
+import pw.binom.strong.web.server.properties.WebServerProperties
 
 object WebConfig {
   fun apply(config: StrongProperties) =
