@@ -14,7 +14,7 @@ internal class NatsMqConnectionImpl(override val reader: NatsReader) : NatsMqCon
     }
   }
 
-  override suspend fun createTopic(name: String) = NatsTopic(connection = this, subject = name)
+  override suspend fun createTopic(name: String) = NatsTopicImpl(connection = this, subject = name)
 
   override suspend fun getTopic(name: String) = createTopic(name)
 

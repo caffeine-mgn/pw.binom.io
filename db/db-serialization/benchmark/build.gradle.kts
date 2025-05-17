@@ -28,7 +28,7 @@ kotlin {
         api(project(":collections"))
         api(project(":db:db-serialization"))
         api(project(":db:sqlite"))
-        api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+        api(libs.kotlinx.coroutines.core)
         implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.9")
       }
     }

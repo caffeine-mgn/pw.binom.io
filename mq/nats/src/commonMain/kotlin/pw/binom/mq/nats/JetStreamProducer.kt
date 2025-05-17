@@ -4,7 +4,7 @@ import pw.binom.io.ByteBuffer
 import pw.binom.mq.Headers
 import pw.binom.mq.Producer
 
-class JetStreamProducer(val subject: String, val topic: JetStreamTopic) : Producer {
+class JetStreamProducer(val subject: String, val topic: JetStreamTopic) : Producer<Headers> {
   override suspend fun send(
     headers: Headers,
     data: ByteArray,

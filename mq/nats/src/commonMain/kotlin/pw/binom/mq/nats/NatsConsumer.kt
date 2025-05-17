@@ -4,12 +4,11 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.mq.Consumer
-import pw.binom.mq.Message
 import pw.binom.mq.nats.client.NatsMessage
 
 class NatsConsumer(
   val group: String?,
-  val topic: NatsTopic,
+  val topic: NatsTopicImpl,
   val incomeListener: suspend (NatsMessage) -> Unit,
 ) : Consumer {
   private var listener: AsyncCloseable? = null

@@ -4,7 +4,7 @@ import pw.binom.io.ByteBuffer
 import pw.binom.mq.Headers
 import pw.binom.mq.Producer
 
-class NatsProducer(val topic: NatsTopic) : Producer {
+class NatsProducer(val topic: NatsTopicImpl) : Producer<Headers> {
   override suspend fun send(
     headers: Headers,
     data: ByteArray,
@@ -28,7 +28,7 @@ class NatsProducer(val topic: NatsTopic) : Producer {
   }
 
   suspend fun send(
-    headers: Headers,
+    headers: Headers = Headers.empty,
     data: ByteArray,
     replyTo: String? = null,
   ) {
@@ -41,7 +41,7 @@ class NatsProducer(val topic: NatsTopic) : Producer {
   }
 
   suspend fun send(
-    headers: Headers,
+    headers: Headers = Headers.empty,
     data: ByteBuffer,
     replyTo: String? = null,
   ) {

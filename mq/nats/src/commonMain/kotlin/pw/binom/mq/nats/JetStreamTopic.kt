@@ -1,7 +1,5 @@
 package pw.binom.mq.nats
 
-import kotlinx.serialization.EncodeDefault
-import pw.binom.mq.Consumer
 import pw.binom.mq.Message
 import pw.binom.mq.Topic
 import pw.binom.mq.nats.client.AckPolicy
@@ -11,13 +9,11 @@ import pw.binom.mq.nats.client.dto.ConsumerInfoResponseDto
 import pw.binom.mq.nats.client.dto.ErrorDto
 import pw.binom.mq.nats.client.dto.MessageGetRequestDto
 import pw.binom.mq.nats.client.dto.StreamConfig
-import pw.binom.uuid.nextUuid
-import kotlin.random.Random
 
 class JetStreamTopic(
   val config: StreamConfig,
   val connection: JetStreamMqConnection,
-) : Topic<Message> {
+) : Topic<Message, JetStreamProducer, JetStreamConsumer> {
   override suspend fun createProducer() =
     JetStreamProducer(
       subject = config.subjects.first(),

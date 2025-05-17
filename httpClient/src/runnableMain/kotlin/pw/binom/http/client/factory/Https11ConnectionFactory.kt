@@ -8,6 +8,7 @@ import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.socket.ssl.asyncChannel
 import pw.binom.ssl.*
 import pw.binom.url.URL
+import pw.binom.url.UrlHelper
 
 class Https11ConnectionFactory(
   val keyManager: KeyManager = EmptyKeyManager,
@@ -22,12 +23,23 @@ class Https11ConnectionFactory(
     }
 
     override suspend fun connect(url: URL, source: NetSocketFactory, pushBack: suspend (HttpConnection) -> Unit): HttpConnection {
-        val schema = url.schema
+
+      val schema: String
+      val port: Int
+      val host:String
+      UrlHelper.parseUrl(
+        url.fullPath,
+        schema = { schema = it },
+        port = { port = it?:443 },
+        domain = {host=it}
+      )
+
+//        val schema = url.schema
         if (schema != "https" && schema != "wss") {
             return fallback.connect(url = url, source = source, pushBack = pushBack)
         }
-        val host = url.domain
-        val port = url.port ?: 443
+//        val host = url.domain
+//        val port = url.port ?: 443
         val stream = SafeException.async {
             val channel = source.connect(host = host, port = port).closeOnException()
             val sslSession = sslContext.clientSession(host = host, port = port).closeOnException()

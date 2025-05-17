@@ -11,6 +11,7 @@ import pw.binom.http.client.factory.HttpConnectionFactory
 import pw.binom.http.client.factory.NetSocketFactory
 import pw.binom.io.http.Headers
 import pw.binom.url.URL
+import pw.binom.url.UrlHelper
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
@@ -62,7 +63,16 @@ class HttpClientRunnable(
 
 
   override suspend fun connect(method: String, url: URL, headers: Headers): HttpClientExchange {
-    val cacheKey = url.let { "${it.schema}://${it.host}:${it.port}" }
+    val schema: String
+    val port: Int?
+    val host: String
+    UrlHelper.parseUrl(
+      url.fullPath,
+      schema = { schema = it },
+      port = { port = it },
+      domain = { host = it }
+    )
+    val cacheKey = url.let { "${schema}://${host}:${port}" }
     var existConnection = lock.synchronize {
       connections.removeLastOrNull(cacheKey)
     }
@@ -101,8 +111,11 @@ class HttpClientRunnable(
   override fun request(method: String, url: URL, headers: Headers): HttpRequestBuilder {
     val builder = super.request(method, url, headers)
     builder.headers.add(Headers.CONNECTION, Headers.KEEP_ALIVE)
-    builder.headers.add(Headers.HOST, url.domain)
-    builder.headers.add(Headers.SERVER, "binom-http-client")
+    val domain: String
+    val port: Int?
+    UrlHelper.parseUrl(url.fullPath, domain = { domain = it }, port = { port = it })
+    builder.headers.add(Headers.HOST, if (port == null) domain else "$domain:$port")
+    builder.headers[Headers.USER_AGENT] = "binom/0.x"
     return builder
   }
 }

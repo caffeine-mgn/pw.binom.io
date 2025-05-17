@@ -17,8 +17,8 @@ dependencies {
   api(project(":url"))
   testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
   testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.5.0")
-  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-  testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${pw.binom.Versions.KOTLINX_SERIALIZATION_VERSION}")
+  api(libs.kotlinx.coroutines.core)
+  testImplementation(libs.kotlinx.serialization.core)
 }
 
 val routePluginId = project.property("route_plugin.id") as String

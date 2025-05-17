@@ -122,7 +122,7 @@ private constructor(
     return r
   }
 
-  internal suspend inline fun sendAndReceive(crossinline func: suspend (NatsProtoConnection, String) -> Unit): NatsMessage {
+  internal suspend inline fun sendAndReceive(crossinline func: suspend (connection: NatsProtoConnection, responseSubject: String) -> Unit): NatsMessage {
     val responseSubject = oneShotSubjectPrefix + Random.nextUuid().toString()
     val subscribeId = "subscribe-" + Random.nextUuid().toString()
     connection.subscribe(

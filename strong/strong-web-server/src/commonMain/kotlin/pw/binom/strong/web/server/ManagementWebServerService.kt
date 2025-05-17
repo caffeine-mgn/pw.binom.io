@@ -28,7 +28,7 @@ class ManagementWebServerService {
   private var server: HttpServer2? = null
   private val handlers by injectServiceList<ManagementHttpHandler>()
   private val chains by injectServiceList<HttpHandlerChain>()
-  private val logger = Logger.getLogger("WebServer")
+  private val logger = Logger.getLogger("ManagementWebServer")
 
   init {
     BeanLifeCycle.postConstruct {

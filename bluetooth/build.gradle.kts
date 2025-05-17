@@ -212,7 +212,7 @@ kotlin {
 //      api(project(":pool"))
 //      api("pw.binom:url:${pw.binom.Versions.BINOM_URL_VERSION}")
 //      api("pw.binom:uuid:${pw.binom.Versions.BINOM_UUID_VERSION}")
-//      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+//      api(libs.kotlinx.coroutines.core)
     }
 //    val nativeRunnableMain by creating {
 //      dependsOn(commonMain.get())
@@ -230,8 +230,8 @@ kotlin {
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
-//      api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
-//      api("org.jetbrains.kotlinx:kotlinx-coroutines-test:${pw.binom.Versions.KOTLINX_COROUTINES_VERSION}")
+//      api(libs.kotlinx.coroutines.core)
+//      api(libs.kotlinx.coroutines.test)
 //      api(project(":charset"))
     }
 //    val nativeRunnableMain by creating {

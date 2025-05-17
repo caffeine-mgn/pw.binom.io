@@ -3,7 +3,7 @@ package pw.binom.mq
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
 
-interface Producer : AsyncCloseable {
+interface Producer<HEADER:Headers> : AsyncCloseable {
   companion object;
 
   suspend fun send(

@@ -31,15 +31,15 @@ kotlin {
       api(project(":file"))
       api(project(":date"))
       api(project(":concurrency"))
-      api("com.ionspin.kotlin:bignum:${pw.binom.Versions.IONSPIN_BIGNUM_VERSION}")
+      api(libs.ionspin.bignum)
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
       api(kotlin("test-annotations-common"))
     }
     jvmMain.dependencies {
-      api("org.bouncycastle:bcprov-jdk15on:1.68")
-      api("org.bouncycastle:bcpkix-jdk15on:1.68")
+      api(libs.bouncycastle.bcpkix)
+      api(libs.bouncycastle.bcprov)
     }
     jvmTest.dependencies {
       api(kotlin("test-junit"))
