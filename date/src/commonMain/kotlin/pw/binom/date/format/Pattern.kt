@@ -26,10 +26,10 @@ internal sealed interface Pattern {
         SSSSSS.find(format, position) -> SSSSSS
         yyyy.find(format, position) -> yyyy
         MMM.find(format, position) -> MMM
-        MM.find(format, position) -> MM
+        MM_.find(format, position) -> MM_
         dd.find(format, position) -> dd
         HH.find(format, position) -> HH
-        mm.find(format, position) -> mm
+        _mm.find(format, position) -> _mm
         EEE.find(format, position) -> EEE
         COMMA.find(format, position) -> COMMA
         u.find(format, position) -> u
@@ -278,7 +278,7 @@ internal sealed interface Pattern {
   /**
    * Month. Example: "04"
    */
-  object MM : ImmutablePattern {
+  object MM_ : ImmutablePattern {
 
     override val patternLength: Int
       get() = 2
@@ -391,7 +391,7 @@ internal sealed interface Pattern {
   /**
    * Minutes. Example: "31"
    */
-  object mm : ImmutablePattern {
+  object _mm : ImmutablePattern {
     override val patternLength: Int
       get() = 2
 
