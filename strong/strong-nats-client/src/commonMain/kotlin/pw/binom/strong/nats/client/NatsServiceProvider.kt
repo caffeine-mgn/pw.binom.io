@@ -7,20 +7,41 @@ import pw.binom.logger.info
 import pw.binom.mq.MqConnection
 import pw.binom.mq.nats.JetStreamMqConnection
 import pw.binom.mq.nats.NatsMqConnection
+import pw.binom.mq.nats.ReconnectableNatsProtoConnection
 import pw.binom.mq.nats.client.Auth
 import pw.binom.mq.nats.client.NatsReader
 import pw.binom.mq.nats.nats
 import pw.binom.network.NetworkManager
 import pw.binom.strong.BeanLifeCycle
+import pw.binom.strong.HealthIndicator
 import pw.binom.strong.inject
 import pw.binom.strong.nats.client.properties.NatsClientProperties
 import pw.binom.strong.properties.injectProperty
 
-class NatsServiceProvider : NatsMqConnection {
+class NatsServiceProvider : NatsMqConnection, HealthIndicator {
   private val nm: NetworkManager by inject()
   private val properties: NatsClientProperties by injectProperty()
   private var con: NatsMqConnection? = null
   private val logger by Logger.ofThisOrGlobal
+
+  override suspend fun isHealthy(): Boolean {
+    val con = con
+    if (properties.lazyStart && con == null) {
+      return true
+    }
+    if (con == null) {
+      return false
+    }
+    val connection = con.reader.connection
+    if (connection is ReconnectableNatsProtoConnection) {
+      return connection.isConnected()
+    }
+    return true
+  }
+
+  override val componentName: String
+    get() = "Nats Client"
+
   private suspend fun getConnection(): NatsMqConnection {
     var con = con
     if (con != null) {

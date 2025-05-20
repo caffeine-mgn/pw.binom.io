@@ -1,8 +1,8 @@
 package pw.binom.properties.ini
 
-import pw.binom.strong.properties.StrongProperties
+import pw.binom.strong.properties.BaseStrongProperties
 
-fun StrongProperties.addIni(ini: String):StrongProperties {
+fun BaseStrongProperties.addIni(ini: String):BaseStrongProperties {
   ini.lineSequence()
     .map { it.trimStart() }
     .filter {

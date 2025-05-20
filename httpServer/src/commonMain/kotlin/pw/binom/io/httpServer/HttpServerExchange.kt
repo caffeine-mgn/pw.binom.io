@@ -45,7 +45,8 @@ interface HttpServerExchange : HttpInput {
 
   fun isQueryParamExist(name: String): Boolean = getQueryParams().containsKey(name)
 
-  fun response() = DefaultHttpServerResponse(this)
+  fun response(): HttpServerResponse
+
 
   /**
    * Returns GET param by [name]. If param is missing will throw [MissingQueryArgumentException].
@@ -114,3 +115,4 @@ interface HttpServerExchange : HttpInput {
     headers: Headers,
   )
 }
+

@@ -50,6 +50,10 @@ class ReconnectableNatsProtoConnection(
   private var connectionLock = SimpleAsyncLock()
   private val closed = AtomicBoolean(false)
 
+  suspend fun isConnected() = connectionLock.synchronize {
+    existConnection != null
+  }
+
   private class Subscription(
     val subject: String,
     val group: String?,
@@ -119,7 +123,7 @@ class ReconnectableNatsProtoConnection(
     }
   }
 
-  suspend fun waitActiveConnection(){
+  suspend fun waitActiveConnection() {
     getConnection()
   }
 

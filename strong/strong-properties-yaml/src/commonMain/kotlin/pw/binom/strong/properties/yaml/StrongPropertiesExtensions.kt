@@ -4,12 +4,12 @@ import com.charleskorn.kaml.AnchorsAndAliases
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
 import pw.binom.properties.PropertyValue
-import pw.binom.strong.properties.StrongProperties
+import pw.binom.strong.properties.BaseStrongProperties
 
-fun StrongProperties.addYaml(
+fun BaseStrongProperties.addYaml(
   text: String,
   yaml: Yaml = Yaml(configuration = YamlConfiguration(anchorsAndAliases = AnchorsAndAliases.Permitted())),
-): StrongProperties {
+): BaseStrongProperties {
   val obj = YamlConvertor.convert(yaml.parseToYamlNode(text))
   if (obj is PropertyValue.Object) {
     add(obj)

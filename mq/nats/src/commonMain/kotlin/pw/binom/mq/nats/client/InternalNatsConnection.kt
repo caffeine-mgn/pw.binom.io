@@ -207,23 +207,28 @@ class InternalNatsConnection private constructor(
   }
 
   override suspend fun readMessage(): NatsMessage {
-    READ_LOOP@ while (true) {
-      val msgText = reader.readln() ?: throw SocketClosedException()
-      when {
-        msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
-        msgText == "PING" -> {
-          writeLock.synchronize {
-            writer.append("PONG\r\n")
-            writer.flush()
+    try {
+      READ_LOOP@ while (true) {
+        val msgText = reader.readln() ?: throw SocketClosedException()
+        when {
+          msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
+          msgText == "PING" -> {
+            writeLock.synchronize {
+              writer.append("PONG\r\n")
+              writer.flush()
+            }
+            continue@READ_LOOP
           }
-          continue@READ_LOOP
+
+          msgText.startsWith("MSG ") -> return parseMsg(msgText)
+          msgText.startsWith("HMSG ") -> return parseHMsg(msgText)
+
+          else -> throw IOException("Unknown message type. Message: [$msgText]")
         }
-
-        msgText.startsWith("MSG ") -> return parseMsg(msgText)
-        msgText.startsWith("HMSG ") -> return parseHMsg(msgText)
-
-        else -> throw IOException("Unknown message type. Message: [$msgText]")
       }
+    } catch (e: StreamClosedException) {
+      onDisconnect()
+      throw e
     }
   }
 

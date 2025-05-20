@@ -1,6 +1,6 @@
 package pw.binom.mq.nats
 
-import pw.binom.mq.MqConnection
+import pw.binom.mq.*
 import pw.binom.mq.nats.client.JetStreamImpl
 import pw.binom.mq.nats.client.NatsReader
 import pw.binom.mq.nats.client.dto.ErrorDto
@@ -14,7 +14,7 @@ class JetStreamMqConnection(reader: NatsReader) : MqConnection {
     // do nothing
   }
 
-  suspend fun createTopic(config:StreamConfig): JetStreamTopic {
+  suspend fun createTopic(config: StreamConfig): JetStreamTopic {
     val stream =
       js.create(
         config
@@ -57,4 +57,7 @@ class JetStreamMqConnection(reader: NatsReader) : MqConnection {
       connection = this,
     )
   }
+
+  override suspend fun getOrCreateTopic(name: String) =
+    getTopic(name) ?: createTopic(name)
 }

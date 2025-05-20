@@ -30,6 +30,17 @@ class HttpServerExchangeImpl(
   override val address: InetAddress
     get() = channel.address
 
+  private var req: DefaultHttpServerResponse? = null
+
+  override fun response(): HttpServerResponse {
+    var req = req
+    if (req == null) {
+      req = DefaultHttpServerResponse(this)
+      this.req = req
+    }
+    return req
+  }
+
   override suspend fun startResponse(
     statusCode: Int,
     headers: Headers,

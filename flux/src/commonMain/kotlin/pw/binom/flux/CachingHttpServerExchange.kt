@@ -9,6 +9,7 @@ import pw.binom.io.http.HashHeaders2
 import pw.binom.io.http.Headers
 import pw.binom.io.http.MutableHeaders
 import pw.binom.io.httpServer.HttpServerExchange
+import pw.binom.io.httpServer.HttpServerResponse
 import pw.binom.io.socket.InetAddress
 import pw.binom.io.socket.InetSocketAddress
 import pw.binom.url.Path
@@ -44,6 +45,8 @@ class CachingHttpServerExchange(val source: HttpServerExchange) : HttpServerExch
     get() = source.address
   override val mainChannel: AsyncCloseable
     get() = source.mainChannel
+
+  override fun response(): HttpServerResponse = source.response()
 
   var bufferedOutput: ByteArrayOutput? = null
     private set

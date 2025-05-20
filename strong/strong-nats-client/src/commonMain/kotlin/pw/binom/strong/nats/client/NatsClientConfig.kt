@@ -3,7 +3,9 @@ package pw.binom.strong.nats.client
 import pw.binom.strong.Strong
 import pw.binom.strong.bean
 import pw.binom.strong.nats.client.properties.NatsClientProperties
+import pw.binom.strong.properties.BaseStrongProperties
 import pw.binom.strong.properties.StrongProperties
+import pw.binom.strong.properties.parse
 
 object NatsClientConfig {
   fun apply(config: StrongProperties) =

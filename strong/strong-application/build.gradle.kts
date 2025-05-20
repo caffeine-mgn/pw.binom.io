@@ -1,3 +1,5 @@
+import pw.binom.publish.*
+
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("maven-publish")
@@ -19,15 +21,30 @@ kotlin {
   }
   macosX64()
    */
-  allTargets()
+  allTargets {
+    config()
+    -"js"
+    -"androidNativeArm32"
+    -"androidNativeArm64"
+    -"androidNativeX64"
+    -"androidNativeX86"
+    -"wasmWasi"
+    -"wasmJs"
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     val commonMain by getting {
       dependencies {
         api(project(":strong"))
+        api(project(":strong:strong-properties"))
+        api(project(":strong:strong-properties-ini"))
+        api(project(":strong:strong-properties-yaml"))
+        api(project(":file"))
+        api(project(":signal"))
         api(project(":logger"))
         api(project(":process"))
         api(project(":network"))
+        api(libs.kotlinx.coroutines.core)
       }
     }
     /*
