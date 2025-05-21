@@ -28,7 +28,7 @@ class WebServerService {
   private var server: HttpServer2? = null
   private val handlers by injectServiceList<HttpHandler>()
   private val chains by injectServiceList<HttpHandlerChain>()
-  private val logger = Logger.getLogger("WebServer")
+  private val logger = Logger.getLogger("Strong.WebServer")
 
   init {
     BeanLifeCycle.postConstruct {

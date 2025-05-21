@@ -309,8 +309,6 @@ data class ListBucketResult(
   val contents: List<Content>,
 )
 
-object S3Client
-
 @Ignore
 class OOOO {
   //    @Test

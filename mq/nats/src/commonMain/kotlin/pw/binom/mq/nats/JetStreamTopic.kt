@@ -81,7 +81,7 @@ class JetStreamTopic(
     name: String,
     start: Boolean = true,
     batchSize: Int = 100,
-    func: suspend (Message) -> Unit,
+    func: suspend (NatsMessage) -> Unit,
   ): JetStreamConsumer? {
     val exist = getConsumerInfo(name) ?: return null
     val jsConsumer = JetStreamConsumer(
@@ -108,6 +108,29 @@ class JetStreamTopic(
       ),
       batchSize = 100,
     )
+
+  suspend fun getOrCreateConsumer(
+    start: Boolean,
+    batchSize: Int = 100,
+    config: ConsumerConfiguration,
+    func: suspend (NatsMessage) -> Unit,
+  ): JetStreamConsumer {
+    val exist = getConsumer(
+      name = config.name ?: config.durableName!!,
+      start = start,
+      batchSize = batchSize,
+      func = func,
+    )
+    if (exist != null) {
+      return exist
+    }
+    return createConsumer(
+      start = start,
+      batchSize = batchSize,
+      config = config,
+      func = func,
+    )
+  }
 
   override suspend fun asyncClose() {
     // Do nothing

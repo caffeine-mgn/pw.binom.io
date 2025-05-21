@@ -19,11 +19,11 @@ import kotlin.time.Duration.Companion.seconds
 
 class S3IntegrationTest {
   private val regin = "us-east-1"
-  lateinit var client: S3Client
+  lateinit var client: S3ClientImpl
   lateinit var httpClient: HttpClient
   lateinit var bucketName: String
 
-  suspend fun S3Client.createBucket() = createBucket(name = bucketName, regin = regin, locationConstraint = regin)
+  suspend fun S3ClientImpl.createBucket() = createBucket(name = bucketName, regin = regin, locationConstraint = regin)
 
   private var started = false
 
@@ -36,7 +36,7 @@ class S3IntegrationTest {
     bucketName = Random.nextUuid().toShortString()
     httpClient = HttpClient.create()
     client =
-      S3Client(
+      S3ClientImpl(
         url = "http://127.0.0.1:7122/".toURL(),
         accessKey = "accessKey1",
         secretAccessKey = "verySecretKey1",

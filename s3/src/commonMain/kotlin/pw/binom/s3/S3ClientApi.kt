@@ -5,6 +5,8 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.DateTime
 import pw.binom.date.parseRfc822Date
+import pw.binom.http.client.Http11ClientExchange
+import pw.binom.http.client.HttpClientRunnable
 import pw.binom.io.AsyncOutput
 import pw.binom.io.bufferedWriter
 import pw.binom.io.http.range.Range
@@ -28,8 +30,9 @@ private val dd =
 private val xml = Xml(serializersModule = dd)
 
 object S3ClientApi {
-  private suspend fun HttpResponse.throwErrorText(code: Int): Nothing {
-    val resp = readText().useAsync { it.readText() }
+  private suspend fun Http11ClientExchange.throwErrorText(code: Int): Nothing {
+
+    val resp = readAllText()
     val element by lazy { resp.xmlTree(true) }
     if (resp.isEmpty()) {
       throw S3Exception("Unknown response $code")
@@ -43,7 +46,7 @@ object S3ClientApi {
   }
 
   suspend fun createBucket(
-    client: HttpClient,
+    client: HttpClientRunnable,
     locationConstraint: String?,
     regin: String,
     name: String,
@@ -70,7 +73,7 @@ object S3ClientApi {
         it.append(payload)
       }
     }.useAsync {
-      when (val code = it.responseCode) {
+      when (val code = it.getResponseCode()) {
         200 -> null
         else -> it.throwErrorText(code)
       }
@@ -78,7 +81,7 @@ object S3ClientApi {
   }
 
   suspend fun deleteObject(
-    client: HttpClient,
+    client: HttpClientRunnable,
     regin: String,
     bucket: String,
     key: String,
@@ -94,7 +97,7 @@ object S3ClientApi {
     secretAccessKey = secretAccessKey,
     payloadContentLength = 0,
   ).useAsync {
-    when (val code = it.responseCode) {
+    when (val code = it.getResponseCode()) {
       200, 204 -> true
       404 -> false
       else -> it.throwErrorText(code)
@@ -102,7 +105,7 @@ object S3ClientApi {
   }
 
   suspend fun putObject(
-    client: HttpClient,
+    client: HttpClientRunnable,
     regin: String,
     bucket: String,
     key: String,
@@ -136,7 +139,7 @@ object S3ClientApi {
     ) { output ->
       payload(output)
     }.useAsync {
-      when (val code = it.responseCode) {
+      when (val code = it.getResponseCode()) {
         200 -> null
         else -> it.throwErrorText(code)
       }
@@ -144,7 +147,7 @@ object S3ClientApi {
   }
 
   suspend fun copyObject(
-    client: HttpClient,
+    client: HttpClientRunnable,
     regin: String,
     sourceBucket: String,
     sourceKey: String,
@@ -163,7 +166,7 @@ object S3ClientApi {
       secretAccessKey = secretAccessKey,
       xAmzCopySource = "$sourceBucket/$sourceKey",
     ).useAsync {
-      when (val code = it.responseCode) {
+      when (val code = it.getResponseCode()) {
         200 -> null
         else -> it.throwErrorText(code)
       }
@@ -171,7 +174,7 @@ object S3ClientApi {
   }
 
   suspend fun listObject2(
-    client: HttpClient,
+    client: HttpClientRunnable,
     url: URL,
     continuationToken: String? = null,
     delimiter: String? = null,
@@ -221,7 +224,7 @@ object S3ClientApi {
         accessKey = accessKey,
         secretAccessKey = secretAccessKey,
       ).useAsync {
-        it.readText().useAsync { it.readText() }
+        it.readAllText()
       }
     val element = result.xmlTree(true)
     if (element.tag == "Error") {
@@ -235,7 +238,7 @@ object S3ClientApi {
   }
 
   fun listObjectFlow(
-    client: HttpClient,
+    client: HttpClientRunnable,
     url: URL,
     blockSize: Int = 500,
     fetchOwner: Boolean? = null,
@@ -274,7 +277,7 @@ object S3ClientApi {
   }
 
   suspend fun headObject(
-    client: HttpClient,
+    client: HttpClientRunnable,
     url: URL,
     regin: String,
     bucket: String,
@@ -301,12 +304,12 @@ object S3ClientApi {
       accessKey = accessKey,
       secretAccessKey = secretAccessKey,
     ).useAsync {
-      val region = it.inputHeaders["X-Amz-Bucket-Region"]?.firstOrNull()
-      val length = it.inputHeaders.contentLength?.toLong()
-      val type = it.inputHeaders.contentType
-      val eTag = it.inputHeaders["ETag"]?.firstOrNull()
-      val lastModify = it.inputHeaders["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
-      when (val code = it.responseCode) {
+      val region = it.getResponseHeaders().getSingleOrNull("X-Amz-Bucket-Region")
+      val length = it.getResponseHeaders().contentLength?.toLong()
+      val type = it.getResponseHeaders().contentType
+      val eTag = it.getResponseHeaders().getSingleOrNull("ETag")
+      val lastModify = it.getResponseHeaders().getSingleOrNull("Last-Modified")?.parseRfc822Date()
+      when (val code = it.getResponseCode()) {
         200 ->
           ContentHead(
             region = region,
@@ -323,7 +326,7 @@ object S3ClientApi {
   }
 
   suspend fun getObject(
-    client: HttpClient,
+    client: HttpClientRunnable,
     url: URL,
     regin: String,
     bucket: String,
@@ -352,13 +355,13 @@ object S3ClientApi {
       range = range,
       secretAccessKey = secretAccessKey,
     )
-    return when (val code = resp.responseCode) {
+    return when (val code = resp.getResponseCode()) {
       200, 206 -> {
-        val region = resp.inputHeaders["X-Amz-Bucket-Region"]?.firstOrNull()
-        val length = resp.inputHeaders.contentLength?.toLong()
-        val type = resp.inputHeaders.contentType
-        val eTag = resp.inputHeaders["ETag"]?.firstOrNull()
-        val lastModify = resp.inputHeaders["Last-Modified"]?.firstOrNull()?.parseRfc822Date()
+        val region = resp.getResponseHeaders().getSingleOrNull("X-Amz-Bucket-Region")
+        val length = resp.getResponseHeaders().contentLength?.toLong()
+        val type = resp.getResponseHeaders().contentType
+        val eTag = resp.getResponseHeaders().getSingleOrNull("ETag")
+        val lastModify = resp.getResponseHeaders().getSingleOrNull("Last-Modified")?.parseRfc822Date()
         val data =
           ContentHead(
             region = region,
@@ -369,7 +372,7 @@ object S3ClientApi {
           )
         S3ObjectStream(
           data = data,
-          source = resp.readBinary()
+          source = resp.getInput()
         )
       }
 
@@ -379,7 +382,7 @@ object S3ClientApi {
   }
 
   suspend fun createMultipartUpload(
-    client: HttpClient,
+    client: HttpClientRunnable,
     regin: String,
     url: URL,
     bucket: String,
@@ -403,9 +406,9 @@ object S3ClientApi {
       payloadSha256 = emptySha256,
       payloadContentLength = 0,
     ).useAsync {
-      when (val code = it.responseCode) {
+      when (val code = it.getResponseCode()) {
         200 -> {
-          val responseText = it.readText().useAsync { it.readText() }
+          val responseText = it.readAllText()
           val element = responseText.xmlTree(true)
           xml.decodeFromXmlElement(InitiateMultipartUploadResult.serializer(), element).uploadId
         }
@@ -416,7 +419,7 @@ object S3ClientApi {
   }
 
   suspend fun completeMultipartUpload(
-    client: HttpClient,
+    client: HttpClientRunnable,
     regin: String,
     url: URL,
     bucket: String,
@@ -458,8 +461,8 @@ object S3ClientApi {
 //            }
     }.useAsync {
       val txt =
-        when (val code = it.responseCode) {
-          200 -> it.readText().useAsync { it.readText() }
+        when (val code = it.getResponseCode()) {
+          200 -> it.readAllText()
           else -> it.throwErrorText(code)
         }
       val element = txt.xmlTree(true)
@@ -468,7 +471,7 @@ object S3ClientApi {
   }
 
   suspend fun listBuckets(
-    client: HttpClient,
+    client: HttpClientRunnable,
     regin: String,
     url: URL,
     accessKey: String,
@@ -481,12 +484,9 @@ object S3ClientApi {
     accessKey = accessKey,
     secretAccessKey = secretAccessKey,
   ).useAsync {
-    when (val code = it.responseCode) {
+    when (val code = it.getResponseCode()) {
       200 -> {
-        val txt =
-          it.readText().useAsync {
-            it.readText()
-          }
+        val txt = it.readAllText()
         val result =
           xml.decodeFromXmlElement(
             serializer = ListAllMyBucketsResult.serializer(),

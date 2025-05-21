@@ -11,7 +11,7 @@ data class NatsClientProperties(
   val enabled: Boolean = true,
   val host: String,
   val port: Int = 4222,
-  val lazyStart: Boolean = true,
+  val lazyStart: Boolean = false,
   val lang: String = "kotlin",
   val clientName: String? = null,
   val clientVersion: String = "1.0.x",

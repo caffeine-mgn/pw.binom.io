@@ -61,10 +61,11 @@ class JetStreamConsumer(
     listenerLock.synchronize {
       receiving.setValue(true)
       if (listener == null) {
+        val name = this.config.name?:this.config.durableName!!
         listener =
           this.topic.connection.js.receiveMessage(
             streamName = this.topic.config.name,
-            consumerName = this.config.name!!,
+            consumerName = name,
             config = PullRequestOptionsDto(batch = batchSize),
             incomeListener = { msg ->
               if (msg.headers.code == 409) {

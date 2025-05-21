@@ -183,6 +183,10 @@ class HttpServerExchangeImpl(
   override fun getQueryParams() = queryParams2
 
   internal suspend fun finishRequest() {
+    val req = req
+    if (!responseStarted && req != null) {
+      req.startOutput().asyncClose()
+    }
     outputStream?.asyncCloseAnyway()
   }
 }

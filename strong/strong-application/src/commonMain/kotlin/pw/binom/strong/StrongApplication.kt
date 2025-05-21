@@ -8,10 +8,13 @@ import pw.binom.Environment
 import pw.binom.availableProcessors
 import pw.binom.getEnv
 import pw.binom.io.file.File
+import pw.binom.io.file.isExist
 import pw.binom.io.file.readText
 import pw.binom.io.file.takeIfFile
 import pw.binom.io.file.workDirectoryFile
 import pw.binom.io.use
+import pw.binom.logger.Logger
+import pw.binom.logger.infoSync
 import pw.binom.properties.ini.addIni
 import pw.binom.signal.Signal
 import pw.binom.strong.properties.StrongProperties
@@ -26,6 +29,7 @@ interface StrongApplicationContext {
 }
 
 object StrongApplication {
+  private val logger = Logger.getLogger("Strong.Application")
 
   private class StrongApplicationContextImpl(
     override val properties: StrongProperties,
@@ -35,7 +39,6 @@ object StrongApplication {
     override fun Strong.Config.unaryPlus() {
       configs += this
     }
-
   }
 
   @OptIn(DelicateCoroutinesApi::class)
@@ -44,16 +47,21 @@ object StrongApplication {
       .addEnvironment(prefix = "")
       .addArgs(args)
     val iniConfigPath =
-      Environment.getEnv("STRONG_CONFIG_INI")?.let { File(it) } ?: Environment.workDirectoryFile.relative("config.ini")
-    val yamlConfigPath =
-      Environment.getEnv("STRONG_CONFIG_YAML")?.let { File(it) }
-        ?: Environment.workDirectoryFile.relative("config.yaml")
+      Environment.getEnv("STRONG_CONFIG_INI")?.let { File(it) }
+        ?.takeIfFile()
+        ?: Environment.workDirectoryFile.relative("config.ini")
+
+    val yamlConfigPath = Environment.getEnv("STRONG_CONFIG_YAML")?.let { File(it) }
+      ?.takeIfFile()
+      ?: Environment.workDirectoryFile.relative("config.yaml")
 
     iniConfigPath.takeIfFile()?.also {
-      properties.addYaml(it.readText())
+      logger.infoSync("Loading config from \"$it\"")
+      properties.addIni(it.readText())
     }
     yamlConfigPath.takeIfFile()?.also {
-      properties.addIni(it.readText())
+      logger.infoSync("Loading config from \"$it\"")
+      properties.addYaml(it.readText())
     }
     var strong: Strong? = null
     MultiFixedSizeThreadNetworkDispatcher(Environment.availableProcessors).use { networkManager ->
