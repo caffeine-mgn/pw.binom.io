@@ -18,11 +18,15 @@ class SerializationService {
     val map = HashMap<String, SerializationProvider>()
     providers.forEach { provider ->
       provider.mimeTypes.forEach { mime ->
+        provider.init(module)
         map[mime] = provider
       }
     }
     map
   }
+
+  val availableTypes: Set<String>
+    get() = types.keys
 
   fun findProvider(mimeType: String) = types[mimeType]
   fun getProvider(mimeType: String) = findProvider(mimeType) ?: throw ProviderNotFoundException(mimeType)
