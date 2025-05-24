@@ -22,7 +22,7 @@ class NatsServiceProvider : NatsMqConnection, HealthIndicator {
   private val nm: NetworkManager by inject()
   private val properties: NatsClientProperties by injectProperty()
   private var con: NatsMqConnection? = null
-  private val logger by Logger.ofThisOrGlobal
+  private val logger = Logger.getLogger("Strong.NatsClient")
 
   override suspend fun isHealthy(): Boolean {
     val con = con

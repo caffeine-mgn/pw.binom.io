@@ -1,9 +1,9 @@
 import pw.binom.publish.*
 
 plugins {
-  id("maven-publish")
   kotlin("multiplatform")
   id("kotlinx-serialization")
+  id("maven-publish")
 //  if (pw.binom.Target.ANDROID_JVM_SUPPORT) {
 //    id("com.android.library")
 //  }
@@ -12,16 +12,22 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
     config()
-    -"js"
-    -"wasmWasi"
-    -"wasmJs"
+//    -"js"
+//    -"wasmWasi"
+//    -"wasmJs"
+//    -"androidNativeArm32"
+//    -"androidNativeArm64"
+//    -"androidNativeX64"
+//    -"androidNativeX86"
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
-      api(project(":strong:strong-properties"))
-      api(project(":mq:nats"))
-      api(project(":metric:prometheus"))
+      api(project(":strong"))
+      api(libs.kotlinx.serialization.core)
+      api(libs.kotlinx.serialization.json)
+      api(libs.kotlinx.serialization.protobuf)
+      api(libs.kotlinx.serialization.properties)
     }
     commonTest.dependencies {
       api(kotlin("test-common"))

@@ -10,8 +10,7 @@ import pw.binom.strong.inject
 
 abstract class AbstractNatsConsumer {
   private val connection: NatsMqConnection by inject()
-  protected abstract val topicName: String
-  protected abstract val groupName: String?
+  protected abstract val consumerConfig:NatsConsumerProperties
   private var topic: NatsTopicImpl? = null
   private var consumer: NatsConsumer? = null
 
@@ -20,8 +19,8 @@ abstract class AbstractNatsConsumer {
   init {
     BeanLifeCycle.postConstruct {
       SafeException.async {
-        val topic = connection.getOrCreateTopic(topicName).closeOnException()
-        this@AbstractNatsConsumer.consumer = topic.createConsumer(group = groupName) { message ->
+        val topic = connection.getOrCreateTopic(consumerConfig.topic).closeOnException()
+        this@AbstractNatsConsumer.consumer = topic.createConsumer(group = consumerConfig.group) { message ->
           income(message)
         }.closeOnException()
         this@AbstractNatsConsumer.topic = topic
