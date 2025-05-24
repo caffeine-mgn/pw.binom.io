@@ -1,11 +1,19 @@
 package pw.binom.strong.serialization
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.modules.EmptySerializersModule
+import kotlinx.serialization.modules.*
 import pw.binom.strong.BeanLifeCycle
 import pw.binom.strong.injectServiceList
 
 class SerializationService {
   private val providers by injectServiceList<SerializationProvider>()
+  private val modules by injectServiceList<SerializationModuleExtender>()
+  private val module by BeanLifeCycle.afterInit {
+    modules.fold(EmptySerializersModule()) { acc, value ->
+      value.extends(acc)
+    }
+  }
   private val types by BeanLifeCycle.afterInit {
     val map = HashMap<String, SerializationProvider>()
     providers.forEach { provider ->

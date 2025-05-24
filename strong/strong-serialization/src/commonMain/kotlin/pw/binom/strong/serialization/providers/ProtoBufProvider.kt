@@ -1,24 +1,24 @@
 package pw.binom.strong.serialization.providers
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.protobuf.ProtoBuf
 import pw.binom.strong.serialization.SerializationProvider
 
-open class JsonProvider : SerializationProvider {
-  protected open var serialization: Json = Json
-  override val mimeTypes: Collection<String> =
-    listOf("application/json")
+open class ProtoBufProvider : SerializationProvider {
+  override val mimeTypes: Collection<String> = listOf("application/protobuf")
+
+  protected open var serialization: ProtoBuf = ProtoBuf
 
   override fun init(module: SerializersModule) {
-    serialization = Json(serialization) {
+    serialization = ProtoBuf(from = serialization) {
       this.serializersModule = module
     }
   }
 
   override fun <T> encode(serializer: KSerializer<T>, value: T): ByteArray =
-    serialization.encodeToString(serializer, value).encodeToByteArray()
+    serialization.encodeToByteArray(serializer, value)
 
   override fun <T> decode(serializer: KSerializer<T>, data: ByteArray): T =
-    serialization.decodeFromString(serializer, data.decodeToString())
+    serialization.decodeFromByteArray(serializer, data)
 }
