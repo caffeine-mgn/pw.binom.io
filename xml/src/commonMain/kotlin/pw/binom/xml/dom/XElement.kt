@@ -1,6 +1,5 @@
 package pw.binom.xml.dom
 
-import pw.binom.xml.sax.AsyncXmlVisitor
 import pw.binom.xml.sax.XmlVisitor
 
 sealed class XElement {
@@ -55,7 +54,7 @@ sealed class XElement {
 
     override fun toString(): String {
       val sb = StringBuilder()
-      sb.append("<$name")
+      sb.append("<").append(name)
       attributes.forEach { (attrName, attrValue) ->
         sb.append(" ").append(attrName).append("=\"").append(attrValue).append("\"")
       }
