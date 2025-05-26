@@ -1,6 +1,7 @@
 package pw.binom.xml
 
-import pw.binom.xml.SyncXmlTokenizer.EOFException
+import pw.binom.xml.AbstractXmlTokenizer.EOFException
+
 
 abstract class AbstractBufferedReader(bufferSize: Int) {
   protected var eof = false

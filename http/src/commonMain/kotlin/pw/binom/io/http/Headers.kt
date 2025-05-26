@@ -20,6 +20,7 @@ interface Headers : Map<String, List<String>> {
     const val ACCEPT_CHARSET = "Accept-Charset"
     const val ORIGIN = "Origin"
     const val CONNECTION = "Connection"
+    const val CHARSET = "Charset"
     const val UPGRADE = "Upgrade"
     const val CONTENT_RANGE = "Content-Range"
     const val WEBSOCKET = "websocket"
