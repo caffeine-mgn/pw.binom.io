@@ -1,6 +1,6 @@
 package pw.binom.xml.dom
 
-import pw.binom.xml.sax.XmlVisitor
+import pw.binom.xml.sax.SyncXmlVisitor2
 
 sealed class XElement {
   var parent: Tag? = null
@@ -10,11 +10,11 @@ sealed class XElement {
       field?.privateChild?.add(this)
     }
 
-  abstract fun accept(visitor: XmlVisitor)
+  abstract fun accept(visitor: SyncXmlVisitor2)
 
   data class Text(val text: String) : XElement() {
     override fun toString(): String = text
-    override fun accept(visitor: XmlVisitor) {
+    override fun accept(visitor: SyncXmlVisitor2) {
       visitor.text(text)
     }
   }
@@ -23,21 +23,21 @@ sealed class XElement {
     override fun toString() =
       "<![CDATA[$text]]>"
 
-    override fun accept(visitor: XmlVisitor) {
+    override fun accept(visitor: SyncXmlVisitor2) {
       visitor.cdata(text)
     }
   }
 
   data class Comment(val text: String) : XElement() {
     override fun toString() = "<!--$text-->"
-    override fun accept(visitor: XmlVisitor) {
+    override fun accept(visitor: SyncXmlVisitor2) {
       visitor.comment(text)
     }
   }
 
   class Config(var name: String) : XElement() {
     val attributes = LinkedHashMap<String, String>()
-    override fun accept(visitor: XmlVisitor) {
+    override fun accept(visitor: SyncXmlVisitor2) {
       visitor.startConfig(name)
       attributes.forEach {
         visitor.attribute(it.key, it.value)
@@ -70,7 +70,7 @@ sealed class XElement {
       return sb.toString()
     }
 
-    override fun accept(visitor: XmlVisitor) {
+    override fun accept(visitor: SyncXmlVisitor2) {
       visitor.startOpenTag(tagName = name)
       if (child.isEmpty()) {
         visitor.endOpenTag(true)

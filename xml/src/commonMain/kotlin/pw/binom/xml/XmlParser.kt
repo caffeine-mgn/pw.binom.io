@@ -3,13 +3,13 @@ package pw.binom.xml
 import pw.binom.io.Reader
 import pw.binom.io.StringReader
 import pw.binom.xml.dom.XElement
-import pw.binom.xml.sax.XmlVisitor
+import pw.binom.xml.sax.SyncXmlVisitor2
 
-object XmlParser {
+object XmlParser : AbstractXmlParser() {
   fun parse(xml: Reader): List<XElement> {
     val visitor = XmlXElementDomVisitor()
     parse(
-      tokenizer = XmlTokenizer(xml),
+      tokenizer = SyncXmlTokenizer(xml),
       visitor = visitor
     )
     return visitor.elements
@@ -18,7 +18,7 @@ object XmlParser {
   fun parse(xml: String) =
     parse(StringReader(xml))
 
-  fun parse(tokenizer: XmlTokenizer, visitor: XmlVisitor) {
+  fun parse(tokenizer: SyncXmlTokenizer, visitor: SyncXmlVisitor2) {
     visitor.start()
     while (tokenizer.next()) {
       parseElement(xmlTokenizer = tokenizer, visitor = visitor)
@@ -29,7 +29,7 @@ object XmlParser {
   private fun trimCdata(text: String) =
     text.removePrefix("<![CDATA[").removeSuffix("]]>")
 
-  private fun parseElement(xmlTokenizer: XmlTokenizer, visitor: XmlVisitor) {
+  private fun parseElement(xmlTokenizer: SyncXmlTokenizer, visitor: SyncXmlVisitor2) {
     when (xmlTokenizer.type) {
       TokenType2.TAG_START -> readTag(xmlTokenizer = xmlTokenizer, visitor = visitor)
       TokenType2.TAG_END -> TODO()
@@ -46,7 +46,7 @@ object XmlParser {
     }
   }
 
-  private fun readConfig(xmlTokenizer: XmlTokenizer, visitor: XmlVisitor) {
+  private fun readConfig(xmlTokenizer: SyncXmlTokenizer, visitor: SyncXmlVisitor2) {
     check(xmlTokenizer.next())
     check(xmlTokenizer.type == TokenType2.SYMBOL)
     visitor.startConfig(xmlTokenizer.text)
@@ -74,7 +74,7 @@ object XmlParser {
     }
   }
 
-  private fun readTag(xmlTokenizer: XmlTokenizer, visitor: XmlVisitor) {
+  private fun readTag(xmlTokenizer: SyncXmlTokenizer, visitor: SyncXmlVisitor2) {
     check(xmlTokenizer.next())
 //    check() {"Illegal token type: ${xmlTokenizer.type}: \"${xmlTokenizer.text}\""}
     when (xmlTokenizer.type) {
@@ -83,7 +83,6 @@ object XmlParser {
         visitor.startOpenTag(tagName)
         while (xmlTokenizer.next()) {
           when (xmlTokenizer.type) {
-            TokenType2.TAG_START -> TODO()
             TokenType2.TAG_END -> {
               visitor.endOpenTag(false)
               break
@@ -94,12 +93,12 @@ object XmlParser {
               check(xmlTokenizer.next())
               check(xmlTokenizer.type == TokenType2.EQUAL)
               check(xmlTokenizer.next())
-              check(xmlTokenizer.type == TokenType2.STRING){"Invalid token type: ${xmlTokenizer.type}. Text: ${xmlTokenizer.text}"}
+              check(xmlTokenizer.type == TokenType2.STRING) { "Invalid token type: ${xmlTokenizer.type}. Text: ${xmlTokenizer.text}" }
               val attrValue = xmlTokenizer.text.removePrefix("\"").removeSuffix("\"")
               visitor.attribute(name = attrName, value = attrValue)
             }
-
             TokenType2.WHITESPACE -> visitor.text(xmlTokenizer.text)
+            TokenType2.TAG_START -> TODO()
             TokenType2.STRING -> TODO()
             TokenType2.TEXT -> TODO()
             TokenType2.EQUAL -> TODO()
@@ -138,6 +137,5 @@ object XmlParser {
       TokenType2.CONFIG_START -> TODO()
       TokenType2.CONFIG_END -> TODO()
     }
-
   }
 }

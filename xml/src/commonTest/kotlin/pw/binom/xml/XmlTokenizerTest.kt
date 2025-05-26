@@ -2,15 +2,15 @@ package pw.binom.xml
 
 import pw.binom.io.Reader
 import pw.binom.io.StringReader
-import pw.binom.xml.XmlTokenizer.EOFException
-import pw.binom.xml.sax.XmlVisitor
+import pw.binom.xml.SyncXmlTokenizer.EOFException
+import pw.binom.xml.sax.SyncXmlVisitor2
 import kotlin.test.Test
 
 class XmlTokenizerTest {
 
   @Test
   fun test() {
-    val tok = XmlTokenizer(BufferedReader(StringReader(data), 10))
+    val tok = SyncXmlTokenizer(SyncBufferedReader(StringReader(data), 10))
     while (tok.next()) {
       println("${tok.text} ${tok.type}")
     }
@@ -20,7 +20,7 @@ class XmlTokenizerTest {
   fun test3() {
     val visitor = XmlXElementDomVisitor()
     XmlParser.parse(
-      tokenizer = XmlTokenizer(StringReader(data)),
+      tokenizer = SyncXmlTokenizer(StringReader(data)),
       visitor = visitor
     )
     println(visitor)
@@ -33,8 +33,8 @@ class XmlTokenizerTest {
   @Test
   fun test2() {
     XmlParser.parse(
-      tokenizer = XmlTokenizer(BufferedReader(StringReader(data), 10)),
-      visitor = object : XmlVisitor {
+      tokenizer = SyncXmlTokenizer(SyncBufferedReader(StringReader(data), 10)),
+      visitor = object : SyncXmlVisitor2 {
         override fun startOpenTag(tagName: String) {
           println("startOpenTag($tagName)")
         }
@@ -107,7 +107,7 @@ class XmlTokenizerTest {
   fun fff() {
     val buffer = CharBuffer(4)
     val buf = ReaderWithBuffer(StringReader("ANTON"), 10)
-    XmlTokenizer.readString("ANTO1N", readChar = { buf.read() ?: throw EOFException() }, pushBack = { buf.push(it) })
+    SyncXmlTokenizer.readString("ANTO1N", readChar = { buf.read() ?: throw EOFException() }, pushBack = { buf.push(it) })
     val sb = StringBuilder()
     while (true) {
       sb.append(buf.read() ?: break)

@@ -1,6 +1,6 @@
 package pw.binom.xml.sax
 
-interface XmlVisitor {
+interface SyncXmlVisitor2 {
   fun start() {}
   fun end() {}
   fun startConfig(name: String) {}

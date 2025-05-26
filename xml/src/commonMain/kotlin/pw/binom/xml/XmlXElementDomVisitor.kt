@@ -3,9 +3,9 @@ package pw.binom.xml
 import pw.binom.collections.LinkedList
 import pw.binom.xml.dom.XElement
 import pw.binom.xml.sax.XMLSAXException
-import pw.binom.xml.sax.XmlVisitor
+import pw.binom.xml.sax.SyncXmlVisitor2
 
-class XmlXElementDomVisitor : XmlVisitor {
+class XmlXElementDomVisitor : SyncXmlVisitor2 {
   private val roots = ArrayList<XElement>()
   private val tagStack = LinkedList<XElement.Tag>()
   private var currentConfig: XElement.Config? = null

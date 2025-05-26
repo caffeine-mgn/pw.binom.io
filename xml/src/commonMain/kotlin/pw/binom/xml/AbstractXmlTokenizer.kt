@@ -1,12 +1,10 @@
 package pw.binom.xml
 
-import pw.binom.io.Reader
+internal typealias NextCharFunc = () -> Char
 
-class XmlTokenizer(val reader: BufferedReader) {
-  constructor(reader: Reader) : this(BufferedReader(reader, 10))
-
+abstract class AbstractXmlTokenizer {
   companion object {
-    fun readString(value: String, readChar: () -> Char, pushBack: (Char) -> Unit): Boolean {
+    inline fun readString(value: String, readChar: () -> Char, pushBack: (Char) -> Unit): Boolean {
       var pos = -1
       while (pos < value.length - 1) {
         val r = readChar()
@@ -25,49 +23,28 @@ class XmlTokenizer(val reader: BufferedReader) {
     }
   }
 
-  //  private var position = -1
-  private var eof = false
+  protected abstract val reader: AbstractBufferedReader
 
-  class EOFException : Exception()
+  protected var internalTokenType = TokenType2.TAG_START
+  protected var internalText = ""
 
-  private enum class State {
-    NONE,
-    COMMENT,
-    STRING,
-  }
-
-  private var state = State.NONE
-  private var internalTokenType = TokenType2.TAG_START
-  private var internalText = ""
   val type
     get() = internalTokenType
   val text
     get() = internalText
 
-//  private val buffer = CharBuffer(4) {
-//    position--
-//  }
+  class EOFException : Exception()
 
-  private fun nextChar(): Char =
-    reader.read() ?: throw EOFException()
+  protected var eof = false
 
-  private fun readChar(): Char {
-    return nextChar()
-//    val resultChar = if (buffer.isEmpty) {
-//      try {
-//        nextChar()
-//      } catch (e: EOFException) {
-//        eof = true
-//        throw e
-//      }
-//    } else {
-//      buffer.get()
-//    }
-//    position++
-//    return resultChar
-  }
+  protected inline fun readString(value: String, readChar: NextCharFunc) =
+    readString(
+      value = value,
+      readChar = readChar,
+      pushBack = { reader.push(it) }
+    )
 
-  fun next(): Boolean {
+  protected inline fun next(readChar: NextCharFunc): Boolean {
     if (eof) {
       return false
     }
@@ -76,46 +53,46 @@ class XmlTokenizer(val reader: BufferedReader) {
     } catch (e: EOFException) {
       return false
     }
-    if (readStartConfig(char)) {
+    if (readStartConfig(char, readChar)) {
       return true
     }
-    if (readEndConfig(char)) {
+    if (readEndConfig(char, readChar)) {
       return true
     }
     if (readSlash(char)) {
       return true
     }
-    if (readComment(char)) {
+    if (readComment(char, readChar)) {
       return true
     }
-    if (readCDATA(char)) {
+    if (readCDATA(char, readChar)) {
       return true
     }
     if (readTagStart(char)) {
       return true
     }
-    if (readSymbol(char)) {
+    if (readSymbol(char, readChar)) {
       return true
     }
-    if (readWhitespace(char)) {
+    if (readWhitespace(char, readChar)) {
       return true
     }
     if (readEqual(char)) {
       return true
     }
-    if (readString(char)) {
+    if (readString(char, readChar)) {
       return true
     }
     if (readTagEnd(char)) {
       return true
     }
-    if (readPlaneText(char)) {
+    if (readPlaneText(char, readChar)) {
       return true
     }
     TODO("--->$char")
   }
 
-  private fun readSlash(char: Char): Boolean {
+  protected fun readSlash(char: Char): Boolean {
     if (char != '/') {
       return false
     }
@@ -124,7 +101,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readPlaneText(char: Char): Boolean {
+  protected inline fun readPlaneText(char: Char, readChar: NextCharFunc): Boolean {
     if (char == '<' || char == '>') {
       return false
     }
@@ -147,7 +124,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readTagEnd(char: Char): Boolean {
+  protected fun readTagEnd(char: Char): Boolean {
     if (char != '>') {
       return false
     }
@@ -156,7 +133,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readString(char: Char): Boolean {
+  protected inline fun readString(char: Char, readChar: NextCharFunc): Boolean {
     if (char != '"' && char != '\'') {
       return false
     }
@@ -174,7 +151,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readEqual(char: Char): Boolean {
+  protected fun readEqual(char: Char): Boolean {
     if (char != '=') {
       return false
     }
@@ -183,7 +160,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readWhitespace(char: Char): Boolean {
+  protected inline fun readWhitespace(char: Char, readChar: NextCharFunc): Boolean {
     if (!char.isWhitespace()) {
       return false
     }
@@ -202,7 +179,16 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readSymbol(char: Char): Boolean {
+  protected fun readTagStart(char: Char): Boolean {
+    if (char != '<') {
+      return false
+    }
+    internalText = "<"
+    internalTokenType = TokenType2.TAG_START
+    return true
+  }
+
+  protected inline fun readSymbol(char: Char, readChar: NextCharFunc): Boolean {
     if (!char.isLetter()) {
       return false
     }
@@ -222,47 +208,11 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readTagStart(char: Char): Boolean {
+  protected inline fun readCDATA(char: Char, readChar: NextCharFunc): Boolean {
     if (char != '<') {
       return false
     }
-//    val sb = StringBuilder()
-//    sb.append("<")
-//    val c = readChar()
-//    if (!c.isLetter()) {
-//      buffer.push(c)
-//      return false
-//    }
-//    sb.append(c)
-//    while (true) {
-//      val r = readChar()
-//      if (r.isLetterOrDigit() || r == ':' || r == '_' || r == '.' || r == '-') {
-//        sb.append(r)
-//        continue
-//      }
-//      buffer.push(r)
-//      break
-//    }
-    internalText = "<"
-    internalTokenType = TokenType2.TAG_START
-    return true
-  }
-
-  private val Char.isWhitespace: Boolean
-    get() = this == ' ' || this == '\t' || this == '\r' || this == '\n'
-
-  private inline fun readString(value: String) =
-    readString(
-      value = value,
-      readChar = { readChar() },
-      pushBack = { reader.push(it) }
-    )
-
-  private fun readCDATA(char: Char): Boolean {
-    if (char != '<') {
-      return false
-    }
-    if (!readString("![CDATA[")) {
+    if (!readString("![CDATA[", readChar)) {
       return false
     }
     val sb = StringBuilder()
@@ -270,7 +220,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     while (true) {
       val r = readChar()
       if (r == ']') {
-        if (readString("]>")) {
+        if (readString("]>", readChar)) {
           sb.append("]]>")
           break
         }
@@ -282,11 +232,11 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readEndConfig(char: Char): Boolean {
+  protected inline fun readEndConfig(char: Char, readChar: NextCharFunc): Boolean {
     if (char != '?') {
       return false
     }
-    if (!readString(">")) {
+    if (!readString(">", readChar)) {
       return false
     }
     internalTokenType = TokenType2.CONFIG_END
@@ -294,11 +244,11 @@ class XmlTokenizer(val reader: BufferedReader) {
     return true
   }
 
-  private fun readStartConfig(char: Char): Boolean {
+  protected inline fun readStartConfig(char: Char, readChar: NextCharFunc): Boolean {
     if (char != '<') {
       return false
     }
-    if (!readString("?")) {
+    if (!readString("?", readChar)) {
       return false
     }
     internalTokenType = TokenType2.CONFIG_START
@@ -307,11 +257,11 @@ class XmlTokenizer(val reader: BufferedReader) {
   }
 
   // `<!--`
-  private fun readComment(char: Char): Boolean {
+  protected inline fun readComment(char: Char, readChar: NextCharFunc): Boolean {
     if (char != '<') {
       return false
     }
-    if (!readString("!--")) {
+    if (!readString("!--", readChar)) {
       return false
     }
     val sb = StringBuilder()
@@ -319,7 +269,7 @@ class XmlTokenizer(val reader: BufferedReader) {
     while (true) {
       val r = readChar()
       if (r == '-') {
-        if (readString("->")) {
+        if (readString("->", readChar)) {
           sb.append("-->")
           break
         }
@@ -330,24 +280,5 @@ class XmlTokenizer(val reader: BufferedReader) {
     internalText = sb.toString()
     internalTokenType = TokenType2.COMMENT
     return true
-//    val f1 = readChar()
-//    if (f1 != '!') {
-//      buffer.push(f1)
-//      return false
-//    }
-//    val f2 = readChar()
-//    if (f2 != '-') {
-//      buffer.push(f2)
-//      buffer.push('!')
-//      return false
-//    }
-//    val f3 = readChar()
-//    if (f3 != '-') {
-//      buffer.push(f3)
-//      buffer.push('-')
-//      buffer.push('!')
-//      return false
-//    }
-//    return true
   }
 }

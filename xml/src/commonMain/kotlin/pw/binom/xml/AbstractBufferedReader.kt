@@ -1,16 +1,17 @@
 package pw.binom.xml
 
-import pw.binom.io.Reader
-import pw.binom.xml.XmlTokenizer.EOFException
+import pw.binom.xml.SyncXmlTokenizer.EOFException
 
-class BufferedReader(val reader: Reader, bufferSize: Int) : Reader {
-  private var eof = false
-  private var column = 0
-  private var line = 0
-  private val buffer = CharBuffer(bufferSize) {
+abstract class AbstractBufferedReader(bufferSize: Int) {
+  protected var eof = false
+  protected var internalPosition = 0
+
+  protected var column = 0
+  protected var line = 0
+  protected val buffer = CharBuffer(bufferSize) {
     internalPosition--
   }
-  private var internalPosition = 0
+
   val position
     get() = internalPosition
 
@@ -18,13 +19,13 @@ class BufferedReader(val reader: Reader, bufferSize: Int) : Reader {
     buffer.push(value)
   }
 
-  override fun read(): Char? {
+  protected inline fun readChar(next:()->Char?): Char? {
     if (eof) {
       return null
     }
     val resultChar = if (buffer.isEmpty) {
       try {
-        reader.read()
+        next()
       } catch (e: EOFException) {
         eof = true
         throw e
@@ -38,9 +39,5 @@ class BufferedReader(val reader: Reader, bufferSize: Int) : Reader {
     }
     internalPosition++
     return resultChar
-  }
-
-  override fun close() {
-    reader.close()
   }
 }

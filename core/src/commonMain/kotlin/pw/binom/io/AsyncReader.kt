@@ -6,7 +6,21 @@ interface AsyncReader : AsyncCloseable {
    */
   suspend fun readChar(): Char?
 
-  suspend fun read(dest: CharArray, offset: Int = 0, length: Int = dest.size - offset): DataTransferSize
+  suspend fun read(dest: CharArray, offset: Int = 0, length: Int = dest.size - offset): DataTransferSize{
+    if (offset + length > dest.size) {
+      throw IndexOutOfBoundsException()
+    }
+    var i = 0
+    while (i < length) {
+      try {
+        val c = readChar() ?: break
+        dest[offset + i++] = c
+      } catch (e: EOFException) {
+        return DataTransferSize.ofSize(i)
+      }
+    }
+    return DataTransferSize.ofSize(i)
+  }
   suspend fun readln(): String? {
     val sb = StringBuilder()
     try {
