@@ -8,11 +8,10 @@ import kotlinx.serialization.modules.SerializersModule
 import pw.binom.io.asAsync
 import pw.binom.xml.dom.XmlElement
 import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
-import pw.binom.xml.serialization.annotations.XmlName
+import pw.binom.xml.serialization.annotations.XmlSerialName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
 import pw.binom.xml.serialization.annotations.XmlWrapper
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 @Serializable
@@ -26,7 +25,7 @@ data class TestData(
   val value: TestData2,
 
   @XmlWrapper("names")
-  @XmlName("value")
+  @XmlSerialName("value")
   val names: List<String>,
 )
 
@@ -45,18 +44,6 @@ data class PolimorfClass(val ololo: String)
 class XmlEncoderTest {
 
   @Test
-  fun ggg() {
-    val number = 144
-    val signed = number.toByte()
-    val unsigned = number.toUByte()
-    println("signed=$signed ${signed.toString(2)}")
-    println("unsigned=$unsigned ${unsigned.toString(2)}")
-    println("signed->unsigned=${signed.toUByte()} ${signed.toUByte().toString(2)}")
-    println("unsigned->signed=${unsigned.toByte()} ${unsigned.toByte().toString(2)}")
-  }
-
-  @Test
-  @Ignore
   fun test() = runTest {
     val module = SerializersModule {
       polymorphic(Any::class, PolimorfClass::class, PolimorfClass.serializer())

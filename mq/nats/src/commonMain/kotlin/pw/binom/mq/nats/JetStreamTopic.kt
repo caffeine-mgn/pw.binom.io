@@ -13,7 +13,7 @@ import pw.binom.mq.nats.client.dto.StreamConfig
 class JetStreamTopic(
   val config: StreamConfig,
   val connection: JetStreamMqConnection,
-) : Topic<Message, JetStreamProducer, JetStreamConsumer> {
+) : Topic<Message, JetStreamProducer, JetStreamAutoConsumer> {
   override suspend fun createProducer() =
     JetStreamProducer(
       subject = config.subjects.first(),
@@ -39,12 +39,49 @@ class JetStreamTopic(
     )
   }
 
+  suspend fun createManualConsumer(
+    config: ConsumerConfiguration,
+  ): JetStreamManualConsumer {
+    val name = config.name ?: config.durableName!!
+    if (getConsumerInfo(name) != null) {
+      throw IllegalStateException("Consumer $name already exist in stream ${this.config.name}")
+    }
+    return JetStreamManualConsumer(
+      config = config,
+      topic = this,
+    )
+  }
+
+  suspend fun getManualConsumerOrNull(name: String): JetStreamManualConsumer? {
+    val exist = getConsumerInfo(name) ?: return null
+    return JetStreamManualConsumer(
+      config = exist.config!!,
+      topic = this,
+    )
+  }
+
+  suspend fun getOrCreateManualConsumer(config: ConsumerConfiguration): JetStreamManualConsumer {
+    val name = config.name ?: config.durableName!!
+    val exist = getConsumerInfo(name)
+    return if (exist != null) {
+      JetStreamManualConsumer(
+        config = exist.config!!,
+        topic = this,
+      )
+    } else {
+      JetStreamManualConsumer(
+        config = config,
+        topic = this,
+      )
+    }
+  }
+
   suspend fun createConsumer(
     start: Boolean,
     batchSize: Int = 100,
     config: ConsumerConfiguration,
     func: suspend (NatsMessage) -> Unit,
-  ): JetStreamConsumer {
+  ): JetStreamAutoConsumer {
     val name = config.name ?: config.durableName!!
     if (getConsumerInfo(name) != null) {
       throw IllegalStateException("Consumer $name already exist in stream ${this.config.name}")
@@ -54,7 +91,7 @@ class JetStreamTopic(
         streamName = this.config.name,
         config = config,
       )
-    val jsConsumer = JetStreamConsumer(
+    val jsConsumer = JetStreamAutoConsumer(
       config = consumer.config,
       topic = this,
       incomeListener = func,
@@ -82,9 +119,9 @@ class JetStreamTopic(
     start: Boolean = true,
     batchSize: Int = 100,
     func: suspend (NatsMessage) -> Unit,
-  ): JetStreamConsumer? {
+  ): JetStreamAutoConsumer? {
     val exist = getConsumerInfo(name) ?: return null
-    val jsConsumer = JetStreamConsumer(
+    val jsConsumer = JetStreamAutoConsumer(
       config = exist.config!!,
       topic = this,
       incomeListener = func,
@@ -114,7 +151,7 @@ class JetStreamTopic(
     batchSize: Int = 100,
     config: ConsumerConfiguration,
     func: suspend (NatsMessage) -> Unit,
-  ): JetStreamConsumer {
+  ): JetStreamAutoConsumer {
     val exist = getConsumer(
       name = config.name ?: config.durableName!!,
       start = start,

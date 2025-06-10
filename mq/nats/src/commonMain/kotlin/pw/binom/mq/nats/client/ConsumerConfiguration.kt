@@ -66,11 +66,14 @@ data class ConsumerConfiguration(
   val backoff: List<
     @Serializable(DurationNanoSerializer::class)
     Duration,
-  >? = null,
+    >? = null,
   @SerialName("metadata")
   val metadata: Map<String, String> = emptyMap(),
   @SerialName("filter_subject")
   val filterSubject: String? = null,
   @SerialName("filter_subjects")
   val filterSubjects: List<String>? = null,
-)
+) {
+  val consumerName
+    get() = name ?: durableName ?: throw IllegalStateException("Consumer name not set")
+}

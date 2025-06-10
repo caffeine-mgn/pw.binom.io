@@ -1,3 +1,5 @@
+package pw.binom.s3
+
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -19,16 +21,12 @@ import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedReader
 import pw.binom.io.http.Headers
 import pw.binom.io.http.range.Range
-import pw.binom.io.httpClient.HttpClient
-import pw.binom.io.httpClient.create
-import pw.binom.io.use
 import pw.binom.io.useAsync
-import pw.binom.s3.S3ClientApi
 import pw.binom.url.URI
 import pw.binom.url.UrlEncoder
 import pw.binom.url.toURI
 import pw.binom.url.toURL
-import pw.binom.xml.serialization.annotations.XmlName
+import pw.binom.xml.serialization.annotations.XmlSerialName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
 import kotlin.jvm.JvmName
@@ -224,24 +222,24 @@ const val AWS_NS = "http://s3.amazonaws.com/doc/2006-03-01/"
 @XmlNamespace([AWS_NS])
 data class Content(
   @XmlNode
-  @XmlName("Key")
+  @XmlSerialName("Key")
   @XmlNamespace([AWS_NS])
   val key: String,
   @XmlNode
-  @XmlName("LastModified")
+  @XmlSerialName("LastModified")
   @XmlNamespace([AWS_NS])
   @Serializable(IsoDateS::class)
   val lastModified: DateTime,
   @XmlNode
-  @XmlName("ETag")
+  @XmlSerialName("ETag")
   @XmlNamespace([AWS_NS])
   val eTag: String,
   @XmlNode
-  @XmlName("Size")
+  @XmlSerialName("Size")
   @XmlNamespace([AWS_NS])
   val size: Long,
   @XmlNode
-  @XmlName("Owner")
+  @XmlSerialName("pw.binom.s3.Owner")
   @XmlNamespace([AWS_NS])
   val owner: Owner,
 )
@@ -250,11 +248,11 @@ data class Content(
 @XmlNamespace([AWS_NS])
 data class Owner(
   @XmlNode
-  @XmlName("ID")
+  @XmlSerialName("ID")
   @XmlNamespace([AWS_NS])
   val id: String,
   @XmlNode
-  @XmlName("DisplayName")
+  @XmlSerialName("DisplayName")
   @XmlNamespace([AWS_NS])
   val displayName: String,
 )
@@ -277,47 +275,47 @@ object IsoDateS : KSerializer<DateTime> {
 @XmlNamespace([AWS_NS])
 data class ListBucketResult(
   @XmlNamespace([AWS_NS])
-  @XmlName("Name")
+  @XmlSerialName("Name")
   @XmlNode
   val name: String,
   @XmlNamespace([AWS_NS])
-  @XmlName("Prefix")
+  @XmlSerialName("Prefix")
   @XmlNode
   val prefix: String,
   @XmlNamespace([AWS_NS])
-  @XmlName("Marker")
+  @XmlSerialName("Marker")
   @XmlNode
   val marker: String,
   @XmlNamespace([AWS_NS])
-  @XmlName("NextMarker")
+  @XmlSerialName("NextMarker")
   @XmlNode
   val nextMarker: String? = null,
   @XmlNamespace([AWS_NS])
-  @XmlName("MaxKeys")
+  @XmlSerialName("MaxKeys")
   @XmlNode
   val maxKeys: Long,
   @XmlNamespace([AWS_NS])
-  @XmlName("Delimiter")
+  @XmlSerialName("Delimiter")
   @XmlNode
   val delimiter: String,
   @XmlNamespace([AWS_NS])
-  @XmlName("IsTruncated")
+  @XmlSerialName("IsTruncated")
   @XmlNode
   val isTruncated: Boolean,
   @XmlNamespace([AWS_NS])
-  @XmlName("Contents")
+  @XmlSerialName("Contents")
   val contents: List<Content>,
 )
 
 @Ignore
-class OOOO {
+class OOOO:IntegrationTest() {
   //    @Test
 //    fun test2() = runTest {
 //        val str = Xml().encodeToString(
-//            ListBucketResult.serializer(),
-//            ListBucketResult(
+//            pw.binom.s3.ListBucketResult.serializer(),
+//            pw.binom.s3.ListBucketResult(
 //                name = "123",
-//                contents = listOf(Content("my-key",), Content("my-key2", "v2")),
+//                contents = listOf(pw.binom.s3.Content("my-key",), pw.binom.s3.Content("my-key2", "v2")),
 //                prefix = "",
 //                marker = "",
 //                maxKeys = 1000L,
@@ -328,7 +326,7 @@ class OOOO {
 //        println("result:\n$str")
 //        val b = str.xmlTree()!!
 //
-//        println("->${Xml().decodeFromString(ListBucketResult.serializer(), str)}")
+//        println("->${Xml().decodeFromString(pw.binom.s3.ListBucketResult.serializer(), str)}")
 //    }
 
   @Test
@@ -339,9 +337,8 @@ class OOOO {
       val bucket = "test"
       val accessKey = "rGIU8vPsmnOx4Prv"
       val secretAccessKey = "bT6YEZsstWsjXh8fJzZdbXvdFZGp3IbR"
-      HttpClient.create().use { client ->
         S3ClientApi.listObjectFlow(
-          client = client,
+          client = httpClient,
           url = url,
           accessKey = accessKey,
           secretAccessKey = secretAccessKey,
@@ -355,7 +352,7 @@ class OOOO {
         ).collect {
           val b =
             S3ClientApi.headObject(
-              client = client,
+              client = httpClient,
               url = url,
               accessKey = accessKey,
               secretAccessKey = secretAccessKey,
@@ -368,7 +365,7 @@ class OOOO {
 
         val dd: String? =
           S3ClientApi.getObject(
-            client = client,
+            client = httpClient,
             url = url,
             accessKey = accessKey,
             secretAccessKey = secretAccessKey,
@@ -378,7 +375,6 @@ class OOOO {
             range = listOf(Range.Last("bytes", 7)),
           )!!.useAsync { it.bufferedReader().readText() }
         println("Test: \"$dd\"")
-      }
     }
 
 //    @Test
@@ -396,7 +392,7 @@ class OOOO {
 //                println(txt)
 //                val r = txt.xmlTree()
 //                println(r)
-//                val ff = Xml().decodeFromXmlElement(ListBucketResult.serializer(), r!!)
+//                val ff = Xml().decodeFromXmlElement(pw.binom.s3.ListBucketResult.serializer(), r!!)
 //                println(ff)
 //
 //                ff.contents.forEach {

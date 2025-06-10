@@ -47,8 +47,15 @@ class JvmProcess(val process: java.lang.Process, val processStarter: JvmProcessS
     process.waitFor()
   }
 
-  override fun close() {
+  override fun killForcibly() {
+    process.destroyForcibly()
+  }
+
+  override fun kill() {
     process.destroy()
+  }
+
+  override fun close() {
     if (isActive) {
       process.destroyForcibly()
     }

@@ -193,6 +193,9 @@ suspend fun AsyncInput.copyTo(dest: AsyncOutput, pool: ByteBufferPool): Long = p
 suspend fun AsyncInput.copyTo(dest: Output, buffer: ByteBuffer): Long {
   var totalLength = 0L
   while (true) {
+    if (available.isNotAvailable) {
+      break
+    }
     buffer.clear()
     val length = read(buffer)
     if (length.isNotAvailable) {

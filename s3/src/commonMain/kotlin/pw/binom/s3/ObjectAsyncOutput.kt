@@ -14,7 +14,7 @@ class ObjectAsyncOutput(
     val key: String,
     val regin: String,
     val contentType: String?,
-    val client: S3ClientImpl,
+    val client: S3Client,
     bufferSize: Int = MIN_PACKAGE_SIZE
 ) : AsyncOutput {
     companion object {

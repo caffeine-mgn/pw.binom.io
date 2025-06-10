@@ -29,6 +29,13 @@ kotlin {
   eachNative {
     useNative()
   }
+  jvm {
+    compilations.all {
+      target.compilations.all {
+        kotlinOptions.jvmTarget = "1.8"
+      }
+    }
+  }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {

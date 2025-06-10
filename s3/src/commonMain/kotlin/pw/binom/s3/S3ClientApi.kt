@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.DateTime
+import pw.binom.date.parseIso8601Date
 import pw.binom.date.parseRfc822Date
 import pw.binom.http.client.Http11ClientExchange
 import pw.binom.http.client.HttpClientRunnable
@@ -20,8 +21,14 @@ import pw.binom.s3.serialization.DateSerialization
 import pw.binom.s3.v4.s3Call
 import pw.binom.url.Query
 import pw.binom.url.URL
+import pw.binom.xml.XmlParser
+import pw.binom.xml.dom.XElement
 import pw.binom.xml.dom.xmlTree
 import pw.binom.xml.serialization.Xml
+import pw.binom.xml.singleWithName
+import pw.binom.xml.tags
+import pw.binom.xml.text
+import pw.binom.xml.withName
 
 private val dd =
   SerializersModule {
@@ -226,15 +233,48 @@ object S3ClientApi {
       ).useAsync {
         it.readAllText()
       }
-    val element = result.xmlTree(true)
-    if (element.tag == "Error") {
-      val error = xml.decodeFromXmlElement(Error.serializer(), element)
-      throw S3ErrorException(
-        code = error.key,
-        description = error.message,
-      )
+    println("result: $result")
+    val xx = XmlParser.parse(result)
+    val errorTag = xx.tags().withName("Error").singleOrNull()
+    if (errorTag != null) {
+      TODO("ERROR")
     }
-    return xml.decodeFromXmlElement(ListBucketResultV2.serializer(), element)
+    val bucketResult = xx.tags().singleWithName("ListBucketResult")
+    return ListBucketResultV2(
+      name = bucketResult.tags().singleWithName("Name").text(),
+      prefix=bucketResult.tags().singleWithName("Prefix").text(),
+      nextContinuationToken = bucketResult.tags().withName("NextContinuationToken").singleOrNull()?.text(),
+      keyCount = bucketResult.tags().singleWithName("KeyCount").text().toInt(),
+      maxKeys = bucketResult.tags().singleWithName("MaxKeys").text().toInt(),
+      delimiter = bucketResult.tags().withName("Delimiter").singleOrNull()?.text()?:"",
+      isTruncated = bucketResult.tags().singleWithName("IsTruncated").text().toBoolean(),
+      contents = bucketResult.tags().withName("Contents").map {el->
+        Content(
+          key = el.tags().singleWithName("Key").text(),
+          lastModified = el.tags().singleWithName("LastModified").text(),
+          eTag = el.tags().singleWithName("ETag").text(),
+          size = el.tags().singleWithName("Size").text().toULong(),
+          owner = el.tags().withName("Owner").singleOrNull()?.let {el->
+            Owner(
+              id = el.tags().singleWithName("ID").text(),
+              displayName = el.tags().singleWithName("DisplayName").text()
+            )
+          },
+          StorageClass = el.tags().singleWithName("StorageClass").text(),
+        )
+      }.toList()
+    )
+//    val element = result.xmlTree(true)
+//    if (element.tag == "Error") {
+//      val error = xml.decodeFromXmlElement(Error.serializer(), element)
+//      throw S3ErrorException(
+//        code = error.key,
+//        description = error.message,
+//      )
+//    }
+//
+//
+//    return xml.decodeFromXmlElement(ListBucketResultV2.serializer(), element)
   }
 
   fun listObjectFlow(
@@ -409,8 +449,15 @@ object S3ClientApi {
       when (val code = it.getResponseCode()) {
         200 -> {
           val responseText = it.readAllText()
-          val element = responseText.xmlTree(true)
-          xml.decodeFromXmlElement(InitiateMultipartUploadResult.serializer(), element).uploadId
+          val r = XmlParser.parse(responseText)
+          r
+            .tags()
+            .singleWithName("InitiateMultipartUploadResult")
+            .tags()
+            .singleWithName("UploadId")
+            .text()
+//          val element = responseText.xmlTree(true)
+//          xml.decodeFromXmlElement(InitiateMultipartUploadResult.serializer(), element).uploadId
         }
 
         else -> it.throwErrorText(code)
@@ -465,8 +512,19 @@ object S3ClientApi {
           200 -> it.readAllText()
           else -> it.throwErrorText(code)
         }
-      val element = txt.xmlTree(true)
-      return xml.decodeFromXmlElement(CompleteMultipartUploadResult.serializer(), element)
+//      println("XML:\n$txt")
+      val res = XmlParser.parse(txt)
+        .tags()
+        .singleWithName("CompleteMultipartUploadResult")
+
+      return CompleteMultipartUploadResult(
+        Location = res.tags().singleWithName("Location").text(),
+        Bucket = res.tags().singleWithName("Bucket").text(),
+        Key = res.tags().singleWithName("Key").text(),
+        ETag = res.tags().singleWithName("ETag").text(),
+      )
+//      val element = txt.xmlTree(true)
+//      return xml.decodeFromXmlElement(CompleteMultipartUploadResult.serializer(), element)
     }
   }
 
@@ -487,15 +545,35 @@ object S3ClientApi {
     when (val code = it.getResponseCode()) {
       200 -> {
         val txt = it.readAllText()
-        val result =
-          xml.decodeFromXmlElement(
-            serializer = ListAllMyBucketsResult.serializer(),
-            xmlElement = txt.xmlTree(true),
-          )
+        val root = XmlParser.parse(txt).filterIsInstance<XElement.Tag>().single()
+        val owner = root.tags().withName("Owner").single()
         Buckets(
-          owner = result.owner,
-          list = result.buckets,
+          owner = Owner(
+            id = owner.tags().withName("ID").single().text(),
+            displayName = owner.tags().withName("DisplayName").single().text(),
+          ),
+          list = root.tags().withName("Buckets").singleOrNull()
+            ?.tags()
+            ?.withName("Bucket")
+            ?.map {
+              Bucket(
+                name = it.tags().withName("Name").single().text(),
+                creationDate = it.tags().withName("CreationDate").single().text().parseIso8601Date(0)!!
+              )
+            }?.toList() ?: emptyList()
         )
+
+
+//        println("txt = $txt")
+//        val result =
+//          xml.decodeFromXmlElement(
+//            serializer = ListAllMyBucketsResult.serializer(),
+//            xmlElement = txt.xmlTree(true),
+//          )
+//        Buckets(
+//          owner = result.owner,
+//          list = result.buckets,
+//        )
       }
 
       else -> it.throwErrorText(code)

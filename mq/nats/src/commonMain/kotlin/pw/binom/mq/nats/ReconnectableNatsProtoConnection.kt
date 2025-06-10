@@ -1,6 +1,10 @@
 package pw.binom.mq.nats
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.isActive
+import kotlinx.coroutines.isActive
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.SpinLock
@@ -15,6 +19,7 @@ import pw.binom.network.SocketClosedException
 import pw.binom.network.SocketConnectException
 import pw.binom.network.tcpConnect
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
 class ReconnectableNatsProtoConnection(

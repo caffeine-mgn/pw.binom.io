@@ -9,6 +9,8 @@ open class AsyncContentLengthInput(
   val closeStream: Boolean = false,
 ) : AsyncHttpInput {
 
+  override fun toString() = "AsyncContentLengthInput(stream=$stream, contentLength=$contentLength)"
+
   override val isEof: Boolean
     get() = eof
 

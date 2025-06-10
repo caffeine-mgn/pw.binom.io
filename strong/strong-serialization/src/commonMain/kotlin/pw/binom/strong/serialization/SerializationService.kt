@@ -2,7 +2,6 @@ package pw.binom.strong.serialization
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.EmptySerializersModule
-import kotlinx.serialization.modules.*
 import pw.binom.strong.BeanLifeCycle
 import pw.binom.strong.injectServiceList
 

@@ -1,6 +1,7 @@
 package pw.binom.s3
 
 import kotlinx.coroutines.flow.Flow
+import pw.binom.http.client.HttpClientRunnable
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.range.Range
 import pw.binom.s3.dto.CompleteMultipartUploadResult
@@ -8,8 +9,23 @@ import pw.binom.s3.dto.Content
 import pw.binom.s3.dto.ContentHead
 import pw.binom.s3.dto.ListBucketResultV2
 import pw.binom.s3.dto.Part
+import pw.binom.url.URL
 
 interface S3Client {
+  companion object {
+    fun create(
+      url: URL,
+      accessKey: String,
+      secretAccessKey: String,
+      client: HttpClientRunnable,
+    ): S3Client = S3ClientImpl(
+      url = url,
+      accessKey = accessKey,
+      secretAccessKey = secretAccessKey,
+      client = client,
+    )
+  }
+
   suspend fun createBucket(
     name: String,
     regin: String,

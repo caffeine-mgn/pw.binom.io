@@ -112,6 +112,14 @@ class WinProcess(val processStarter: MingwProcessStarter) : Process {
     WaitForSingleObject(processHandle, INFINITE)
   }
 
+  override fun killForcibly() {
+    TerminateProcess(processHandle, 0.convert())
+  }
+
+  override fun kill() {
+    killForcibly()
+  }
+
   override val isActive: Boolean
     get() {
       memScoped {

@@ -5,6 +5,7 @@ import pw.binom.asyncInput
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class TestAsyncBufferedInput {
 
@@ -16,10 +17,10 @@ class TestAsyncBufferedInput {
         val b = data.asyncInput().bufferedInput(10)
 
         val buf = ByteBuffer(50)
-        assertEquals(-1, b.available)
+        assertTrue(b.available.isNotAvailable)
         buf.reset(0, 5)
         assertEquals(5, b.readFully(buf))
-        assertEquals(5, b.available)
+        assertEquals(5, b.available.toInt)
         assertArrayEquals(data, 0, buf, 0, 5)
         buf.reset(0, 5)
         assertEquals(5, b.readFully(buf))

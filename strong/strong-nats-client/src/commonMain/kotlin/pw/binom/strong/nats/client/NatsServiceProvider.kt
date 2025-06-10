@@ -1,5 +1,6 @@
 package pw.binom.strong.nats.client
 
+import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.io.socket.DomainSocketAddress
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
@@ -9,6 +10,7 @@ import pw.binom.mq.nats.JetStreamMqConnection
 import pw.binom.mq.nats.NatsMqConnection
 import pw.binom.mq.nats.ReconnectableNatsProtoConnection
 import pw.binom.mq.nats.client.Auth
+import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.NatsReader
 import pw.binom.mq.nats.nats
 import pw.binom.network.NetworkManager
@@ -83,6 +85,16 @@ class NatsServiceProvider : NatsMqConnection, HealthIndicator {
 
   override suspend fun getOrCreateTopic(name: String) =
     getConnection().getOrCreateTopic(name)
+
+  override suspend fun listen(
+    subject: String,
+    group: String?,
+    messageCount: Int,
+  ): ReceiveChannel<NatsMessage> = getConnection().listen(
+    subject = subject,
+    group = group,
+    messageCount = messageCount
+  )
 
   init {
     BeanLifeCycle.postConstruct {

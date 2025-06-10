@@ -2,6 +2,7 @@
 
 package pw.binom.mq.nats.client
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.*
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.coroutines.SimpleAsyncLock
@@ -188,10 +189,15 @@ class InternalNatsConnection private constructor(
 
     val header = ByteArray(headerSize - 2)
     reader.readFully(header)
-    reader.skip(2)
-    val body = ByteArray(bodySize)
-    reader.readFully(body)
     val headers = parseHeaders(header)
+    reader.skip(2)
+    val body = if (bodySize > 0) {
+      val b = ByteArray(bodySize)
+      reader.readFully(b)
+      b
+    } else {
+      byteArrayOf()
+    }
 
 
     val data = body

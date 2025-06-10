@@ -5,7 +5,6 @@ import kotlinx.serialization.SerialInfo
 
 @OptIn(ExperimentalSerializationApi::class)
 @SerialInfo
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)
+@Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)
-@Repeatable
-annotation class XmlName(val name: String)
+annotation class XmlAttribute(vararg val nameSpace: String)

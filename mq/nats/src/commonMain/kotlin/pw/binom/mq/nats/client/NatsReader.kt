@@ -7,7 +7,6 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.mq.nats.client.NatsReader.IncomeMessage
 import pw.binom.uuid.nextUuid
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -19,13 +18,23 @@ class NatsReader
 private constructor(
   val connection: NatsProtoConnection,
   private val incomeListener: IncomeMessage,
-  private val scope: CoroutineScope = GlobalScope,
-  private val context: CoroutineContext = EmptyCoroutineContext,
+  val scope: CoroutineScope = GlobalScope,
+  val context: CoroutineContext = EmptyCoroutineContext,
 ) : AsyncCloseable {
   fun interface IncomeMessage {
     companion object {
-      val stub = IncomeMessage {}
+      val stub = object : IncomeMessage {
+        override val forkCoroutine: Boolean
+          get() = false
+
+        override suspend fun income(message: NatsMessage) {
+
+        }
+      }
     }
+
+    val forkCoroutine: Boolean
+      get() = true
 
     suspend fun income(message: NatsMessage)
   }
@@ -36,6 +45,16 @@ private constructor(
   private val subscribeWaiters = HashMap<String, CancellableContinuation<NatsMessage>>()
   private val oneShotSubjectPrefix = "one-shot-" + Random.nextUuid().toShortString() + "-"
   private val subscribeSubjectPrefix = "subscribe-" + Random.nextUuid().toShortString() + "-"
+
+  private suspend fun callListener(listener: IncomeMessage, message: NatsMessage) {
+    if (listener.forkCoroutine) {
+      scope.launch(context) {
+        listener.income(message)
+      }
+    } else {
+      listener.income(message)
+    }
+  }
 
   private val job =
     scope.launch(context) {
@@ -57,21 +76,18 @@ private constructor(
         if (msg.subscribeId.startsWith(subscribeSubjectPrefix)) {
           val listener = subscribeWatersLock.synchronize { listeners[msg.subscribeId] }
           if (listener != null) {
-            scope.launch(context) {
-              listener.income(msg)
-            }
+            callListener(listener, msg)
             continue
           }
         }
-        scope.launch(context) {
-          incomeListener.income(msg)
-        }
+        callListener(incomeListener, msg)
       }
     }
 
   suspend fun subscribe(
     subject: String,
     group: String? = null,
+    messageCount: Int = 0,
     listener: IncomeMessage,
   ): AsyncCloseable {
     val subscribeId = subscribeSubjectPrefix + Random.nextUuid().toString()
@@ -81,6 +97,9 @@ private constructor(
       group = group,
       subscribeId = subscribeId,
     )
+    if (messageCount > 0) {
+      connection.unsubscribe(subscribeId = subscribeId, afterMessages = messageCount)
+    }
     return AsyncCloseable {
       connection.unsubscribe(subscribeId = subscribeId)
     }

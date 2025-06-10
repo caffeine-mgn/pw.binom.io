@@ -26,7 +26,7 @@ abstract class AbstractRollingAverageGauge(
     }
 
     if (toLeft) {
-      values[cursor++] = value
+      values[++cursor] = value
       if (cursor >= values.size) {
         cursor = values.size - 2
         toLeft = false

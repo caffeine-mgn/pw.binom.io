@@ -1,21 +1,19 @@
 package pw.binom.mq.nats
 
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.mq.Consumer
-import pw.binom.mq.Message
 import pw.binom.mq.nats.client.AckPolicy
 import pw.binom.mq.nats.client.ConsumerConfiguration
+import pw.binom.mq.nats.client.NatsHeaders
 import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.dto.PullRequestOptionsDto
-import kotlin.coroutines.resume
+import kotlin.time.Duration
 
-class JetStreamConsumer(
+class JetStreamAutoConsumer(
   val config: ConsumerConfiguration,
   val topic: JetStreamTopic,
   val incomeListener: suspend (NatsMessage) -> Unit,
@@ -61,14 +59,19 @@ class JetStreamConsumer(
     listenerLock.synchronize {
       receiving.setValue(true)
       if (listener == null) {
-        val name = this.config.name?:this.config.durableName!!
+        val name = this.config.name ?: this.config.durableName!!
         listener =
           this.topic.connection.js.receiveMessage(
             streamName = this.topic.config.name,
             consumerName = name,
             config = PullRequestOptionsDto(batch = batchSize),
             incomeListener = { msg ->
-              if (msg.headers.code == 409) {
+
+              if (msg.headers.code == NatsHeaders.CODE_CONSUME_TIMEOUT) {
+                stop()
+                return@receiveMessage
+              }
+              if (msg.headers.code == NatsHeaders.CODE_CONSUMER_DELETED) {
                 stop()
                 deleteWaiter.send(Unit)
               }

@@ -1,6 +1,6 @@
 package pw.binom.strong.nats.client
 
-import pw.binom.mq.nats.JetStreamConsumer
+import pw.binom.mq.nats.JetStreamAutoConsumer
 import pw.binom.mq.nats.JetStreamTopic
 import pw.binom.mq.nats.NatsMqConnection
 import pw.binom.mq.nats.client.ConsumerConfiguration
@@ -15,13 +15,13 @@ abstract class AbstractJetStreamNatsConsumer {
   protected abstract suspend fun consume(message: NatsMessage)
 
   private var topic: JetStreamTopic? = null
-  private var consumer1: JetStreamConsumer? = null
+  private var consumer1: JetStreamAutoConsumer? = null
 
   init {
     BeanLifeCycle.postConstruct {
       val jetStream = connection.jetStream!!
-      val existTopic = jetStream.getTopic(config.topic)
-        ?: throw IllegalStateException("Stream ${config.topic} doesn't exist")
+      val existTopic = jetStream.getTopic(config.streamName)
+        ?: throw IllegalStateException("Stream ${config.streamName} doesn't exist")
       topic = existTopic
       val existConsumer = existTopic.getConsumer(
         name = config.name,
@@ -34,13 +34,15 @@ abstract class AbstractJetStreamNatsConsumer {
         return@postConstruct
       }
       if (!config.autoCreate) {
-        throw IllegalStateException("Consumer ${config.name} in stream ${config.topic} doesn't exist")
+        throw IllegalStateException("Consumer ${config.name} in stream ${config.streamName} doesn't exist")
       }
 
       val consumerConfiguration = ConsumerConfiguration(
         durableName = if (config.durable) config.name else null,
         name = if (config.durable) null else config.name,
         memStorage = config.memStorage,
+        description = config.description,
+        ackPolicy = config.ackPolicy,
       )
       consumer1 = existTopic.createConsumer(
         start = true, config = consumerConfiguration,

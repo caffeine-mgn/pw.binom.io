@@ -19,4 +19,11 @@ data class PullRequestOptionsDto(
   @SerialName("idle_heartbeat")
   @Serializable(DurationNanoSerializer::class)
   val idleHeartbeat: Duration? = null,
-)
+) {
+
+  fun minBatch(min: Int) = if (batch < min) {
+    copy(batch = min)
+  } else {
+    this
+  }
+}

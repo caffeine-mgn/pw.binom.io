@@ -298,7 +298,7 @@ class DBAccess2Impl internal constructor(
                 serializersModule = serializersModule,
               )
             }
-          SerializationMetrics.decodeAvrTime.put(obj.duration)
+//          SerializationMetrics.decodeAvrTime.put(obj.duration) // TODO вернуть
           emit(obj.value)
         }
       } finally {

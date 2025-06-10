@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import pw.binom.s3.AWS_NAMESPACE1
 import pw.binom.s3.AWS_NAMESPACE2
 import pw.binom.s3.AWS_NAMESPACE3
-import pw.binom.xml.serialization.annotations.XmlName
+import pw.binom.xml.serialization.annotations.XmlSerialName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
 
@@ -13,19 +13,19 @@ import pw.binom.xml.serialization.annotations.XmlNode
 @SerialName("CompleteMultipartUploadResult")
 @XmlNamespace([AWS_NAMESPACE3, AWS_NAMESPACE1, AWS_NAMESPACE2])
 data class CompleteMultipartUploadResult(
-    @XmlName("Location")
+    @XmlSerialName("Location")
     @XmlNamespace([AWS_NAMESPACE3, AWS_NAMESPACE1, AWS_NAMESPACE2])
     @XmlNode
     val Location: String,
-    @XmlName("Bucket")
+    @XmlSerialName("Bucket")
     @XmlNamespace([AWS_NAMESPACE3, AWS_NAMESPACE1, AWS_NAMESPACE2])
     @XmlNode
     val Bucket: String,
-    @XmlName("Key")
+    @XmlSerialName("Key")
     @XmlNamespace([AWS_NAMESPACE3, AWS_NAMESPACE1, AWS_NAMESPACE2])
     @XmlNode
     val Key: String,
-    @XmlName("ETag")
+    @XmlSerialName("ETag")
     @XmlNamespace([AWS_NAMESPACE3, AWS_NAMESPACE1, AWS_NAMESPACE2])
     @XmlNode
     val ETag: String,

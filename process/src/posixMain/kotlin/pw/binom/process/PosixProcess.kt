@@ -44,6 +44,14 @@ class PosixProcess internal constructor(private val posixProcessStarter: PosixPr
     }
   }
 
+  override fun killForcibly() {
+    kill(pid.convert(), 2)
+  }
+
+  override fun kill() {
+    kill(pid.convert(), 9)
+  }
+
   init {
     when (val r = fork()) {
       -1 -> throw RuntimeException("Can't start ${posixProcessStarter.exe}")

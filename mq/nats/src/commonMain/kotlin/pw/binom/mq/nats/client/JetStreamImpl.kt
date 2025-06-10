@@ -1,12 +1,14 @@
 package pw.binom.mq.nats.client
 
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
-import pw.binom.mq.Headers
-import pw.binom.mq.Message
 import pw.binom.mq.nats.client.dto.*
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
@@ -122,7 +124,7 @@ class JetStreamImpl(val reader: NatsReader) {
       getStreamInfo(
         name = streamName,
       )
-    if (streamInfo.error?.code==ErrorDto.NOT_FOUND){
+    if (streamInfo.error?.code == ErrorDto.NOT_FOUND) {
       throw RuntimeException("Stream $streamName not found")
     }
     if (streamInfo.config?.allowDirect == true) {
@@ -261,6 +263,50 @@ class JetStreamImpl(val reader: NatsReader) {
       if (replyTo != null) {
         sendAck(subject = replyTo)
       }
+    }
+  }
+
+  suspend fun pullNext(
+    streamName: String,
+    consumerName: String,
+    config: PullRequestOptionsDto,
+    withAckSupport: Boolean = true,
+  ): Flow<NatsMessage> {
+    val newConfig = config.minBatch(1)
+    val into = Random.nextUuid().toString()
+    var remaining = newConfig.batch
+    val channel = Channel<NatsMessage>(capacity = config.batch)
+    var listener: AsyncCloseable? = null
+    listener = reader.subscribe(
+      subject = into,
+    ) { msg ->
+      if (msg.headers.code == NatsHeaders.CODE_CONSUMER_HEARTBEAT) {
+        return@subscribe
+      }
+      if (msg.headers.code == NatsHeaders.CODE_CONSUME_TIMEOUT || msg.headers.code == NatsHeaders.CODE_CONSUMER_DELETED) {
+        channel.close()
+        listener?.asyncCloseAnyway()
+        return@subscribe
+      }
+      channel.send(msg)
+      remaining--
+      if (remaining <= 0) {
+        channel.close()
+        listener?.asyncCloseAnyway()
+      }
+    }
+    pullMessages(
+      streamName = streamName,
+      consumerName = consumerName,
+      into = into,
+      config = newConfig,
+    )
+
+    val flow = channel.receiveAsFlow()
+    return if (withAckSupport) {
+      flow.map { MessageWithAck(it) }
+    } else {
+      flow
     }
   }
 

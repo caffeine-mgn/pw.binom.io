@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import pw.binom.s3.AWS_NAMESPACE1
 import pw.binom.s3.AWS_NAMESPACE2
 import pw.binom.s3.AWS_NAMESPACE3
-import pw.binom.xml.serialization.annotations.XmlName
+import pw.binom.xml.serialization.annotations.XmlSerialName
 import pw.binom.xml.serialization.annotations.XmlNamespace
 import pw.binom.xml.serialization.annotations.XmlNode
 
@@ -14,7 +14,7 @@ import pw.binom.xml.serialization.annotations.XmlNode
 @Serializable
 class CreateBucketConfiguration(
     @XmlNamespace([AWS_NAMESPACE3, AWS_NAMESPACE1, AWS_NAMESPACE2])
-    @XmlName("LocationConstraint")
+    @XmlSerialName("LocationConstraint")
     @XmlNode
     val locationConstraint: String? = null
 )

@@ -9,6 +9,9 @@ interface NatsHeaders : Headers {
     const val NATS_TIMESTAMP = "Nats-Time-Stamp"
     const val NATS_STREAM = "Nats-Stream"
     const val NATS_LAST_SEQUENCE = "Nats-Last-Sequence"
+    const val CODE_CONSUME_TIMEOUT = 408
+    const val CODE_CONSUMER_DELETED = 409
+    const val CODE_CONSUMER_HEARTBEAT = 100
     internal val emptyByteArray = byteArrayOf()
     val empty: NatsHeaders =
       object : NatsHeaders {

@@ -12,7 +12,7 @@ import pw.binom.io.asAsync
 import pw.binom.xml.dom.XmlElement
 import pw.binom.xml.dom.xmlTree
 import pw.binom.xml.sax.AsyncXmlRootWriterVisitor
-import pw.binom.xml.serialization.annotations.XmlName
+import pw.binom.xml.serialization.annotations.XmlSerialName
 
 class Xml(
   val serializersModule: SerializersModule = EmptySerializersModule(),
@@ -30,7 +30,7 @@ class Xml(
 
   fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T, withHeader: Boolean = false): String {
     val sb = StringBuilder()
-    val tagName = serializer.descriptor.annotations.find { it is XmlName }?.let { it as XmlName }?.name
+    val tagName = serializer.descriptor.annotations.find { it is XmlSerialName }?.let { it as XmlSerialName }?.name
       ?: serializer.descriptor.serialName
     val v = if (withHeader) {
       AsyncXmlRootWriterVisitor.withHeader(sb.asAsync())

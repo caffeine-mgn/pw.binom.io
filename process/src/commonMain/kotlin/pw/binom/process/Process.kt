@@ -21,6 +21,9 @@ interface Process : Closeable {
   val isActive: Boolean
 
   fun join()
+  fun killForcibly()
+  fun kill()
+
 
   class ProcessStillActive : ProcessException()
 }

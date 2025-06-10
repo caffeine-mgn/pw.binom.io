@@ -1,5 +1,6 @@
 package pw.binom.mq
 
+import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.io.AsyncCloseable
 
 interface Consumer : AsyncCloseable {

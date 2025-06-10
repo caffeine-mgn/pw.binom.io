@@ -5,6 +5,8 @@ import pw.binom.http.client.Http11ClientExchange
 import pw.binom.http.client.HttpClientRunnable
 import pw.binom.io.AsyncOutput
 import pw.binom.io.http.Headers
+import pw.binom.io.http.HttpContentLength
+import pw.binom.io.http.httpContentLength
 import pw.binom.io.http.range.Range
 import pw.binom.io.httpClient.HttpClient
 import pw.binom.io.httpClient.HttpResponse
@@ -96,6 +98,10 @@ internal suspend fun s3Call(
   }
   if (payloadContentLength != null) {
     request.headers.contentLength = payloadContentLength.toULong()
+  } else {
+    if (payload != null) {
+      request.headers.httpContentLength = HttpContentLength.CHUNKED
+    }
   }
   specialHeaders.forEach { (key, value) ->
     request.headers[key] = value
@@ -103,6 +109,7 @@ internal suspend fun s3Call(
   if (range.isNotEmpty()) {
     request.headers.range = range
   }
+
 
   val connection = request.connect() as Http11ClientExchange
   if (payload != null) {

@@ -1,6 +1,8 @@
 package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.collections.defaultMutableMap
 import pw.binom.io.AsyncCloseable
@@ -9,21 +11,22 @@ import pw.binom.io.socket.SocketAddress
 import pw.binom.network.NetworkManager
 import pw.binom.network.SocketConnectException
 import pw.binom.network.tcpConnect
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 @Deprecated(message = "Use InternalNatsConnection")
 internal class NatsConnectorImpl(
-    val clientName: String? = null,
-    val lang: String = "kotlin",
-    val echo: Boolean = true,
-    val tlsRequired: Boolean = false,
-    val user: String? = null,
-    val pass: String? = null,
-    val defaultGroup: String? = null,
-    val attemptCount: Int = 3,
-    var networkDispatcher: NetworkManager,
-    serverList: List<SocketAddress>,
+  val clientName: String? = null,
+  val lang: String = "kotlin",
+  val echo: Boolean = true,
+  val tlsRequired: Boolean = false,
+  val user: String? = null,
+  val pass: String? = null,
+  val defaultGroup: String? = null,
+  val attemptCount: Int = 3,
+  var networkDispatcher: NetworkManager,
+  serverList: List<SocketAddress>,
 ) : NatsProtoConnection {
   init {
     require(serverList.isNotEmpty()) { "Server list is empty" }
@@ -87,6 +90,12 @@ internal class NatsConnectorImpl(
 
   override suspend fun readMessage(): NatsMessage {
     return checkConnection().readMessage()
+  }
+
+  override fun messageFlow() = flow<NatsMessage> {
+    while (coroutineContext.isActive) {
+      emit(checkConnection().readMessage())
+    }
   }
 
   private var connecting = false

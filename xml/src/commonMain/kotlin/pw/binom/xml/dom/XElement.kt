@@ -1,10 +1,14 @@
 package pw.binom.xml.dom
 
 import pw.binom.xml.sax.SyncXmlVisitor2
+import kotlin.jvm.JvmInline
 
 sealed class XElement {
   var parent: Tag? = null
     set(value) {
+      if (value === field) {
+        return
+      }
       field?.privateChild?.remove(this)
       field = value
       field?.privateChild?.add(this)
@@ -35,7 +39,7 @@ sealed class XElement {
     }
   }
 
-  class Config(var name: String) : XElement() {
+  data class Config(var name: String) : XElement() {
     val attributes = LinkedHashMap<String, String>()
     override fun accept(visitor: SyncXmlVisitor2) {
       visitor.startConfig(name)
@@ -47,6 +51,49 @@ sealed class XElement {
   }
 
   class Tag(var name: String) : XElement() {
+    val prefix: String?
+      get() {
+        val nameSpaceSeparator = name.indexOf(':')
+        if (nameSpaceSeparator == -1) {
+          return null
+        }
+        return name.substring(0, nameSpaceSeparator)
+      }
+    val nameWithoutPrefix: String
+      get() {
+        val nameSpaceSeparator = name.indexOf(':')
+        if (nameSpaceSeparator == -1) {
+          return name
+        }
+        return name.substring(nameSpaceSeparator + 1)
+      }
+
+    fun setNameSpacePrefix(prefix: String, url: String) {
+      attributes["xmlns:$prefix"] = url
+    }
+
+    fun getDefinedNameSpaces(): Map<String, String> {
+      val result = HashMap<String, String>()
+      attributes.forEach { (key, value) ->
+        if (key.startsWith("xmlns:")) {
+          result[key.substring(6)] = value
+        }
+      }
+      if (result.isEmpty()) {
+        return emptyMap()
+      }
+      return result
+    }
+
+    var defaultNameSpace: String?
+      get() = attributes["xmlns"]
+      set(value) {
+        if (value == null) {
+          attributes.remove("xmlns")
+        } else {
+          attributes["xmlns"] = value
+        }
+      }
     internal val privateChild = ArrayList<XElement>()
     val attributes = LinkedHashMap<String, String>()
     val child: List<XElement>

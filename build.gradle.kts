@@ -13,6 +13,7 @@ buildscript {
     maven(url = "https://repo.binom.pw")
     mavenCentral()
     maven(url = "https://plugins.gradle.org/m2/")
+    maven(url = "https://s01.oss.sonatype.org/content/repositories/releases/")
     maven(url = "https://maven.google.com")
   }
   dependencies {

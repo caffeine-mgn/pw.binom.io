@@ -10,10 +10,12 @@ actual open class ByteBuffer(var native: JByteBuffer) :
   Channel,
   Buffer,
   ByteBufferProvider {
-  actual companion object;
+  actual companion object {
+    private val ZERO = JByteBuffer.allocate(0)
+  }
 
   //  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
-  actual constructor(size: Int) : this(JByteBuffer.allocate(size))
+  actual constructor(size: Int) : this(JByteBuffer.allocateDirect(size))
   actual constructor(array: ByteArray) : this(JByteBuffer.wrap(array))
 
 //    actual companion object {
@@ -98,7 +100,7 @@ actual open class ByteBuffer(var native: JByteBuffer) :
     closed = true
     preClose()
     ByteBufferMetric.dec(this)
-    native = JByteBuffer.allocate(0)
+    native = ZERO
   }
 
   actual override var position: Int

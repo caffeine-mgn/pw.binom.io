@@ -5,17 +5,21 @@ package pw.binom.xml.serialization
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 import pw.binom.xml.serialization.annotations.XmlEmptyValue
-import pw.binom.xml.serialization.annotations.XmlName
+import pw.binom.xml.serialization.annotations.XmlSerialName
 import pw.binom.xml.serialization.annotations.XmlNamespace
+import pw.binom.xml.serialization.annotations.XmlNode
+
+fun SerialDescriptor.isXmlNode(index: Int) =
+  getElementAnnotations(index).any { it is XmlNode }
 
 fun SerialDescriptor.xmlName() =
-  (annotations.find { it is XmlName } as XmlName?)?.name ?: serialName
+  (annotations.find { it is XmlSerialName } as XmlSerialName?)?.name ?: serialName
 
 fun SerialDescriptor.xmlName(index: Int) =
 //    if (this is PrimitiveKind) {
 //        null
 //    } else {
-  (getElementAnnotations(index).find { it is XmlName } as XmlName?)?.name
+  (getElementAnnotation<XmlSerialName>(index))?.name
     ?: getElementName(index)
 //    }
 
@@ -30,3 +34,7 @@ fun SerialDescriptor.xmlNamespace(index: Int) =
 
 inline fun <reified T : Any> SerialDescriptor.getElementAnnotation(index: Int) =
   (getElementAnnotations(index).find { it is T } as T?)
+
+inline fun SerialDescriptor.eachElements(func: (Int) -> Unit) {
+  repeat(elementsCount, func)
+}

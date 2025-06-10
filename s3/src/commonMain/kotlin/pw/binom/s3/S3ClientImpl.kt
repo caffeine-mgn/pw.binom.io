@@ -9,7 +9,7 @@ import pw.binom.s3.dto.ContentHead
 import pw.binom.s3.dto.Part
 import pw.binom.url.URL
 
-class S3ClientImpl(
+internal class S3ClientImpl(
   val url: URL,
   val accessKey: String,
   val secretAccessKey: String,

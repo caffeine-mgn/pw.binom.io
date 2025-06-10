@@ -1,8 +1,12 @@
 package pw.binom.mq.nats.client
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
 import pw.binom.uuid.nextUuid
+import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
 
 interface NatsProtoConnection : AsyncCloseable {
@@ -39,6 +43,12 @@ interface NatsProtoConnection : AsyncCloseable {
   }
 
   suspend fun readMessage(): NatsMessage
+
+  fun messageFlow(): Flow<NatsMessage> = flow {
+    while (coroutineContext.isActive) {
+      emit(readMessage())
+    }
+  }
 
   suspend fun publish(
     subject: String,

@@ -3,10 +3,23 @@ package pw.binom.xml
 import pw.binom.collections.LinkedList
 import pw.binom.xml.dom.XElement
 
+fun Collection<XElement>.tags() = asSequence().filterIsInstance<XElement.Tag>()
 fun XElement.Tag.tags() = child.asSequence().filterIsInstance<XElement.Tag>()
-fun XElement.Tag.text() = child.asSequence().filterIsInstance<XElement.Text>().joinToString("")
+fun XElement.Tag.text() = child.asSequence()
+  .map {
+    when (it) {
+      is XElement.Text -> it.text.trim()
+      is XElement.CDATA -> it.text
+      else -> null
+    }
+  }.filterNotNull().joinToString("")
+
+
 fun Sequence<XElement.Tag>.withName(name: String) =
   filter { it.name == name }
+
+fun Sequence<XElement.Tag>.singleWithName(name: String) =
+  withName(name).single()
 
 fun XElement.Tag.flattenXml() = sequence<XElement> {
   yield(this@flattenXml)

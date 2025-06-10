@@ -3,6 +3,18 @@ package pw.binom.mq
 import pw.binom.collections.emptyIterator
 
 open class MapHeaders(val map: Map<String, List<String>>) : Headers {
+  companion object {
+    private fun buildMap(paired: Array<out Pair<String, String>>): Map<String, List<String>> {
+      val map = HashMap<String, ArrayList<String>>()
+      paired.forEach { (key, value) ->
+        map.getOrPut(key) { ArrayList() }.add(value)
+      }
+      return map
+    }
+  }
+
+  constructor(vararg paired: Pair<String, String>) : this(buildMap(paired))
+
   private class MapIterator(map: Map<String, List<String>>) : Iterator<Pair<String, String>> {
     private val mapIterator = map.iterator()
     private var listIterator: Iterator<String> = emptyIterator()
