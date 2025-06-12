@@ -13,32 +13,32 @@ class ProxyHttpSocketFactory(
   private val default: NetSocketFactory,
   private val proxySelector: ProxySelector,
 ) : NetSocketFactory {
-    fun interface ProxySelector {
-        fun getProxy(host: String, port: Int): ProxyConfig?
-    }
+  fun interface ProxySelector {
+    fun getProxy(host: String, port: Int): ProxyConfig?
+  }
 
-    data class ProxyConfig(
-        val address: SocketAddress,
-        val auth: HttpAuth? = null,
-        val headers: Headers = emptyHeaders(),
-    )
+  data class ProxyConfig(
+    val address: SocketAddress,
+    val auth: HttpAuth? = null,
+    val headers: Headers = emptyHeaders(),
+  )
 
-    override suspend fun connect(host: String, port: Int): AsyncChannel {
-        val proxyAddress = proxySelector.getProxy(
-            host = host,
-            port = port,
-        ) ?: return default.connect(host = host, port = port)
-        return SafeException.async {
-            val channel =
-                default.connect(
-                    host = proxyAddress.address.host,
-                    port = proxyAddress.address.port,
-                ).closeOnException()
-            channel.tcpConnectViaHttpProxy(
-                address = DomainSocketAddress(host = host, port = port),
-                auth = proxyAddress.auth,
-                headers = proxyAddress.headers,
-            )
-        }
+  override suspend fun connect(host: String, port: Int): AsyncChannel {
+    val proxyAddress = proxySelector.getProxy(
+      host = host,
+      port = port,
+    ) ?: return default.connect(host = host, port = port)
+    return SafeException.async {
+      val channel =
+        default.connect(
+          host = proxyAddress.address.host,
+          port = proxyAddress.address.port,
+        ).closeOnException()
+      channel.tcpConnectViaHttpProxy(
+        address = DomainSocketAddress(host = host, port = port),
+        auth = proxyAddress.auth,
+        headers = proxyAddress.headers,
+      )
     }
+  }
 }

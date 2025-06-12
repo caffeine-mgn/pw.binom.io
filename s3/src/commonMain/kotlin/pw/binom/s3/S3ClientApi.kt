@@ -233,7 +233,6 @@ object S3ClientApi {
       ).useAsync {
         it.readAllText()
       }
-    println("result: $result")
     val xx = XmlParser.parse(result)
     val errorTag = xx.tags().withName("Error").singleOrNull()
     if (errorTag != null) {

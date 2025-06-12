@@ -30,6 +30,7 @@ abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
   private val idleConnection by lazy { ArrayList<PooledAsyncConnectionImpl>(maxConnections) }
 
   private val waiters = ArrayList<Continuation<PooledAsyncConnectionImpl>>()
+  private val waitersLock = SpinLock()
   private val idleConnectionLock = SpinLock()
   private val connectionsLock = SpinLock()
   private val avalibles = WeakReferenceMap<PooledAsyncConnection, Boolean>()
@@ -42,7 +43,7 @@ abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
 
   private var cleaning = false
 
-  private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? = waiters.removeLastOrNull()
+  private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? = waitersLock.synchronize {  waiters.removeLastOrNull()}
 
   fun prepareStatement(sql: String) {
     PooledAsyncPreparedStatement2(this, sql)
@@ -120,7 +121,11 @@ abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
         throw IllegalStateException("No free connections")
       }
 
-      val con = suspendCoroutine<PooledAsyncConnectionImpl> { waiters += it }
+      val con = suspendCoroutine<PooledAsyncConnectionImpl> {
+        waitersLock.synchronize {
+          waiters += it
+        }
+      }
       if (!con.checkValid()) {
         connectionsLock.synchronize {
           connections -= con
@@ -166,10 +171,14 @@ abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
   }
 
   override suspend fun asyncClose() {
-    waiters.forEach {
+    val watersLocal = waitersLock.synchronize {
+      val newWaters = ArrayList(waiters)
+      waiters.clear()
+      newWaters
+    }
+    watersLocal.forEach {
       it.resumeWithException(StreamClosedException())
     }
-    waiters.clear()
     defaultMutableList(connections).forEach {
       it.asyncCloseAnyway()
     }

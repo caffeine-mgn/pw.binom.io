@@ -229,7 +229,7 @@ interface Headers : Map<String, List<String>> {
     val new = HashHeaders2()
     new += this
     new += headers
-    return headers
+    return new
   }
 }
 
