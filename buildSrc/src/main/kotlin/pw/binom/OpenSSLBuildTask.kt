@@ -141,7 +141,8 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     )
     if (target.get().family == Family.MINGW ||
       target.get().architecture == Architecture.ARM64 ||
-      target.get().architecture == Architecture.ARM32
+      target.get().architecture == Architecture.ARM32 ||
+      HostManager.hostIsMingw
     ) {
       configArgs += "no-asm"
     }
@@ -182,6 +183,9 @@ abstract class OpenSSLBuildTask : DefaultTask() {
     )
     val staticFile = staticLib.get().asFile
     staticFile.parentFile.mkdirs()
+//    linker.static(staticFile){
+//      files("*.*",temparalFile)
+//    }
     linker.static(
       objectFiles = temparalFile.listFiles().toList(),
       output = staticFile,
