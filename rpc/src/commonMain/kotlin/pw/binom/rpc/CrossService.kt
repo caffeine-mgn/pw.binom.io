@@ -5,7 +5,8 @@ import kotlin.properties.ReadOnlyProperty
 interface CrossService {
     val name: String
 
-    interface CrossMethod<T> : ReadOnlyProperty<Any, CrossMethod<T>> {
-        suspend operator fun invoke(params: Map<String, Any?>): T
+
+    interface CrossMethod<REQUEST,RESPONSE> : ReadOnlyProperty<Any, CrossMethod<REQUEST,RESPONSE>> {
+        suspend operator fun invoke(params: REQUEST): RESPONSE
     }
 }

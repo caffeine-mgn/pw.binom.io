@@ -17,6 +17,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(libs.kotlinx.serialization.json)
+      api(project(":rpc"))
     }
     commonTest.dependencies {
       api(kotlin("test-common"))

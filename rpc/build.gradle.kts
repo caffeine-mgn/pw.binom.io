@@ -31,6 +31,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":collections"))
+      api(libs.kotlinx.serialization.core)
     }
 
     commonTest.dependencies {

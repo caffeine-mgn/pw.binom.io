@@ -5,24 +5,24 @@ import kotlin.properties.PropertyDelegateProvider
 import kotlin.reflect.KProperty
 
 abstract class AbstractLocalService : CrossService {
-    private val methods = defaultMutableMap<String, CrossService.CrossMethod<Any?>>()
+    private val methods = defaultMutableMap<String, CrossService.CrossMethod<Any?,Any?>>()
     fun findMethod(name: String) = methods[name]
 
-    class LocalMethod<T> internal constructor(val name: String, val func: suspend (Map<String, Any?>) -> T) :
-        CrossService.CrossMethod<T> {
-        override suspend operator fun invoke(params: Map<String, Any?>): T = func(params)
-        override fun getValue(thisRef: Any, property: KProperty<*>): CrossService.CrossMethod<T> = this
+    class LocalMethod<REQUEST,RESPONSE> internal constructor(val name: String, val func: suspend (REQUEST) -> RESPONSE) :
+        CrossService.CrossMethod<REQUEST,RESPONSE> {
+        override suspend operator fun invoke(params: REQUEST)= func(params)
+        override fun getValue(thisRef: Any, property: KProperty<*>): CrossService.CrossMethod<REQUEST,RESPONSE> = this
     }
 
   @Suppress("UNCHECKED_CAST")
-    inner class Provider<T>(val func: suspend (Map<String, Any?>) -> T) :
-        PropertyDelegateProvider<Any, LocalMethod<T>> {
-        override fun provideDelegate(thisRef: Any, property: KProperty<*>): LocalMethod<T> {
+    inner class Provider<REQUEST,RESPONSE>(val func: suspend (REQUEST) -> RESPONSE) :
+        PropertyDelegateProvider<Any, LocalMethod<REQUEST,RESPONSE>> {
+        override fun provideDelegate(thisRef: Any, property: KProperty<*>): LocalMethod<REQUEST,RESPONSE> {
             val m = LocalMethod(property.name, func)
-            methods[property.name] = m as CrossService.CrossMethod<Any?>
+            methods[property.name] = m as CrossService.CrossMethod<Any?,Any?>
             return m
         }
     }
 
-    protected fun <T> local(func: suspend (Map<String, Any?>) -> T) = Provider(func)
+    protected fun <REQUEST,RESPONSE> local(func: suspend (REQUEST) -> RESPONSE) = Provider(func)
 }
