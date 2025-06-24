@@ -4,6 +4,7 @@ headers = iconv.h
 headerFilter = NOTHING
 linkerOpts.macosArm64 = -liconv
 linkerOpts.macosX86 = -liconv
+linkerOpts.mingw_x64 = -liconv
 ---
 #include <iconv.h>
 

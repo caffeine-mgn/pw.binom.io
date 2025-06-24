@@ -165,6 +165,8 @@ internal interface NativeLibrary : Library {
    */
   fun openLocalDevice(device: Pointer): Pointer
 
+  fun SDP_Request(device: Pointer,removeDeviceAddress: ByteArray)
+
   /**
    * @param device pointer to [NOpennedDevice]
    */
@@ -188,9 +190,10 @@ internal interface NativeLibrary : Library {
 
   /**
    * @param device pointer to [NOpennedDevice]
+   * @param time time for searching: [time] * 1.28. For example where time=8 `8 * 1.28 = 10.24 seconds`
    * @return pointer to [NRemoteDevice]
    */
-  fun searchRemoteDevices(device: Pointer): Pointer?
+  fun searchRemoteDevices(device: Pointer, time:Int): Pointer?
 
   /**
    * @param devices pointer to [NRemoteDevice]

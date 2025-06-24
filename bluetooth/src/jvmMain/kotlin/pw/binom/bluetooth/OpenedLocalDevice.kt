@@ -13,9 +13,9 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
     }
   }
 
-  actual fun discover(): List<RemoteDevice> {
+  actual fun discover(time: Int): List<RemoteDevice> {
     ensureOpened()
-    val remoteDevices = NativeLibrary.INSTANCE.searchRemoteDevices(native)
+    val remoteDevices = NativeLibrary.INSTANCE.searchRemoteDevices(native, time)
     val list = ArrayList<RemoteDevice>()
     try {
       var i = remoteDevices
@@ -83,5 +83,9 @@ actual class OpenedLocalDevice(val native: Pointer) : Closeable {
       psm = psm.value,
     ) ?: TODO("Can't open connection to $remoteAddress")
     return SPPConnection(connection)
+  }
+
+  actual fun spdRequest(address: Address) {
+    NativeLibrary.INSTANCE.SDP_Request(native, address.raw)
   }
 }

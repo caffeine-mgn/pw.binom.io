@@ -1,4 +1,4 @@
-headers = devices.h spp.h
+headers = devices.h spp.h services.h
 headerFilter = *
 ---
 void aa(){

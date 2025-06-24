@@ -6,6 +6,7 @@ object JSONRPC {
   const val METHOD_FIELD = "method"
   const val PARAMS_FIELD = "params"
   const val ID_FIELD = "id"
+  const val RESULT_FIELD = "result"
   const val ERROR_FIELD = "error"
   const val ERROR_CODE_FIELD = "code"
   const val ERROR_MESSAGE_FIELD = "message"

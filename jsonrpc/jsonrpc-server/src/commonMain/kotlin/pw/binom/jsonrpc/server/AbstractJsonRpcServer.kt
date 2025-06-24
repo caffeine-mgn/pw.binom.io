@@ -8,75 +8,47 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import pw.binom.jsonrpc.JSONRPC
+import pw.binom.jsonrpc.JsonRpcRequest
+import pw.binom.jsonrpc.JsonRpcResponse
+import pw.binom.jsonrpc.exceptions.InternalErrorException
 import pw.binom.jsonrpc.exceptions.JsonRpcException
+import pw.binom.jsonrpc.exceptions.MethodNotFoundException
 
 abstract class AbstractJsonRpcServer {
   companion object;
 
-  protected abstract fun findMethod(name: String): JsonRpcMethod<*, *>?
+  protected abstract fun findMethod(name: String): JsonServiceRpcMethod<*, *>?
   protected abstract val json: Json
 
-  suspend fun income(element: JsonElement): JsonElement =
-    when (element) {
-      is JsonArray -> JsonArray(element.map {
-          singleProcessing(it)
-      })
+  suspend fun income(element: JsonElement): JsonElement? = JsonRpcRequest.execute(element) { req ->
+    singleProcessing(req)
+  }?.json
 
-      is JsonObject -> singleProcessing(element)
-      else -> genError(JsonRpcException("Invalid root element"))
-    }
-
-  suspend fun genError(error: Throwable, id: JsonElement? = null) =
-      buildJsonObject {
-          put(JSONRPC.VERSION_FIELD, JsonPrimitive(JSONRPC.JSONRPC_V2))
-          if (id != null) {
-              put(JSONRPC.ID_FIELD, id)
-          }
-          put(JSONRPC.ERROR_FIELD, errorProcessing(error))
-      }
-
-  private suspend fun singleProcessing(element: JsonElement): JsonObject {
-    if (element !is JsonObject) {
-      return genError(JsonRpcException("Root element is not object"))
-    }
-    val jRpcVersion =
-      element[JSONRPC.VERSION_FIELD] ?: return genError(
-        JsonRpcException("field \"${JSONRPC.VERSION_FIELD}\" is missing"),
-        id = element[JSONRPC.ID_FIELD]
-      )
-    if (jRpcVersion !is JsonPrimitive) {
-      return genError(JsonRpcException("Field \"${JSONRPC.VERSION_FIELD}\" is invalid"), id = element[JSONRPC.ID_FIELD])
-    }
-    if (jRpcVersion.content != JSONRPC.JSONRPC_V2) {
-      return genError(
-        JsonRpcException("Invalid json rpc version: \"${jRpcVersion.content}\""),
-        id = element[JSONRPC.ID_FIELD]
-      )
-    }
-    val method = element[JSONRPC.METHOD_FIELD] ?: throw JsonRpcException("Field \"${JSONRPC.METHOD_FIELD}\" is missing")
-    if (method !is JsonPrimitive) {
-      return genError(JsonRpcException("Field \"${JSONRPC.METHOD_FIELD}\" is invalid"), id = element[JSONRPC.ID_FIELD])
-    }
-
-    return try {
-        buildJsonObject {
-            put(JSONRPC.VERSION_FIELD, kotlinx.serialization.json.JsonPrimitive(JSONRPC.JSONRPC_V2))
-            val id = element[JSONRPC.ID_FIELD]
-            if (id != null) {
-                put(JSONRPC.ID_FIELD, id)
-            }
-            put("result", execute(method = method.content, params = element[JSONRPC.PARAMS_FIELD]) ?: JsonNull)
-        }
+  private suspend fun singleProcessing(element: JsonRpcRequest.Single): JsonRpcResponse.Single? {
+    val content = try {
+      execute(method = element.method, params = element.params)
     } catch (e: Throwable) {
-      genError(e, id = element[JSONRPC.ID_FIELD])
+      return errorProcessing(id = element.id, exception = e)
     }
+    return JsonRpcResponse.Single(
+      id = element.id, content = JsonRpcResponse.Content.Result(content)
+    )
   }
 
-  protected abstract suspend fun errorProcessing(exception: Throwable): JsonObject
+  protected open suspend fun errorProcessing(id: JsonPrimitive?, exception: Throwable): JsonRpcResponse.Single =
+    when (exception) {
+      is JsonRpcException -> JsonRpcResponse.Single(
+        id = id, content = exception.asResponseContent()
+      )
+
+      else -> JsonRpcResponse.Single(
+        id = id, content = InternalErrorException(exception.toString()).asResponseContent()
+      )
+    }
 
   suspend fun execute(method: String, params: JsonElement?): JsonElement? {
-    val jsonMethod = findMethod(method) ?: throw JsonRpcException("Method not found")
-    jsonMethod as JsonRpcMethod<Any?, Any?>
+    val jsonMethod = findMethod(method) ?: throw MethodNotFoundException("Method \"$method\" not found")
+    jsonMethod as JsonServiceRpcMethod<Any?, Any?>
     val jsonParam = json.decodeFromJsonElement(jsonMethod.jsonRpcRequest, params ?: JsonNull)
     val result = jsonMethod.executeJsonRpc(jsonParam)
     return json.encodeToJsonElement(jsonMethod.jsonRpcResponse, result)

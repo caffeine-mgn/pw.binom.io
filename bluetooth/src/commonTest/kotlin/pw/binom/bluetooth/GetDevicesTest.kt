@@ -4,11 +4,27 @@ import pw.binom.io.use
 import pw.binom.thread.Thread
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 
 class GetDevicesTest {
-  val selfDeviceAddress1 = "00:1A:7D:DA:71:11"
-  val selfDeviceAddress2 = "8A:88:4B:21:20:34"
+  val selfDeviceAddress1 = "00:1A:7D:DA:71:11" // subochev-work
+  val selfDeviceAddress2 = "8A:88:4B:21:20:34" // subochev-work #1
   val workBookAddress = "0C:9A:3C:EA:4C:09"
+
+  @Test
+  fun dd() {
+    val e = Devices.getDevices()
+    val workBookAddress = Address.parse(workBookAddress)
+    e.last().let { device1 ->
+      device1.open().use { device ->
+        println("Getting SPD from $workBookAddress using ${device1.address}")
+//        val devices = device1.discover(5.seconds)
+        device.spdRequest(workBookAddress)
+//        println("->$devices")
+      }
+    }
+    println(e)
+  }
 
   @Test
   fun spdTest() {
@@ -40,7 +56,7 @@ class GetDevicesTest {
     }
     println("--->$self")
     self.open().use {
-      println("found:\n${it.discover().joinToString("\n")}")
+      println("found:\n${it.discover(5.seconds).joinToString("\n")}")
     }
   }
 

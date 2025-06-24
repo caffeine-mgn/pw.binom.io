@@ -63,8 +63,8 @@ int hci_write_scan_enable(int sock, uint8_t scan_enable, int timeout) {
 #endif
 
 START_EXTERN
-EXTERN_DLL_EXPORT const struct NLocalDevice* getLocalDevices(){
-    struct NLocalDevice* result = NULL;
+EXTERN_DLL_EXPORT const struct NLocalDevice *getLocalDevices() {
+    struct NLocalDevice *result = NULL;
 #ifdef LINUX_TARGET
     struct hci_dev_info di;
     // Получаем список всех доступных адаптеров
@@ -81,10 +81,10 @@ EXTERN_DLL_EXPORT const struct NLocalDevice* getLocalDevices(){
             close(sock);
             continue;
         }
-        struct NLocalDevice* nextDevice = (struct NLocalDevice*)malloc(sizeof(NLocalDevice));
+        struct NLocalDevice *nextDevice = (struct NLocalDevice *) malloc(sizeof(NLocalDevice));
         nextDevice->deviceId = dev_id;
-        copyAddressAndReverseBytes((unsigned char*)&di.bdaddr, (unsigned char*)&nextDevice->address);
-        memcpy(&nextDevice->name, &di.name, 8);
+        copyAddressAndReverseBytes((unsigned char *) &di.bdaddr, (unsigned char *) &nextDevice->address);
+        memcpy(&nextDevice->name, &di.name, 248);
         nextDevice->next = result;
         result = nextDevice;
         close(sock);
@@ -132,26 +132,27 @@ EXTERN_DLL_EXPORT const struct NLocalDevice* getLocalDevices(){
 #endif
     return result;
 }
-EXTERN_DLL_EXPORT void detachLocalDevices(struct NLocalDevice *devices){
-    struct NLocalDevice* d = devices;
+
+EXTERN_DLL_EXPORT void detachLocalDevices(struct NLocalDevice *devices) {
+    struct NLocalDevice *d = devices;
     while (d != NULL) {
-        struct NLocalDevice* n = d;
+        struct NLocalDevice *n = d;
         d = d->next;
-        n->next = (struct NLocalDevice *)NULL;
+        n->next = (struct NLocalDevice *) NULL;
     }
 }
 
-EXTERN_DLL_EXPORT void freeLocalDevices(const struct NLocalDevice* devices){
-    const struct NLocalDevice* d = devices;
-    while (d!=0){
-      const struct NLocalDevice* n = d;
-      d=d->next;
-      delete n;
+EXTERN_DLL_EXPORT void freeLocalDevices(const struct NLocalDevice *devices) {
+    const struct NLocalDevice *d = devices;
+    while (d != 0) {
+        const struct NLocalDevice *n = d;
+        d = d->next;
+        delete n;
     }
 }
 
-EXTERN_DLL_EXPORT const struct NOpennedDevice* openLocalDevice(const struct NLocalDevice* devices){
-    if (!devices){
+EXTERN_DLL_EXPORT const struct NOpennedDevice *openLocalDevice(const struct NLocalDevice *devices) {
+    if (!devices) {
         return NULL;
     }
 #ifdef LINUX_TARGET
@@ -159,10 +160,11 @@ EXTERN_DLL_EXPORT const struct NOpennedDevice* openLocalDevice(const struct NLoc
     if (sock < 0) {
         return NULL;
     }
-    struct NOpennedDevice* result = (struct NOpennedDevice*)malloc(sizeof(NOpennedDevice));
+    struct NOpennedDevice *result = (struct NOpennedDevice *) malloc(sizeof(NOpennedDevice));
     result->deviceId = devices->deviceId;
     result->socketId = sock;
-    copyAddressAndReverseBytes((unsigned char*)&devices->address, (unsigned char*)&result->address);
+    memcpy(result->name, devices->name, 248);
+    copyAddressAndReverseBytes((unsigned char *) &devices->address, (unsigned char *) &result->address);
     return result;
 #endif
 #ifdef WINDOWS_TARGET
@@ -172,25 +174,25 @@ EXTERN_DLL_EXPORT const struct NOpennedDevice* openLocalDevice(const struct NLoc
 #endif
 }
 
-EXTERN_DLL_EXPORT void closeLocalDevice(const struct NOpennedDevice *device){
-    if (!device){
+EXTERN_DLL_EXPORT void closeLocalDevice(const struct NOpennedDevice *device) {
+    if (!device) {
         return;
     }
 #ifdef LINUX_TARGET
     close(device->socketId);
-    free((void*)device);
+    free((void *) device);
 #endif
 #ifdef WINDOWS_TARGET
     free((void*)device);
 #endif
 }
 
-EXTERN_DLL_EXPORT const int getLocalDeviceDiscoverable(const struct NOpennedDevice *device){
+EXTERN_DLL_EXPORT const int getLocalDeviceDiscoverable(const struct NOpennedDevice *device) {
 #ifdef LINUX_TARGET
-    uint8_t discoverable=0;
-    int err = hci_read_scan_enable(device->socketId, &discoverable,1000);
+    uint8_t discoverable = 0;
+    int err = hci_read_scan_enable(device->socketId, &discoverable, 1000);
     if (err < 0) {
-      return -1;
+        return -1;
     }
     return discoverable == (SCAN_INQUIRY | SCAN_PAGE);
 #endif
@@ -199,9 +201,9 @@ EXTERN_DLL_EXPORT const int getLocalDeviceDiscoverable(const struct NOpennedDevi
 #endif
 }
 
-EXTERN_DLL_EXPORT int setLocalDeviceDiscoverable(const struct NOpennedDevice *device, const int enabled){
+EXTERN_DLL_EXPORT int setLocalDeviceDiscoverable(const struct NOpennedDevice *device, const int enabled) {
 #ifdef LINUX_TARGET
-    uint8_t scan_enable = enabled>0 ? (SCAN_INQUIRY | SCAN_PAGE) : SCAN_PAGE;
+    uint8_t scan_enable = enabled > 0 ? (SCAN_INQUIRY | SCAN_PAGE) : SCAN_PAGE;
     // Устанавливаем режим сканирования
     if (!hci_write_scan_enable(device->socketId, scan_enable, 1000)) {
         return -errno;
@@ -213,30 +215,30 @@ EXTERN_DLL_EXPORT int setLocalDeviceDiscoverable(const struct NOpennedDevice *de
 #endif
 }
 
-EXTERN_DLL_EXPORT const struct NRemoteDevice* searchRemoteDevices(const struct NOpennedDevice* device){
-    int len = 8;        // Длительность сканирования: 8 * 1.28 = 10.24 секунд
-    struct NRemoteDevice* result = NULL;
+EXTERN_DLL_EXPORT const struct NRemoteDevice *searchRemoteDevices(const struct NOpennedDevice *device, int time) {
+    //    int len = 8;        // Длительность сканирования: 8 * 1.28 = 10.24 секунд
+    struct NRemoteDevice *result = NULL;
 #ifdef LINUX_TARGET
-    if (!device){
+    if (!device) {
         return NULL;
     }
 
-    int max_rsp = 255;  // Максимальное количество устройств
+    int max_rsp = 255; // Максимальное количество устройств
     int flags = IREQ_CACHE_FLUSH;
 
-    inquiry_info *ii = (inquiry_info*)malloc(max_rsp * sizeof(inquiry_info));
-    if (!ii){
+    inquiry_info *ii = (inquiry_info *) malloc(max_rsp * sizeof(inquiry_info));
+    if (!ii) {
         return NULL;
     }
 
-    int num_rsp = hci_inquiry(device->deviceId, len, max_rsp, NULL, &ii, flags);
-    if (num_rsp<=0){
+    int num_rsp = hci_inquiry(device->deviceId, time, max_rsp, NULL, &ii, flags);
+    if (num_rsp <= 0) {
         free(ii);
         return NULL;
     }
-    for (int i = 0;i< num_rsp; i++) {
-        struct NRemoteDevice* s = (struct NRemoteDevice*)malloc(sizeof(NRemoteDevice));
-        copyAddressAndReverseBytes((unsigned char*)&ii[i].bdaddr,(unsigned char*)&s->address);
+    for (int i = 0; i < num_rsp; i++) {
+        struct NRemoteDevice *s = (struct NRemoteDevice *) malloc(sizeof(NRemoteDevice));
+        copyAddressAndReverseBytes((unsigned char *) &ii[i].bdaddr, (unsigned char *) &s->address);
         memset(&s->name, 0, sizeof(s->name));
         hci_read_remote_name(device->socketId, &ii[i].bdaddr, sizeof(s->name), s->name, 0);
         s->next = result;
@@ -255,7 +257,7 @@ EXTERN_DLL_EXPORT const struct NRemoteDevice* searchRemoteDevices(const struct N
     searchParams.fReturnRemembered = TRUE;
     searchParams.fReturnUnknown = TRUE;
     searchParams.fReturnConnected = TRUE;
-    searchParams.cTimeoutMultiplier = len; // Время ожидания (в единицах по 1.28 секунд)
+    searchParams.cTimeoutMultiplier = time; // Время ожидания (в единицах по 1.28 секунд)
 
     // Указываем выбранное радиоустройство
     searchParams.hRadio = device->device;
@@ -298,12 +300,12 @@ EXTERN_DLL_EXPORT const struct NRemoteDevice* searchRemoteDevices(const struct N
     return result;
 }
 
-EXTERN_DLL_EXPORT void freeRemoteDevices(const struct NRemoteDevice* devices){
-    const struct NRemoteDevice* d = devices;
-    while (d!=0){
-      const struct NRemoteDevice* n = d;
-      d=d->next;
-      delete n;
+EXTERN_DLL_EXPORT void freeRemoteDevices(const struct NRemoteDevice *devices) {
+    const struct NRemoteDevice *d = devices;
+    while (d != 0) {
+        const struct NRemoteDevice *n = d;
+        d = d->next;
+        delete n;
     }
 }
 

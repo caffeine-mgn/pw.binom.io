@@ -27,6 +27,7 @@ struct NLocalDevice {
 struct NOpennedDevice {
   unsigned char address[6];
 #ifdef LINUX_TARGET
+  char name[248];
   int deviceId;
   int socketId;
 #endif
@@ -53,7 +54,7 @@ EXTERN_DLL_EXPORT int setLocalDeviceDiscoverable(const struct NOpennedDevice *de
 
 EXTERN_DLL_EXPORT void freeLocalDevices(const struct NLocalDevice *devices);
 
-EXTERN_DLL_EXPORT const struct NRemoteDevice *searchRemoteDevices(const struct NOpennedDevice *device);
+EXTERN_DLL_EXPORT const struct NRemoteDevice *searchRemoteDevices(const struct NOpennedDevice *device, int time);
 EXTERN_DLL_EXPORT void freeRemoteDevices(const struct NRemoteDevice *devices);
 
 

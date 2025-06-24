@@ -17,6 +17,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(libs.kotlinx.serialization.json)
+      api(libs.binom.atomic)
       api(project(":jsonrpc"))
     }
     commonTest.dependencies {

@@ -1,3 +1,4 @@
+linkerOpts.mingw_x64 = -lwsock32 -lws2_32 -liphlpapi
 ---
 #include <fcntl.h>
 #include <windows.h>
