@@ -22,5 +22,4 @@ abstract class AbstractRemoteService(val invoker: Invoker) : CrossService {
       RemoteMethod(property.name)
   }
 
-  protected fun <REQUEST,RESPONSE> remote(k:KSerializer) = Provider<REQUEST,RESPONSE>()
 }

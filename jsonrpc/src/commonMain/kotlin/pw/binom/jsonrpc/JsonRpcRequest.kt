@@ -40,6 +40,8 @@ sealed interface JsonRpcRequest {
       }
   }
 
+  suspend fun execute(func: suspend (Single) -> JsonRpcResponse.Single?): JsonRpcResponse?
+
   val json: JsonElement
 
   data class Single(
@@ -64,23 +66,25 @@ sealed interface JsonRpcRequest {
       }
 
       suspend fun execute(json: JsonObject, func: suspend (Single) -> JsonRpcResponse.Single?) =
-        try {
-          val element = parse(json)
-          func(element)
-        } catch (e: JsonRpcException) {
-          val id = json[JSONRPC.ID_FIELD]?.let { it as? JsonPrimitive }
-          JsonRpcResponse.Single(
-            id = id,
-            content = e.asResponseContent()
-          )
-        } catch (e: Throwable) {
-          val id = json[JSONRPC.ID_FIELD]?.let { it as? JsonPrimitive }
-          JsonRpcResponse.Single(
-            id = id,
-            content = InternalErrorException(e.toString()).asResponseContent()
-          )
-        }
+        parse(json).execute(func)
     }
+
+    override suspend fun execute(func: suspend (Single) -> JsonRpcResponse.Single?) =
+      try {
+        func(this)
+      } catch (e: JsonRpcException) {
+        val id = json[JSONRPC.ID_FIELD]?.let { it as? JsonPrimitive }
+        JsonRpcResponse.Single(
+          id = id,
+          content = e.asResponseContent()
+        )
+      } catch (e: Throwable) {
+        val id = json[JSONRPC.ID_FIELD]?.let { it as? JsonPrimitive }
+        JsonRpcResponse.Single(
+          id = id,
+          content = InternalErrorException(e.toString()).asResponseContent()
+        )
+      }
 
     override val json
       get() = buildJsonObject {
@@ -95,7 +99,23 @@ sealed interface JsonRpcRequest {
       }
   }
 
-  data class Batch(val requests: List<JsonRpcRequest>) : JsonRpcRequest {
+  data class Batch(val requests: List<JsonRpcRequest.Single>) : JsonRpcRequest {
+    companion object {
+
+    }
+
+    override suspend fun execute(func: suspend (Single) -> JsonRpcResponse.Single?): JsonRpcResponse.Batch? {
+      val resp = ArrayList<JsonRpcResponse.Single>(requests.size)
+      requests.forEach {
+        resp += it.execute(func) ?: return@forEach
+      }
+      return if (resp.isNotEmpty()) {
+        JsonRpcResponse.Batch(resp)
+      } else {
+        null
+      }
+    }
+
     override val json: JsonElement
       get() = buildJsonArray {
         requests.forEach { request ->

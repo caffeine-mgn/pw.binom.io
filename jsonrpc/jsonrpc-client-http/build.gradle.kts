@@ -12,11 +12,17 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
     config()
+    -"wasmJs"
+    -"wasmWasi"
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {
       api(libs.kotlinx.serialization.json)
+      api(libs.binom.atomic)
+      api(project(":jsonrpc"))
+      api(project(":httpClient"))
+      api(project(":jsonrpc:jsonrpc-client"))
     }
     commonTest.dependencies {
       api(kotlin("test-common"))
