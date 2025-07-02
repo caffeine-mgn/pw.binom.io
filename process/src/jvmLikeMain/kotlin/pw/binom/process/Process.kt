@@ -15,8 +15,13 @@ class JvmProcess(val process: java.lang.Process, val processStarter: JvmProcessS
     private val channel = Channels.newChannel(process.outputStream)
 
     override fun write(data: ByteBuffer) = DataTransferSize.ofSize(channel.write(data.native))
+    override fun write(data: ByteArray, offset: Int, length: Int): DataTransferSize {
+      process.outputStream.write(data, offset, length)
+      return DataTransferSize.ofSize(length)
+    }
 
     override fun flush() {
+      process.outputStream.flush()
       // Do nothing
     }
 

@@ -5,7 +5,9 @@ import kotlinx.serialization.json.JsonElement
 import pw.binom.http.client.HttpClientCommon
 import pw.binom.http.client.HttpClientCommonExchange
 import pw.binom.io.http.Headers
-import pw.binom.io.http.headersOf
+import pw.binom.io.http.HttpContentLength
+import pw.binom.io.http.httpContentLength
+import pw.binom.io.http.mutableHeadersOf
 import pw.binom.io.useAsync
 import pw.binom.jsonrpc.JsonRpcInvocator
 import pw.binom.jsonrpc.JsonRpcRequest
@@ -22,7 +24,9 @@ abstract class AbstractHttpJsonRpcInvocator : JsonRpcInvocator {
   protected open fun buildRequest() = httpClient.request(
     method = "POST",
     url = baseUrl,
-    headers = headersOf(Headers.CONTENT_TYPE to "application/json")
+    headers = mutableHeadersOf(Headers.CONTENT_TYPE to "application/json").also {
+      it.httpContentLength = HttpContentLength.CHUNKED
+    }
   )
 
   protected open suspend fun postRequest(request: HttpClientCommonExchange) {

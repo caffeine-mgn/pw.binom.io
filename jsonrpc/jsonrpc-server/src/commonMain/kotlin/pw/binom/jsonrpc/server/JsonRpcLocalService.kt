@@ -57,7 +57,6 @@ abstract class JsonRpcLocalService {
         response = response,
         implementation = implementation,
       )
-
     }
   }
 

@@ -99,7 +99,7 @@ sealed interface JsonRpcRequest {
       }
   }
 
-  data class Batch(val requests: List<JsonRpcRequest.Single>) : JsonRpcRequest {
+  data class Batch(val requests: List<Single>) : JsonRpcRequest {
     companion object {
 
     }
