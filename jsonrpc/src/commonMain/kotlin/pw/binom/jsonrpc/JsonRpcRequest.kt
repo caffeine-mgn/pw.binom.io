@@ -15,6 +15,13 @@ import pw.binom.jsonrpc.exceptions.ParseException
 
 sealed interface JsonRpcRequest {
   companion object {
+    fun parse(json: JsonElement) =
+      when (json) {
+        is JsonObject -> Single.parse(json)
+        is JsonArray -> Batch.parse(json)
+        else -> throw IllegalArgumentException("Invalid json element")
+      }
+
     suspend fun execute(json: JsonElement, func: suspend (Single) -> JsonRpcResponse.Single?) =
       when (json) {
         is JsonArray -> {
@@ -101,7 +108,12 @@ sealed interface JsonRpcRequest {
 
   data class Batch(val requests: List<Single>) : JsonRpcRequest {
     companion object {
-
+      fun parse(json: JsonArray): Batch = Batch(json.map {
+        when (it) {
+          is JsonObject -> Single.parse(it)
+          else -> throw IllegalArgumentException("Invalid json element")
+        }
+      })
     }
 
     override suspend fun execute(func: suspend (Single) -> JsonRpcResponse.Single?): JsonRpcResponse.Batch? {
