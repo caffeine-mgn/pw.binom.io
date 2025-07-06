@@ -21,16 +21,17 @@ class SseRequestBuilder(
       url = url,
       headers = headers,
     ) as Http11ClientExchange
-    val responseCode = exchange.getResponseCode()
-    val responseHeaders = exchange.getResponseHeaders()
-    val (input, output) = exchange.toRaw()
-    val charset = responseHeaders.getSingleOrNull(Headers.CHARSET)?.let { Charsets.get(it) } ?: Charsets.UTF8
-    val reader = input.bufferedReader(charset = charset, bufferSize = bufferSize)
-    return SseConnectionImpl(
-      responseCode = responseCode,
-      responseHeaders = responseHeaders,
-      input = reader,
-      output = output,
-    )
+    return exchange.toSSE(bufferSize=bufferSize)
+//    val responseCode = exchange.getResponseCode()
+//    val responseHeaders = exchange.getResponseHeaders()
+//    val (input, output) = exchange.toRaw()
+//    val charset = responseHeaders.getSingleOrNull(Headers.CHARSET)?.let { Charsets.get(it) } ?: Charsets.UTF8
+//    val reader = input.bufferedReader(charset = charset, bufferSize = bufferSize)
+//    return SseConnectionImpl(
+//      responseCode = responseCode,
+//      responseHeaders = responseHeaders,
+//      input = reader,
+//      output = output,
+//    )
   }
 }

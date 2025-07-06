@@ -27,16 +27,31 @@ internal class SseConnectionImpl(
     output.append("event: ").append(event).append("\n")
   }
 
-  override suspend fun send(event: String?, data: String) {
+  private suspend fun sendId(id: String?) {
+    id ?: return
+    require('\n' !in id) { NEWLINE_ERROR }
+    output.append("id: ").append(id).append("\n")
+  }
+  private suspend fun sendRetry(retry: String?) {
+    retry ?: return
+    require('\n' !in retry) { NEWLINE_ERROR }
+    output.append("retry: ").append(retry).append("\n")
+  }
+
+  override suspend fun send(eventName: String?, id: String, retry: String?, data: String) {
     require('\n' !in data) { NEWLINE_ERROR }
-    sendEvent(event)
+    sendEvent(eventName)
+    sendId(id)
+    sendRetry(retry)
     sendStart()
     output.append(data)
     sendEnd()
   }
 
-  override suspend fun send(event: String?, data: AsyncReader) {
-    sendEvent(event)
+  override suspend fun send(eventName: String?, id: String, retry: String?, data: AsyncReader) {
+    sendEvent(eventName)
+    sendId(id)
+    sendRetry(retry)
     sendStart()
     while (true) {
       try {
