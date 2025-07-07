@@ -15,7 +15,7 @@ open class AsyncBufferedOutputAppendable protected constructor(
     val closeParent: Boolean,
     protected val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
-) : AsyncWriter, AsyncFlushable, AsyncCloseable {
+) : AsyncWriter {
 
     constructor(
         charset: Charset = Charsets.UTF8,

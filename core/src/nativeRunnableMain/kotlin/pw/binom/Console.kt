@@ -48,17 +48,17 @@ actual object Console {
       }
     }
 
-  private class StdOutput(val stream: CPointer<FILE>?) : Appendable {
+  private class StdOutput(val stream: CPointer<FILE>?) : Writer {
     override fun append(value: Char): Appendable {
       fprintf(stream, value.toString())
-      fflush(stream)
+      flush()
       return this
     }
 
     override fun append(value: CharSequence?): Appendable {
       value ?: return this
       fprintf(stream, if (value is String) value else value.toString())
-      fflush(stream)
+      flush()
       return this
     }
 
@@ -69,13 +69,21 @@ actual object Console {
     ): Appendable {
       value ?: return this
       fprintf(stream, value.substring(startIndex, endIndex))
-      fflush(stream)
+      flush()
       return this
+    }
+
+    override fun flush() {
+      fflush(stream)
+    }
+
+    override fun close() {
+      fclose(stream)
     }
   }
 
-  actual val std: Appendable = StdOutput(stdout)
-  actual val err: Appendable = StdOutput(stderr)
+  actual val std: Writer = StdOutput(stdout)
+  actual val err: Writer = StdOutput(stderr)
 
   //    actual val input: Reader = ReaderUTF82(inChannel)
   actual val input: Reader =

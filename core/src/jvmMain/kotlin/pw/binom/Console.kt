@@ -47,7 +47,7 @@ actual object Console {
             // Do nothing
         }
     }
-    actual val std: Appendable = AppendableUTF8(stdChannel)
-    actual val err: Appendable = AppendableUTF8(errChannel)
+    actual val std: Writer = AppendableUTF8(stdChannel)
+    actual val err: Writer = AppendableUTF8(errChannel)
     actual val input: Reader = ReaderUTF82(inChannel)
 }

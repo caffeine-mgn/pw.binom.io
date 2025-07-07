@@ -15,7 +15,7 @@ class BufferedOutputAppendable private constructor(
     val closeParent: Boolean,
     private val buffer: ByteBuffer,
     private var closeBuffer: Boolean,
-) : Appendable, Flushable, Closeable {
+) : Writer {
 
     constructor(
         charset: Charset = Charsets.UTF8,
