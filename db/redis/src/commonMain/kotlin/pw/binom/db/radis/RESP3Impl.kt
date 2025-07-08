@@ -120,11 +120,12 @@ class RESP3Impl(
     }
     outBuffer.clear()
     outBuffer.alloc(len)
-    val d = outBuffer.lock()
-    d.clear()
-    d.limit = len
-    input.readFully(d)
-    func(d)
+    outBuffer.locked { d ->
+      d.clear()
+      d.limit = len
+      input.readFully(d)
+      func(d)
+    }
     outBuffer.clear()
     return true
   }
@@ -213,10 +214,13 @@ class RESP3Impl(
       '+' -> {
         outBuffer.clear()
         outBuffer.write(internalReadInlineString().encodeToByteArray())
-        func(outBuffer.lock())
+        outBuffer.locked {
+          func(it)
+        }
         outBuffer.clear()
         true
       }
+
       '$' -> internalReadStringDataOrNull(func)
       else -> throw RadisException("Expected \"$\" but actual \"$char\"")
     }
@@ -304,15 +308,16 @@ class RESP3Impl(
     writer.append("$").append(str.length).append("\r\n").append(str).append("\r\n")
   }
 
-  suspend fun writeDataString(data: ByteArray) {
-    outBuffer.clear()
-    outBuffer.write(data)
-    writeDataString(outBuffer.lock())
-    outBuffer.clear()
-  }
-
   suspend fun writeDataString(data: ByteBuffer) {
     writer.append("$").append(data.remaining).append("\r\n")
+    writer.flush()
+    output.writeFully(data)
+    output.flush()
+    writer.append("\r\n")
+  }
+
+  suspend fun writeDataString(data: ByteArray) {
+    writer.append("$").append(data.size).append("\r\n")
     writer.flush()
     output.writeFully(data)
     output.flush()
@@ -322,7 +327,9 @@ class RESP3Impl(
   suspend fun writeString(value: String) {
     outBuffer.clear()
     outBuffer.write(value.encodeToByteArray())
-    writeDataString(outBuffer.lock())
+    outBuffer.locked {
+      writeDataString(it)
+    }
   }
 
   suspend fun writeNull() {
@@ -408,23 +415,29 @@ class RESP3Impl(
       is String -> {
         writeString(value)
       }
+
       is Boolean -> {
         writeBoolean(value)
       }
+
       is Long, is Int, is Short, is Byte,
       is ULong, is UInt, is UShort, is UByte,
-      -> {
+        -> {
         writeInteger(value.toString())
       }
+
       is Float, is Double -> {
         writeDouble(value.toString())
       }
+
       is List<*> -> {
         writeList(value)
       }
+
       is Set<*> -> {
         writeSet(value)
       }
+
       is Map<*, *> -> {
         writeMap(value as Map<Any?, Any?>)
       }

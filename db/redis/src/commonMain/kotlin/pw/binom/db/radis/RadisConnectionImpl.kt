@@ -474,34 +474,6 @@ class RadisConnectionImpl(
     }
   }
 
-  suspend fun setStringAsBytes(
-    key: String,
-    data: ByteArray,
-  ) {
-    operation {
-      resp.startList(3)
-      resp.writeASCIStringFast("SET")
-      resp.writeASCIStringFast(key)
-      resp.writeDataString(data)
-      resp.flush()
-      checkOkResponse()
-    }
-  }
-
-  override suspend fun setStringAsBytes(
-    key: String,
-    data: ByteBuffer,
-  ) {
-    operation {
-      resp.startList(3)
-      resp.writeASCIStringFast("SET")
-      resp.writeASCIStringFast(key)
-      resp.writeDataString(data)
-      resp.flush()
-      checkOkResponse()
-    }
-  }
-
   override suspend fun delete(vararg key: String) =
     operation {
       resp.startList(1 + key.size)
@@ -522,15 +494,91 @@ class RadisConnectionImpl(
       resp.readLong() == 1L
     }
 
+  private fun calcSetListSize(
+    ttl: Duration?,
+    updateMode: UpdateMode,
+  ) = 3 + (ttl?.let { 2 } ?: 0) + (if (updateMode != UpdateMode.ANYWAY) 1 else 0)
+
+  private suspend fun writeSetArgs(
+    ttl: Duration?,
+    updateMode: UpdateMode,
+  ) {
+    if (ttl != null) {
+      resp.writeASCIStringFast("PX")
+      resp.writeASCIStringFast(ttl.inWholeMilliseconds.toString())
+    }
+    when (updateMode) {
+      UpdateMode.ANYWAY -> {
+        // Do nothing
+      }
+
+      UpdateMode.ONLY_IF_EXIST -> resp.writeASCIStringFast("XX")
+      UpdateMode.ONLY_IF_NOT_EXIST -> resp.writeASCIStringFast("NX")
+    }
+  }
+
+
   override suspend fun setString(
     key: String,
     value: String,
+    ttl: Duration?,
+    updateMode: UpdateMode,
   ) {
     operation {
-      resp.startList(3)
+      resp.startList(
+        calcSetListSize(
+          ttl = ttl,
+          updateMode = updateMode
+        )
+      )
       resp.writeASCIStringFast("SET")
       resp.writeASCIStringFast(key)
       resp.writeString(value)
+      writeSetArgs(ttl, updateMode)
+      resp.flush()
+      checkOkResponse()
+    }
+  }
+
+  override suspend fun setStringAsBytes(
+    key: String,
+    data: ByteArray,
+    ttl: Duration?,
+    updateMode: UpdateMode,
+  ) {
+    operation {
+      resp.startList(
+        calcSetListSize(
+          ttl = ttl,
+          updateMode = updateMode
+        )
+      )
+      resp.writeASCIStringFast("SET")
+      resp.writeASCIStringFast(key)
+      resp.writeDataString(data)
+      writeSetArgs(ttl, updateMode)
+      resp.flush()
+      checkOkResponse()
+    }
+  }
+
+  override suspend fun setStringAsBytes(
+    key: String,
+    data: ByteBuffer,
+    ttl: Duration?,
+    updateMode: UpdateMode,
+  ) {
+    operation {
+      resp.startList(
+        calcSetListSize(
+          ttl = ttl,
+          updateMode = updateMode
+        )
+      )
+      resp.writeASCIStringFast("SET")
+      resp.writeASCIStringFast(key)
+      resp.writeDataString(data)
+      writeSetArgs(ttl, updateMode)
       resp.flush()
       checkOkResponse()
     }

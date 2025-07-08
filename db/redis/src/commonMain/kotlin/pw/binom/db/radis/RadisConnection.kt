@@ -7,6 +7,7 @@ import pw.binom.io.socket.SocketAddress
 import pw.binom.network.Network
 import pw.binom.network.NetworkManager
 import pw.binom.network.tcpConnect
+import kotlin.time.Duration
 
 interface RadisConnection : AsyncCloseable {
   enum class ValueType {
@@ -45,6 +46,8 @@ interface RadisConnection : AsyncCloseable {
   suspend fun setString(
     key: String,
     value: String,
+    ttl: Duration? = null,
+    updateMode: UpdateMode = UpdateMode.ANYWAY,
   )
 
   suspend fun delete(vararg key: String): Long
@@ -83,7 +86,16 @@ interface RadisConnection : AsyncCloseable {
 
   suspend fun setStringAsBytes(
     key: String,
+    data: ByteArray,
+    ttl: Duration?,
+    updateMode: UpdateMode = UpdateMode.ANYWAY,
+  )
+
+  suspend fun setStringAsBytes(
+    key: String,
     data: ByteBuffer,
+    ttl: Duration?,
+    updateMode: UpdateMode = UpdateMode.ANYWAY,
   )
 
   suspend fun getString(key: String): String?
