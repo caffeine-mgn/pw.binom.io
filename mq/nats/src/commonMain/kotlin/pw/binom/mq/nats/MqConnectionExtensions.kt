@@ -14,6 +14,8 @@ import pw.binom.mq.nats.client.Auth
 import pw.binom.mq.nats.client.InternalNatsConnection
 import pw.binom.mq.nats.client.NatsReader
 import pw.binom.network.NetworkManager
+import pw.binom.thread.DefaultUncaughtExceptionHandler
+import pw.binom.thread.UncaughtExceptionHandler
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
@@ -33,6 +35,8 @@ suspend fun MqConnection.Companion.nats(
   writeBufferSize: Int = DEFAULT_BUFFER_SIZE,
   scope: CoroutineScope = GlobalScope,
   context: CoroutineContext = DefaultEmptyCoroutineContext,
+  uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
+  onDisconnected: ((Throwable) -> Unit)? = null,
 ): NatsMqConnection {
   val connection =
     InternalNatsConnection.connect(
@@ -52,6 +56,8 @@ suspend fun MqConnection.Companion.nats(
       con = connection,
       scope = scope,
       context = if (context === DefaultEmptyCoroutineContext) coroutineContext else context,
+      uncaughtExceptionHandler = uncaughtExceptionHandler,
+      onDisconnected = onDisconnected,
     )
   return NatsMqConnectionImpl(reader)
 }
@@ -94,6 +100,7 @@ suspend fun MqConnection.Companion.nats(
       con = connection,
       scope = scope,
       context = if (context === DefaultEmptyCoroutineContext) coroutineContext else context,
+      onDisconnected = { connection.disconnected() },
     )
   return NatsMqConnectionImpl(reader)
 }

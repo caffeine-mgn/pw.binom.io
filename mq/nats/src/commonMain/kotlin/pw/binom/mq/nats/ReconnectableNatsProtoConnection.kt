@@ -224,7 +224,7 @@ class ReconnectableNatsProtoConnection(
     }
   }
 
-  private suspend fun disconnected() {
+  internal suspend fun disconnected() {
     connectionLock.synchronize {
       existConnection?.asyncClose()
       existConnection = null
