@@ -365,6 +365,14 @@ class JetStreamImpl(val reader: NatsReader) {
     }
   }
 
+  suspend fun getLastMessage(
+    stream: String,
+    subject: String,
+  ) = reader.sendAndReceive(
+    subject = "\$JS.API.DIRECT.GET.%s.%s.$stream.$subject",
+    data = null as ByteArray?
+  )
+
   suspend fun pullMessages(
     streamName: String,
     consumerName: String,

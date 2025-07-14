@@ -7,6 +7,10 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
+import pw.binom.io.IOException
+import pw.binom.thread.DefaultUncaughtExceptionHandler
+import pw.binom.thread.Thread
+import pw.binom.thread.UncaughtExceptionHandler
 import pw.binom.uuid.nextUuid
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -20,6 +24,8 @@ private constructor(
   private val incomeListener: IncomeMessage,
   val scope: CoroutineScope = GlobalScope,
   val context: CoroutineContext = EmptyCoroutineContext,
+  val uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
+  val onDisconnected: (suspend (Throwable) -> Unit)? = null,
 ) : AsyncCloseable {
   fun interface IncomeMessage {
     companion object {
@@ -61,10 +67,22 @@ private constructor(
       while (isActive) {
         val msg = try {
           connection.readMessage()
+        } catch (e: IOException) {
+          val onDisconnected = onDisconnected
+          if (onDisconnected == null) {
+            uncaughtExceptionHandler.uncaughtException(thread = Thread.currentThread, throwable = e)
+          } else {
+            try {
+              onDisconnected(e)
+            } catch (ex: Throwable) {
+              ex.addSuppressed(e)
+              uncaughtExceptionHandler.uncaughtException(thread = Thread.currentThread, throwable = ex)
+            }
+          }
+          break
         } catch (e: Throwable) {
-          println("Nats connection closed! ${e::class}")
-          e.printStackTrace()
-          throw e
+          uncaughtExceptionHandler.uncaughtException(thread = Thread.currentThread, throwable = e)
+          break
         }
         if (msg.subject.startsWith(oneShotSubjectPrefix)) {
           val con = oneShotWatersLock.synchronize { subscribeWaiters.remove(msg.subject) }
@@ -193,11 +211,15 @@ private constructor(
       scope: CoroutineScope = GlobalScope,
       context: CoroutineContext = EmptyCoroutineContext,
       incomeListener: IncomeMessage = IncomeMessage.stub,
+      uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
+      onDisconnected: (suspend (Throwable) -> Unit)? = null,
     ) = NatsReader(
       connection = con,
       incomeListener = incomeListener,
       scope = scope,
       context = context,
+      uncaughtExceptionHandler = uncaughtExceptionHandler,
+      onDisconnected = onDisconnected,
     )
   }
 
