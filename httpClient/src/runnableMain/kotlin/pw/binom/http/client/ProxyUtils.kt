@@ -20,7 +20,7 @@ suspend fun AsyncChannel.tcpConnectViaHttpProxy(
         headersForSend[Headers.PROXY_AUTHORIZATION] = auth.headerValue
     }
     headersForSend += headers
-    bufferedAsciiWriter(closeParent = false).useAsync { writer ->
+    bufferedOutput(closeStream = false).useAsync { writer ->
         Http11.sendRequest(
             output = writer,
             method = "CONNECT",

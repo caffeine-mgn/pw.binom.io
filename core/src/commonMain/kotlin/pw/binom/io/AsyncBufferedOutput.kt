@@ -1,6 +1,26 @@
 package pw.binom.io
 
+import pw.binom.ByteBufferPool
 import pw.binom.DEFAULT_BUFFER_SIZE
+
+class AsyncBufferedOutput2(
+  override val stream: AsyncOutput,
+  val pool: ByteBufferPool,
+  private val closeStream: Boolean,
+) : AbstractAsyncBufferedOutput() {
+  override val buffer = pool.borrow()
+
+  override suspend fun asyncClose() {
+    try {
+      super.asyncClose()
+    } finally {
+      if (closeStream) {
+        stream.asyncClose()
+      }
+      pool.recycle(buffer)
+    }
+  }
+}
 
 class AsyncBufferedOutput(
   override val stream: AsyncOutput,
@@ -21,7 +41,7 @@ class AsyncBufferedOutput(
   }
 }
 
-abstract class AbstractAsyncBufferedOutput : AsyncOutput {
+abstract class AbstractAsyncBufferedOutput : AsyncOutput, AsyncWriter {
   protected abstract val stream: AsyncOutput
   protected abstract val buffer: ByteBuffer
   private var closed = false
@@ -36,6 +56,30 @@ abstract class AbstractAsyncBufferedOutput : AsyncOutput {
     if (closed) {
       throw StreamClosedException()
     }
+  }
+
+  override suspend fun append(value: CharSequence?): AsyncAppendable {
+    value?.forEach {
+      append(it)
+    }
+    return this
+  }
+
+  override suspend fun append(value: Char): AsyncAppendable {
+    writeByte(value.code.toByte())
+    return this
+  }
+
+  override suspend fun append(
+    value: CharSequence?,
+    startIndex: Int,
+    endIndex: Int,
+  ): AsyncAppendable {
+    value ?: return this
+    for (i in startIndex until endIndex) {
+      append(value[i])
+    }
+    return this
   }
 
   suspend fun writeFully(data: ByteArray): Int {
@@ -122,6 +166,20 @@ fun AsyncOutput.bufferedOutput(
   return AsyncBufferedOutput(
     stream = this,
     bufferSize = bufferSize,
+    closeStream = closeStream,
+  )
+}
+
+fun AsyncOutput.bufferedOutput(
+  pool: ByteBufferPool,
+  closeStream: Boolean = true,
+): AsyncBufferedOutput2 {
+  if (this is AsyncBufferedOutput2 && this.pool === pool) {
+    return this
+  }
+  return AsyncBufferedOutput2(
+    stream = this,
+    pool = pool,
     closeStream = closeStream,
   )
 }

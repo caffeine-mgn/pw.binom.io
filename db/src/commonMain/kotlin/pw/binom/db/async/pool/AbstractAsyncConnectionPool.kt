@@ -1,11 +1,14 @@
 package pw.binom.db.async.pool
 
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import pw.binom.collections.WeakReferenceMap
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.date.DateTime
+import pw.binom.db.ConnectionMaxLiveTimeException
 import pw.binom.db.async.AsyncConnection
 import pw.binom.io.StreamClosedException
 import pw.binom.io.useAsync
@@ -16,12 +19,14 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
   abstract val maxConnections: Int
   open val pingTime: Duration = 1.0.minutes
   open val idleTime: Duration = 5.0.minutes
+  open val maxLifetime: Duration = 18.0.seconds
   open val waitFreeConnection: Boolean = true
   protected abstract suspend fun createConnection(): AsyncConnection
 
@@ -43,7 +48,8 @@ abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
 
   private var cleaning = false
 
-  private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? = waitersLock.synchronize {  waiters.removeLastOrNull()}
+  private fun getOneWater(): Continuation<PooledAsyncConnectionImpl>? =
+    waitersLock.synchronize { waiters.removeLastOrNull() }
 
   fun prepareStatement(sql: String) {
     PooledAsyncPreparedStatement2(this, sql)
@@ -141,11 +147,20 @@ abstract class AbstractAsyncConnectionPool : AsyncConnectionPool {
   override suspend fun getConnection(): PooledAsyncConnection = getConnectionAnyWay()
 
   override suspend fun <T> borrow(func: suspend PooledAsyncConnection.() -> T): T {
-    val out =
-      getConnection().useAsync {
-        func(it)
+    val maxLifetime = maxLifetime
+    return getConnection().useAsync { connection ->
+      if (maxLifetime.isInfinite()) {
+        func(connection)
+      } else {
+        try {
+          withTimeout(maxLifetime) {
+            func(connection)
+          }
+        } catch (e: TimeoutCancellationException) {
+          throw ConnectionMaxLiveTimeException()
+        }
       }
-    return out
+    }
   }
 
   internal suspend fun free(sql: String) {

@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.allTargets
 import pw.binom.publish.applyDefaultHierarchyBinomTemplate
@@ -23,8 +24,15 @@ fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.useNative() {
 
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
+  jvm {
+    compilations.all {
+      compilerOptions.configure {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+      }
+    }
+  }
   androidTarget()
-  allTargets{
+  allTargets {
     config()
   }
   eachNative {

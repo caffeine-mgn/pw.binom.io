@@ -22,6 +22,7 @@ import pw.binom.io.*
 import pw.binom.io.socket.SocketAddress
 import pw.binom.network.*
 import pw.binom.scram.ScramSaslClient
+import pw.binom.tracing.Tracing
 import pw.binom.writeByte
 import pw.binom.writeInt
 import pw.binom.writeShort
@@ -44,15 +45,16 @@ class PGConnection private constructor(
 
   companion object {
     const val TYPE = "PostgreSQL"
+    const val SCOPE = "postgresql-async"
     suspend fun connect(
-        address: SocketAddress,
-        applicationName: String? = "Binom Async Client",
-        networkDispatcher: NetworkManager = Dispatchers.Network,
-        userName: String,
-        password: String,
-        dataBase: String,
-        charset: Charset = Charsets.UTF8,
-        readBufferSize: Int = DEFAULT_BUFFER_SIZE,
+      address: SocketAddress,
+      applicationName: String? = "Binom Async Client",
+      networkDispatcher: NetworkManager = Dispatchers.Network,
+      userName: String,
+      password: String,
+      dataBase: String,
+      charset: Charset = Charsets.UTF8,
+      readBufferSize: Int = DEFAULT_BUFFER_SIZE,
     ): PGConnection {
       val connection = networkDispatcher.tcpConnect(address.resolve())
       try {
@@ -157,50 +159,58 @@ class PGConnection private constructor(
   }
 
   internal suspend fun query(query: String): QueryResponse {
-    val msg = this.reader.queryMessage
-    msg.query = query
-    sendOnly(msg)
-    var statusMsg: String? = null
-    var rowsAffected = 0L
-    LOOP@ while (true) {
-      when (val msg2 = readResponse()) {
-        is ReadyForQueryMessage -> return QueryResponse.Status(
-          status = statusMsg ?: "",
-          rowsAffected = rowsAffected
-        )
+    Tracing.processing(scope = SCOPE, name = "query", args = { mapOf("query" to query) }) {
 
-        is CommandCompleteMessage -> {
-          statusMsg = msg2.statusMessage
-          rowsAffected += msg2.rowsAffected
-          continue@LOOP
+      val msg = this.reader.queryMessage
+      msg.query = query
+      sendOnly(msg)
+      var statusMsg: String? = null
+      var rowsAffected = 0L
+      Tracing.processing(scope = SCOPE, name = "reading response", args = { mapOf("query" to query) }) {
+        LOOP@ while (true) {
+          when (val msg2 = readResponse()) {
+            is ReadyForQueryMessage -> return QueryResponse.Status(
+              status = statusMsg ?: "",
+              rowsAffected = rowsAffected
+            )
+
+            is CommandCompleteMessage -> {
+              statusMsg = msg2.statusMessage
+              rowsAffected += msg2.rowsAffected
+              continue@LOOP
+            }
+
+            is RowDescriptionMessage -> {
+              busy = true
+              val msg3 = reader.data
+              msg3.reset(msg2)
+              return msg3
+            }
+
+            is ErrorMessage -> {
+              checkType<ReadyForQueryMessage>(readResponse())
+              throw PostgresqlException("${msg2.fields['M']}. Query: $query")
+            }
+
+            is NoticeMessage -> continue@LOOP
+            is NoDataMessage -> continue@LOOP
+            else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2], Query: [$query]")
+          }
         }
-
-        is RowDescriptionMessage -> {
-          busy = true
-          val msg3 = reader.data
-          msg3.reset(msg2)
-          return msg3
-        }
-
-        is ErrorMessage -> {
-          checkType<ReadyForQueryMessage>(readResponse())
-          throw PostgresqlException("${msg2.fields['M']}. Query: $query")
-        }
-
-        is NoticeMessage -> continue@LOOP
-        is NoDataMessage -> continue@LOOP
-        else -> throw SQLException("Unexpected Message. Response Type: [${msg2::class}], Message: [$msg2], Query: [$query]")
       }
     }
+    throw IllegalStateException()
   }
 
   internal suspend fun sendOnly(msg: KindedMessage) {
-    if (closed) {
-      throw ClosedException()
+    Tracing.processing(scope = SCOPE, name = "sendOnly $msg") {
+      if (closed) {
+        throw ClosedException()
+      }
+      msg.write(packageWriter)
+      packageWriter.finishAsync(connection)
+      connection.flush()
     }
-    msg.write(packageWriter)
-    packageWriter.finishAsync(connection)
-    connection.flush()
   }
 
   private suspend fun sendReceive(msg: KindedMessage): KindedMessage {
@@ -213,7 +223,10 @@ class PGConnection private constructor(
     }
   }
 
-  internal suspend fun readResponse(): KindedMessage = KindedMessage.read(reader)
+  internal suspend fun readResponse(): KindedMessage =
+    Tracing.processing(scope = SCOPE, name = "readResponse") {
+      KindedMessage.read(reader)
+    }
 
   private suspend fun request(msg: KindedMessage): KindedMessage {
     msg.write(packageWriter)

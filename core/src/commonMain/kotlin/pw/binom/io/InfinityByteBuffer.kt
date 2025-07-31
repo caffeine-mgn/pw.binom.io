@@ -1,5 +1,6 @@
 package pw.binom.io
 
+import pw.binom.collections.LinkedList
 import pw.binom.collections.Stack
 import pw.binom.set
 
@@ -56,31 +57,31 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
       get() = writePosition - readPosition
   }
 
-  private val packages = Stack<Package>()
+  private val packages = LinkedList<Package>()
 
   private fun getReadyForWrite(): Package {
-    if (packages.isEmpty) {
+    if (packages.isEmpty()) {
       val p = Package()
-      packages.pushLast(p)
+      packages.addLast(p)
       return p
     }
-    var last = packages.peekLast()
+    var last = packages.peekLast()?: throw NoSuchElementException()
     if (last.writeRemaining > 0) {
       return last
     }
     last = Package()
-    packages.pushLast(last)
+    packages.addLast(last)
     return last
   }
 
   private fun getReadyForRead(): Package? {
     while (true) {
-      if (packages.isEmpty) {
+      if (packages.isEmpty()) {
         return null
       }
-      val l = packages.peekFirst()
+      val l = packages.peekFirst()?: throw NoSuchElementException()
       if (l.readRemaining <= 0) {
-        val p = packages.popFirst()
+        val p = packages.removeAt(0)
         size -= p.data.capacity
         p.data.close()
         continue
@@ -135,8 +136,8 @@ class InfinityByteBuffer(private val packageSize: Int) : Closeable, Output, Inpu
   override fun close() {
     checkClosed()
     closed = true
-    while (!packages.isEmpty) {
-      packages.popFirst().data.close()
+    while (!packages.isEmpty()) {
+      packages.removeAt(0).data.close()
     }
   }
 }

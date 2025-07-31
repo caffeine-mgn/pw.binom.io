@@ -1,9 +1,12 @@
 package pw.binom.io.socket.ssl
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.Closeable
 import pw.binom.io.length
 import pw.binom.io.putSafeInto
+import pw.binom.io.use
+import pw.binom.io.using
 import java.nio.ByteBuffer
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLEngineResult
@@ -22,7 +25,8 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
     private var rbio = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize * 2)
     private var wbio = ByteBuffer.allocateDirect(sslEngine.session.packetBufferSize * 2)
     private val tmpBuf = ByteBuffer.allocateDirect(sslEngine.session.applicationBufferSize)
-    private val clientData = pw.binom.io.InfinityByteBuffer(512)
+    private val tmpBufWrapper = pw.binom.io.ByteBuffer(tmpBuf)
+    private val clientData = pw.binom.io.InfinityByteBuffer(DEFAULT_BUFFER_SIZE)
 
     init {
         SSLMetrics.incSSLSession()
@@ -129,7 +133,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
             tmpBuf.clear()
             val s = sslEngine.unwrap(rbio, tmpBuf)
             tmpBuf.flip()
-            clientData.write(pw.binom.io.ByteBuffer(tmpBuf))
+            clientData.write(tmpBufWrapper)
             rbio.cleanup()
             val state = when (s.status) {
                 SSLEngineResult.Status.OK ->
@@ -328,6 +332,7 @@ actual class SSLSession(private val sslEngine: SSLEngine) : Closeable {
         if (!closed.compareAndSet(false, true)) {
             throw IllegalStateException("SSLSession already closed")
         }
+        tmpBufWrapper.close()
         SSLMetrics.decSSLSession()
         sslEngine.closeOutbound()
 //        sslEngine.closeInbound()

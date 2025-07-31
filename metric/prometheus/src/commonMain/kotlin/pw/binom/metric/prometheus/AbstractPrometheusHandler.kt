@@ -4,6 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncAppendable
 import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.bufferedOutput
 import pw.binom.io.httpServer.HttpHandler
 import pw.binom.io.httpServer.HttpServerExchange
 import pw.binom.io.use
@@ -50,7 +51,7 @@ abstract class AbstractPrometheusHandler : HttpHandler {
   override suspend fun handle(exchange: HttpServerExchange) {
     exchange.startResponse(200)
     usingBuffer { buffer ->
-      exchange.output.bufferedAsciiWriter().useAsync {
+      exchange.output.bufferedOutput().useAsync {
         makeResponse(it)
       }
     }

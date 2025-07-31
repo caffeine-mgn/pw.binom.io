@@ -22,9 +22,11 @@ kotlin {
   macosX64()
    */
   targets.all {
-    compilations["main"].compileTaskProvider.configure {
-      this.compilerOptions {
-        freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
+    compilations.all{
+      compileTaskProvider.configure {
+        compilerOptions {
+          freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
+        }
       }
     }
   }

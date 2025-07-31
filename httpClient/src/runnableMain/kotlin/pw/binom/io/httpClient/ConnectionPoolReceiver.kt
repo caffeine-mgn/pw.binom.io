@@ -1,6 +1,5 @@
 package pw.binom.io.httpClient
 
-import pw.binom.io.http.AsyncAsciiChannel
 import pw.binom.io.httpClient.protocol.HttpConnect
 import pw.binom.url.URL
 

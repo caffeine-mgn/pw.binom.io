@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pw.binom.publish.*
 
 plugins {
@@ -15,6 +16,13 @@ kotlin {
     -"js"
     -"wasmWasi"
     -"wasmJs"
+  }
+  jvm {
+    compilations.all {
+      compilerOptions.configure {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+      }
+    }
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {

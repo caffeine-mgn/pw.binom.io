@@ -3,7 +3,8 @@ package pw.binom.http.client.factory
 import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.http.client.Http11ConnectionImpl
 import pw.binom.http.client.HttpConnection
-import pw.binom.io.http.AsyncAsciiChannel
+import pw.binom.io.bufferedAsciiReader
+import pw.binom.io.bufferedOutput
 import pw.binom.url.URL
 
 class Http11ConnectionFactory(
@@ -24,10 +25,8 @@ class Http11ConnectionFactory(
       port = url.port ?: 80
     )
     return Http11ConnectionImpl(
-      channel = AsyncAsciiChannel(
-        channel = channel,
-        bufferSize = autoFlushSize,
-      ),
+      input = channel.bufferedAsciiReader(),
+      output = channel.bufferedOutput(),
       autoFlushSize = autoFlushSize,
       pushBack = pushBack,
     )

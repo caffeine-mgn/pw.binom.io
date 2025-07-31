@@ -4,6 +4,7 @@ import pw.binom.io.AsyncOutput
 import pw.binom.io.ByteBuffer
 import pw.binom.io.DataTransferSize
 import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.bufferedOutput
 import pw.binom.url.UrlEncoder
 import kotlin.random.Random
 
@@ -43,7 +44,7 @@ class AsyncMultipartOutput(
   }
 
   private var first = true
-  private val writer = stream.bufferedAsciiWriter()
+  private val writer = stream.bufferedOutput()
   private suspend fun printBoundary() {
     writer.append("--").append(boundary)
   }

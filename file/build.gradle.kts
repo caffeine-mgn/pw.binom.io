@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.*
 
@@ -30,11 +32,11 @@ kotlin {
     useNative()
   }
   jvm {
-    compilations.all {
-      target.compilations.all {
-        kotlinOptions.jvmTarget = "1.8"
-      }
-    }
+//    compilations.all {
+//      target.compilations.all {
+//        kotlinOptions.jvmTarget = "1.8"
+//      }
+//    }
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
@@ -56,3 +58,14 @@ kotlin {
   }
 }
 apply<pw.binom.plugins.ConfigPublishPlugin>()
+tasks.withType<KotlinJvmCompile>(){
+  compilerOptions {
+    optIn.add("kotlin.RequiresOptIn")
+    jvmTarget.set(JvmTarget.JVM_1_8)
+  }
+}
+//tasks.named<KotlinJvmCompile>("compileKotlin"){
+//  compilerOptions {
+//    jvmTarget.set(JvmTarget.JVM_1_8)
+//  }
+//}

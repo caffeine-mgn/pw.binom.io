@@ -9,8 +9,10 @@ apply<pw.binom.plugins.ConfigPublishPlugin>()
 kotlin {
   androidTarget()
   allTargets{
+    -"wasmJs"
 //    config()
   }
+  wasmJs()
   applyDefaultHierarchyBinomTemplate()
   sourceSets {
     commonMain.dependencies {

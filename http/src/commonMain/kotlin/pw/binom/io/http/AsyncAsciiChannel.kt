@@ -6,6 +6,7 @@ import pw.binom.io.AsyncChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.bufferedOutput
 
 open class AsyncAsciiChannel private constructor(
   pool: ByteBufferPool?,
@@ -30,12 +31,13 @@ open class AsyncAsciiChannel private constructor(
     channel.bufferedAsciiReader(closeParent = false, pool = pool)
   }
   var writer = if (pool == null) {
-    channel.bufferedAsciiWriter(closeParent = false, bufferSize = bufferSize)
+    channel.bufferedOutput(closeStream = false, bufferSize = bufferSize)
   } else {
-    channel.bufferedAsciiWriter(closeParent = false, pool = pool)
+    channel.bufferedOutput(closeStream = false, pool = pool)
   }
 
-  override suspend fun asyncClose() {
+
+    override suspend fun asyncClose() {
     try {
       reader.asyncCloseAnyway()
       writer.asyncCloseAnyway()
@@ -44,3 +46,4 @@ open class AsyncAsciiChannel private constructor(
     }
   }
 }
+

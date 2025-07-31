@@ -301,7 +301,6 @@ class JetStreamImpl(val reader: NatsReader) {
       into = into,
       config = newConfig,
     )
-
     val flow = channel.receiveAsFlow()
     return if (withAckSupport) {
       flow.map { MessageWithAck(it) }

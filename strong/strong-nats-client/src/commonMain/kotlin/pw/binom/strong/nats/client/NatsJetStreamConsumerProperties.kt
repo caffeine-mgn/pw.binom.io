@@ -16,7 +16,7 @@ data class NatsJetStreamConsumerProperties(
   val ackPolicy: AckPolicy = AckPolicy.NONE,
   val batchSize: Int = 100,
   val maxBytes: Int? = null,
-  val deliverPolicy: DeliverPolicy? = null,
+  val deliverPolicy: DeliverPolicy? = DeliverPolicy.All,
   val deliverGroup: String? = null,
   val flowControl: Boolean? = null,
 ) {
@@ -24,8 +24,8 @@ data class NatsJetStreamConsumerProperties(
     get() = ConsumerConfiguration(
       durableName = if (durable) name else null,
       name = if (durable) null else name,
-      memStorage = false,
-      ackPolicy = AckPolicy.NONE,
+      memStorage = memStorage,
+      ackPolicy = ackPolicy,
       description = description,
       deliverPolicy = deliverPolicy,
       deliverGroup = deliverGroup,

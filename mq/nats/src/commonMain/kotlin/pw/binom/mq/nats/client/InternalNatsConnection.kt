@@ -14,7 +14,7 @@ import pw.binom.network.SocketClosedException
 
 class InternalNatsConnection private constructor(
   override val config: ConnectInfo,
-  private val channel: AsyncChannelPair<AsyncBufferedAsciiInputReader, AsyncBufferedAsciiWriter>,
+  private val channel: AsyncChannelPair<AsyncBufferedAsciiInputReader, AsyncBufferedOutput>,
 //  private val writer: AsyncBufferedAsciiWriter,
 //  private val reader: AsyncBufferedAsciiInputReader,
 //  private val channel: AsyncChannel,
@@ -22,6 +22,12 @@ class InternalNatsConnection private constructor(
   private val onDisconnect: (() -> Unit)? = null,
 ) : NatsProtoConnection {
   companion object {
+    private val CLRF = "\r\n".encodeToByteArray()
+    private val SPACE=" ".encodeToByteArray()
+    private val CMD_PUB="PUB ".encodeToByteArray()
+    private val CMD_HPUB="HPUB ".encodeToByteArray()
+    private val CMD_SUB="SUB ".encodeToByteArray()
+    private val CMD_UNSUB="UNSUB ".encodeToByteArray()
     private fun parseInfoMsg(msg: String): ConnectInfo {
       if (!msg.startsWith("INFO ")) {
         throw RuntimeException("Unknown message. Message: [$msg]")
@@ -64,10 +70,14 @@ class InternalNatsConnection private constructor(
       readBufferSize: Int = DEFAULT_BUFFER_SIZE,
       writeBufferSize: Int = DEFAULT_BUFFER_SIZE,
     ): InternalNatsConnection {
-      val bufferedChannel = channel.buffered(
-        readBufferSize = readBufferSize,
-        writeBufferSize = writeBufferSize,
+      val bufferedChannel=AsyncChannelPair.create(
+        input = channel.input.bufferedAsciiReader(bufferSize = readBufferSize),
+        output = channel.output.bufferedOutput(bufferSize = writeBufferSize),
       )
+//      val bufferedChannel = channel.buffered(
+//        readBufferSize = readBufferSize,
+//        writeBufferSize = writeBufferSize,
+//      )
 //      val writer = channel.bufferedAsciiWriter(bufferSize = writeBufferSize, closeParent = false)
 //      val reader = channel.bufferedAsciiReader(bufferSize = readBufferSize, closeParent = false)
       val connectRequest =
@@ -84,9 +94,9 @@ class InternalNatsConnection private constructor(
           echo = echo,
         )
       try {
-        bufferedChannel.output.append("CONNECT ")
-          .append(Json.encodeToString(ConnectRequestDto.serializer(), connectRequest))
-          .append("\r\n")
+        bufferedChannel.output.write("CONNECT ".encodeToByteArray())
+        bufferedChannel.output.write(Json.encodeToString(ConnectRequestDto.serializer(), connectRequest).encodeToByteArray())
+        bufferedChannel.output.write(CLRF)
 
         bufferedChannel.output.flush()
         val connectMsg = bufferedChannel.input.readln() ?: throw IOException("Can't connect to Nats")
@@ -220,7 +230,8 @@ class InternalNatsConnection private constructor(
           msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
           msgText == "PING" -> {
             writeLock.synchronize {
-              writer.append("PONG\r\n")
+              writer.write("PONG".encodeToByteArray())
+              writer.write(CLRF)
               writer.flush()
             }
             continue@READ_LOOP
@@ -228,6 +239,11 @@ class InternalNatsConnection private constructor(
 
           msgText.startsWith("MSG ") -> return parseMsg(msgText)
           msgText.startsWith("HMSG ") -> return parseHMsg(msgText)
+          msgText.startsWith("-ERR '") -> {
+            val error = msgText.removePrefix("-ERR '").removeSuffix("'")
+            println("ERROR: $error")
+            continue@READ_LOOP
+          }
 
           else -> throw IOException("Unknown message type. Message: [$msgText]")
         }
@@ -243,41 +259,41 @@ class InternalNatsConnection private constructor(
     replyTo: String?,
     headers: HeadersBody,
     dataSize: Int,
-    data: (AsyncBufferedAsciiWriter) -> Unit,
+    data: (AsyncOutput) -> Unit,
   ) {
     require(subject.isNotEmpty() && " " !in subject)
     require(replyTo == null || (replyTo.isNotEmpty() && " " !in replyTo))
+    check(headers.isEmpty || (config.headersSupported && headerEnabled)) { "Headers not supported" }
     try {
       writeLock.lock()
       if (headers.isEmpty) {
-        writer.append("PUB ")
-          .append(subject)
-        if (replyTo != null) {
-          writer.append(" ").append(replyTo)
-        }
-        writer.append(" ").append(dataSize.toString()).append("\r\n")
-        data(writer)
-        writer.append("\r\n")
-        writer.flush()
+        writer.write(CMD_PUB)
       } else {
-        check(config.headersSupported && headerEnabled) { "Headers not supported" }
-        writer.append("HPUB ")
-          .append(subject)
-        if (replyTo != null) {
-          writer.append(" ").append(replyTo)
-        }
+        writer.write(CMD_HPUB)
+      }
+      writer.write(subject.encodeToByteArray())
+      if (replyTo != null) {
+        writer.write(SPACE)
+        writer.write(replyTo.toString().encodeToByteArray())
+      }
+      if (headers.isEmpty) {
+        writer.write(SPACE)
+        writer.write(dataSize.toString().encodeToByteArray())
+      } else {
         val headersSize = headers.bytes.size + 2
         val totalSize = dataSize + headersSize
-        writer.append(" ")
-          .append(headersSize)
-          .append(" ").append(totalSize).append("\r\n")
+        writer.write(SPACE)
+        writer.write(headersSize.toString().encodeToByteArray())
+        writer.write(SPACE)
+        writer.write(totalSize.toString().encodeToByteArray())
+        writer.write(CLRF)
         writer.write(headers.bytes)
-        writer.append("\r\n")
-        data(writer)
-        writer.append("\r\n")
-        writer.flush()
-        return
       }
+      writer.write(CLRF)
+      writer.flush()
+      data(writer)
+      writer.write(CLRF)
+      writer.flush()
     } catch (e: StreamClosedException) {
       onDisconnect()
     } finally {
@@ -297,7 +313,7 @@ class InternalNatsConnection private constructor(
       headers = headers,
       dataSize = data?.remaining ?: 0,
     ) {
-      data?.let { bytes -> it.write(bytes) }
+      data?.let { bytes -> it.writeFully(bytes) }
     }
   }
 
@@ -307,11 +323,15 @@ class InternalNatsConnection private constructor(
     subscribeId: String,
   ) {
     writeLock.synchronize {
-      writer.append("SUB ").append(subject)
+      writer.write(CMD_SUB)
+      writer.write(subject.encodeToByteArray())
       if (group != null) {
-        writer.append(" ").append(group)
+        writer.write(SPACE)
+        writer.write(group.encodeToByteArray())
       }
-      writer.append(" ").append(subscribeId).append("\r\n")
+      writer.write(SPACE)
+      writer.write(subscribeId.encodeToByteArray())
+      writer.write(CLRF)
       writer.flush()
     }
   }
@@ -321,11 +341,13 @@ class InternalNatsConnection private constructor(
     afterMessages: Int,
   ) {
     writeLock.synchronize {
-      writer.append("UNSUB ").append(subscribeId)
+      writer.write(CMD_UNSUB)
+      writer.write(subscribeId.encodeToByteArray())
       if (afterMessages > 0) {
-        writer.append(" ").append(afterMessages.toString())
+        writer.write(SPACE)
+        writer.write(afterMessages.toString().encodeToByteArray())
       }
-      writer.append("\r\n")
+      writer.write(CLRF)
       writer.flush()
     }
   }
@@ -342,7 +364,9 @@ class InternalNatsConnection private constructor(
       headers = headers,
       dataSize = data?.size ?: 0,
     ) {
-      data?.let { bytes -> it.write(bytes) }
+      data?.let { bytes ->
+        it.writeFully(bytes)
+      }
     }
   }
 

@@ -79,7 +79,7 @@ class HttpProxyConnect(
 //        } else {
 //            headers
 //        }
-    output.bufferedAsciiWriter(closeParent = false).useAsync { writer ->
+    output.bufferedOutput(closeStream = false).useAsync { writer ->
       Http11.sendRequest(
         output = writer,
         method = method,
@@ -121,7 +121,7 @@ class HttpProxyConnect(
       }
       newHeaders[Headers.PROXY_CONNECTION] = Headers.KEEP_ALIVE
       newHeaders[Headers.HOST] = host
-      output.bufferedAsciiWriter(closeParent = false).useAsync { bufOutput ->
+      output.bufferedOutput(closeStream = false).useAsync { bufOutput ->
         Http11.sendRequest(
           output = bufOutput,
           method = "CONNECT",

@@ -30,7 +30,7 @@ class NatsRawConnection(
   var isConnected = false
   var isConnecting = false
   private var disconnecting = false
-  val writer = channel.bufferedAsciiWriter()
+  val writer = channel.bufferedOutput()
   val reader = channel.bufferedAsciiReader()
 
   data class ConnectInfo(

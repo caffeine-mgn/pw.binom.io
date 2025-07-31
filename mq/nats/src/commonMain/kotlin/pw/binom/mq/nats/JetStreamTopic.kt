@@ -69,6 +69,10 @@ class JetStreamTopic(
         topic = this,
       )
     } else {
+      connection.js.createConsumer(
+        streamName = this.config.name,
+        config = config,
+      )
       JetStreamManualConsumer(
         config = config,
         topic = this,

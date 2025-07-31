@@ -52,8 +52,15 @@ kotlin {
         }
       }
       val args = listOf("-include-binary", sqliteStaticTask.staticFile.asFile.get().absolutePath)
-      compilations["main"].kotlinOptions.freeCompilerArgs = args
-      compilations["test"].kotlinOptions.freeCompilerArgs = args
+//      compilations["main"].kotlinOptions.freeCompilerArgs = args
+//      compilations["test"].kotlinOptions.freeCompilerArgs = args
+      compilations.all {
+        compileTaskProvider.configure {
+          compilerOptions {
+            freeCompilerArgs.addAll(args)
+          }
+        }
+      }
     }
   }
   applyDefaultHierarchyBinomTemplate()

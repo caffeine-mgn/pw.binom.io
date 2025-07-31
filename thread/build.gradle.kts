@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.*
 
@@ -29,6 +30,13 @@ kotlin {
   }
   eachNative {
     useNative()
+  }
+  jvm {
+    compilations.all {
+      compilerOptions.configure {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+      }
+    }
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {

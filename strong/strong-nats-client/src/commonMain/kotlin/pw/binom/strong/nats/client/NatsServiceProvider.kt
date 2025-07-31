@@ -4,7 +4,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.io.socket.DomainSocketAddress
 import pw.binom.logger.Logger
 import pw.binom.logger.debug
-import pw.binom.logger.info
 import pw.binom.mq.MqConnection
 import pw.binom.mq.nats.JetStreamMqConnection
 import pw.binom.mq.nats.NatsMqConnection
@@ -21,7 +20,7 @@ import pw.binom.strong.nats.client.properties.NatsClientProperties
 import pw.binom.strong.properties.injectProperty
 
 class NatsServiceProvider : NatsMqConnection, HealthIndicator {
-  private val nm: NetworkManager by inject()
+  private val networkManager: NetworkManager by inject()
   private val properties: NatsClientProperties by injectProperty()
   private var con: NatsMqConnection? = null
   private val logger = Logger.getLogger("Strong.NatsClient")
@@ -52,9 +51,9 @@ class NatsServiceProvider : NatsMqConnection, HealthIndicator {
     logger.debug("Open connection to ${properties.host}:${properties.port}")
     con = MqConnection.nats(
       address = DomainSocketAddress(properties.host, properties.port),
-      networkManager = nm,
+      networkManager = networkManager,
       lang = properties.lang,
-      context = nm,
+      context = networkManager,
       clientName = properties.clientName,
       version = properties.clientVersion,
       echo = properties.allowEcho,

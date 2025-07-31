@@ -25,7 +25,7 @@ class AsyncAppendableUTF8(private val stream: AsyncOutput) : AsyncWriter {
 
     override suspend fun append(value: CharSequence?, startIndex: Int, endIndex: Int): AsyncAppendable {
         value ?: return this
-        (startIndex..endIndex).forEach {
+        (startIndex until endIndex).forEach {
             append(value[it])
         }
         return this

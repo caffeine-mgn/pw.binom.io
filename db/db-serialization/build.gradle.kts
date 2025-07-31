@@ -23,6 +23,7 @@ kotlin {
       api(project(":db"))
       api(project(":collections"))
       api(project(":db:db-serialization-annotations"))
+      api(project(":tracing"))
       api(libs.kotlinx.coroutines.core)
     }
     commonTest.dependencies {

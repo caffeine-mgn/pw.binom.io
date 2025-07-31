@@ -22,6 +22,7 @@ kotlin {
       api(project(":date"))
       api(project(":network"))
       api(project(":ssl"))
+      api(project(":tracing"))
       api(project(":scram"))
     }
     commonTest.dependencies {

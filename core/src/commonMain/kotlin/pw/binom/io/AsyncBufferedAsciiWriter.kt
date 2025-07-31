@@ -2,7 +2,7 @@ package pw.binom.io
 
 import pw.binom.*
 import pw.binom.atomic.AtomicBoolean
-
+/*
 abstract class AbstractAsyncBufferedAsciiWriter(
   val closeParent: Boolean,
 ) : AsyncWriter, BufferedAsyncOutput {
@@ -172,6 +172,9 @@ abstract class AbstractAsyncBufferedAsciiWriter(
     if (buffer.position > 0) {
 
       buffer.flip()
+      buffer.holdState {
+        println("SEND $output\n---===---\n${it.toByteArray().decodeToString()}\n---===---")
+      }
       output.writeFully(buffer)
       buffer.clear()
       output.flush()
@@ -200,6 +203,7 @@ class AsyncBufferedAsciiWriter private constructor(
   override val buffer: ByteBuffer,
   closeParent: Boolean = true,
 ) : AbstractAsyncBufferedAsciiWriter(closeParent = closeParent) {
+
   override fun toString(): String = "AsyncBufferedAsciiWriter(output=$output)"
 
   constructor(output: AsyncOutput, pool: ByteBufferPool, closeParent: Boolean = true) : this(
@@ -236,13 +240,13 @@ fun AsyncOutput.bufferedAsciiWriter(
   bufferSize = bufferSize,
   closeParent = closeParent,
 )
-
+*/
 fun AsyncChannelPair<*, *>.buffered(
   readBufferSize: Int = DEFAULT_BUFFER_SIZE,
   writeBufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) = AsyncChannelPair.create(
   input = input.bufferedAsciiReader(bufferSize = readBufferSize),
-  output = output.bufferedAsciiWriter(bufferSize = writeBufferSize),
+  output = output.bufferedOutput(bufferSize = writeBufferSize),
 )
 
 
@@ -250,5 +254,5 @@ fun AsyncChannelPair<*, *>.buffered(
   bufferSize: Int,
 ) = AsyncChannelPair.create(
   input = input.bufferedAsciiReader(bufferSize = bufferSize),
-  output = output.bufferedAsciiWriter(bufferSize = bufferSize),
+  output = output.bufferedOutput(bufferSize = bufferSize),
 )

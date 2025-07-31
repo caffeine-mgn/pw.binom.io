@@ -52,8 +52,15 @@ fun KotlinNativeTarget.useNativeNet() {
   staticBuildTask.dependsOn(removeCacheTask)
   tasks.findByName(compileTaskName)?.dependsOn(staticBuildTask)
   val args = listOf("-include-binary", staticBuildTask.staticFile.asFile.get().absolutePath)
-  compilations["main"].kotlinOptions.freeCompilerArgs = args
-  compilations["test"].kotlinOptions.freeCompilerArgs = args
+  compilations.all {
+    compileTaskProvider.configure {
+      this.compilerOptions {
+        freeCompilerArgs.addAll(args)
+      }
+    }
+  }
+//  compilations["main"].kotlinOptions.freeCompilerArgs = args
+//  compilations["test"].kotlinOptions.freeCompilerArgs = args
   compilations["main"].cinterops {
     create("nativeCommon") {
       definitionFile.set(project.file("src/cinterop/native.def"))

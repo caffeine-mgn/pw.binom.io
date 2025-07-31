@@ -14,7 +14,7 @@ const val MILLISECONDS_IN_HOUR = MILLISECONDS_IN_MINUTE * 60
 const val MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24
 
 @OptIn(ExperimentalContracts::class)
-inline fun extractDateItems(
+internal inline fun extractDateItems(
   utc: Long,
   offset: Duration,
   year: (Int) -> Unit = {},

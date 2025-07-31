@@ -55,6 +55,8 @@ class Stack<T> {
     }
     _size--
     result.set(item.value)
+    item.next = null
+    item.back = null
   }
 
   fun popFirst(): T {
@@ -66,6 +68,8 @@ class Stack<T> {
       bottom = null
     }
     _size--
+    item.next = null
+    item.back = null
     return item.value
   }
 

@@ -5,9 +5,10 @@ import pw.binom.io.AsyncChannel
 import pw.binom.io.IOException
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.bufferedOutput
 
 class BaseSMTPClient(val connect: AsyncChannel) : SMTPClient {
-    private val writer = connect.bufferedAsciiWriter()
+    private val writer = connect.bufferedOutput()
     private val reader = connect.bufferedAsciiReader()
 
     private var code = 0

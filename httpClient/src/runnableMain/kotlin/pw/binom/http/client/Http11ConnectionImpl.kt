@@ -10,7 +10,8 @@ import pw.binom.io.httpClient.protocol.v11.Http11
  * Держатель HTTP подключения для HTTP-1.1
  */
 class Http11ConnectionImpl(
-  private val channel: AsyncAsciiChannel,
+  private val output: AbstractAsyncBufferedOutput,
+  private val input: AsyncBufferedAsciiInputReader,
   private val autoFlushSize: Int,
   /**
    * Callback, вызываемый при возврате в pool соединений
@@ -48,12 +49,12 @@ class Http11ConnectionImpl(
         state = HttpConnection.State.CLOSED
       }
       Http11.sendRequest(
-        output = channel.writer,
+        output = output,
         method = method,
         request = request,
         headers = headers,
       )
-      channel.writer.flush()
+      output.flush()
       val bodyLen = headers.httpContentLength
       val outputStream = if (method == "HEAD" || bodyLen == HttpContentLength.NONE) {
         EmptyAsyncOutput
@@ -62,7 +63,7 @@ class Http11ConnectionImpl(
           HttpContentLength.NONE -> EmptyAsyncOutput
           HttpContentLength.CHUNKED -> {
             AsyncChunkedOutput(
-              stream = channel.writer,
+              stream = output,
               autoFlushBuffer = autoFlushSize,
               closeStream = false,
             ).closeOnException()
@@ -71,12 +72,12 @@ class Http11ConnectionImpl(
           is HttpContentLength.Fixed -> {
             val stream = when {
               bodyLen.chunked -> AsyncChunkedOutput(
-                stream = channel.writer,
+                stream = output,
                 autoFlushBuffer = autoFlushSize,
                 closeStream = false,
               )
 
-              else -> channel.writer
+              else -> output
             }
             AsyncContentLengthOutput(
               stream = stream,
@@ -89,12 +90,15 @@ class Http11ConnectionImpl(
       state = HttpConnection.State.BUSY
       lastActive = DateTime.now
       Http11ClientExchange(
-        input = channel.reader,
+        input = input,
         output = outputStream,
-        rawOutput = channel.writer,
+        rawOutput = output,
         onClose = { isError ->
           when {
-            state == HttpConnection.State.CLOSED -> channel.asyncCloseAnyway()
+            state == HttpConnection.State.CLOSED -> {
+              input.asyncCloseAnyway()
+              output.asyncCloseAnyway()
+            }
             keepAlive && !isError -> when {
               outputStream === EmptyAsyncOutput -> state = HttpConnection.State.READY
               (outputStream as? AsyncContentLengthOutput)?.isFull == true -> {
@@ -110,13 +114,15 @@ class Http11ConnectionImpl(
 
               else -> {
                 state = HttpConnection.State.CLOSED
-                channel.asyncCloseAnyway()
+                input.asyncCloseAnyway()
+                output.asyncCloseAnyway()
               }
             }
 
             else -> {
               state = HttpConnection.State.CLOSED
-              channel.asyncCloseAnyway()
+              input.asyncCloseAnyway()
+              output.asyncCloseAnyway()
             }
           }
         }
@@ -125,7 +131,8 @@ class Http11ConnectionImpl(
   }
 
   override suspend fun asyncClose() {
-    channel.asyncClose()
+    input.asyncCloseAnyway()
+    output.asyncCloseAnyway()
   }
 }
 

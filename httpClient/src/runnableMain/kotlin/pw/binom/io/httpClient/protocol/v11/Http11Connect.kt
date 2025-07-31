@@ -4,6 +4,7 @@ import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.io.AsyncChannel
 import pw.binom.io.bufferedAsciiReader
 import pw.binom.io.bufferedAsciiWriter
+import pw.binom.io.bufferedOutput
 import pw.binom.io.http.Headers
 import pw.binom.io.httpClient.ConnectionFactory
 import pw.binom.io.httpClient.HttpRequestBody
@@ -55,7 +56,7 @@ class Http11Connect(
 //      )
       this.tcp = tcp
     }
-    val output = tcp.bufferedAsciiWriter(closeParent = false)
+    val output = tcp.bufferedOutput(closeStream = false)
     try {
       Http11.sendRequest(
         output = output,
