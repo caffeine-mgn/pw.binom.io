@@ -3,12 +3,14 @@ package pw.binom.db.async.pool
 import pw.binom.db.async.AsyncConnection
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
-class AsyncConnectionPoolImpl (
+class AsyncConnectionPoolImpl(
   override val maxConnections: Int,
   override val pingTime: Duration = 1.0.minutes,
   override val idleTime: Duration = 5.0.minutes,
   override val waitFreeConnection: Boolean = true,
+  override val maxLifetime: Duration = 10.seconds,
   val factory: suspend () -> AsyncConnection,
 ) : AbstractAsyncConnectionPool() {
   init {
