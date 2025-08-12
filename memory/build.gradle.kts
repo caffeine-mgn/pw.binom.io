@@ -1,3 +1,5 @@
+//import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import pw.binom.kotlin.clang.eachNative
 import pw.binom.publish.*
@@ -17,11 +19,22 @@ fun KotlinNativeTarget.useNativeUtils() {
 }
 
 apply<pw.binom.KotlinConfigPlugin>()
+java {
+  sourceCompatibility = JavaVersion.VERSION_21
+  targetCompatibility = JavaVersion.VERSION_21
+}
 kotlin {
+  jvmToolchain(21)
   allTargets {
     config()
-//    -"jvm"
+    -"jvm"
 //    -"js"
+  }
+  jvm {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_1_8)
+//      jvmDefault.set(JvmDefaultMode.ENABLE)
+    }
   }
 
   eachNative {
@@ -50,7 +63,7 @@ kotlin {
     wasmJsMain {
       dependsOn(anyWasmMain)
     }
-    wasmWasiMain{
+    wasmWasiMain {
       dependsOn(anyWasmMain)
     }
     dependsOn("*Native*Main", runnableNativeMain)

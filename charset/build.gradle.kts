@@ -25,11 +25,11 @@ fun KotlinNativeTarget.useIconvUtils() {
 }
 
 kotlin {
-  androidTarget {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_1_8)
-    }
-  }
+//  androidTarget {
+//    compilerOptions {
+//      jvmTarget.set(JvmTarget.JVM_1_8)
+//    }
+//  }
   allTargets {
     config()
   }

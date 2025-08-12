@@ -10,19 +10,17 @@ plugins {
 }
 apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
-  androidTarget()
   allTargets {
     config()
+    -"jvm"
     -"js"
     -"wasmWasi"
     -"wasmJs"
   }
   jvm {
-    compilations.all {
-      compilerOptions.configure {
-        jvmTarget.set(JvmTarget.JVM_1_8)
-      }
-    }
+//    compilerOptions {
+//      jvmTarget.set(JvmTarget.JVM_1_8)
+//    }
   }
   applyDefaultHierarchyBinomTemplate()
   sourceSets {

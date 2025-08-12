@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import pw.binom.publish.*
 
 plugins {
@@ -11,9 +13,15 @@ apply<pw.binom.KotlinConfigPlugin>()
 kotlin {
   allTargets {
     config()
+    -"jvm"
     -"js"
     -"wasmWasi"
     -"wasmJs"
+  }
+  jvm {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_1_8)
+    }
   }
   applyDefaultHierarchyBinomTemplate()
 //  applyDefaultHierarchyTemplate()
