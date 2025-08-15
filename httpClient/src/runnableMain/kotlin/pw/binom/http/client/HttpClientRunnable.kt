@@ -10,6 +10,8 @@ import pw.binom.http.client.factory.Http11ConnectionFactory
 import pw.binom.http.client.factory.HttpConnectionFactory
 import pw.binom.http.client.factory.NetSocketFactory
 import pw.binom.io.http.Headers
+import pw.binom.io.http.emptyHeaders
+import pw.binom.io.http.headersOf
 import pw.binom.url.URL
 import pw.binom.url.UrlHelper
 import kotlin.coroutines.CoroutineContext
