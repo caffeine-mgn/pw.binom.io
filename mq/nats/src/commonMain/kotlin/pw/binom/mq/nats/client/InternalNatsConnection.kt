@@ -114,35 +114,10 @@ class InternalNatsConnection private constructor(
         throw e
       }
     }
-
-    /**
-     * \r
-     */
-    private const val CR: Byte = 0x0d
-
-    /**
-     * \n
-     */
-    private const val LF: Byte = 0x0a
-    private val LINE_END = byteArrayOf(0x0d, 0x0a)
   }
 
   private val reader = channel.input
   private val writer = channel.output
-
-  private class MessageImpl : NatsMessage {
-    override var subject: String = ""
-    override var subscribeId: String = ""
-    override var replyTo: String? = null
-    override var data: ByteArray = ByteArray(0)
-    override var headers = NatsHeaders.empty
-
-    override suspend fun ack() {
-    }
-
-    override fun toString() =
-      "Message(subject='$subject', sid='$subscribeId', replyTo=$replyTo, headers=$headers, data=${data.contentToString()})"
-  }
 
   private class NatsMessageImpl2(
     override val subject: String,
@@ -155,7 +130,6 @@ class InternalNatsConnection private constructor(
     }
   }
 
-  private val msg = MessageImpl()
   private val writeLock = SimpleAsyncLock()
 
   private suspend fun parseMsg(msgText: String): NatsMessageImpl2 {
@@ -173,7 +147,6 @@ class InternalNatsConnection private constructor(
     val data = ByteArray(size)
     reader.readFully(data)
     reader.skip(2)
-    val headersBody = HeadersBody.empty
     return NatsMessageImpl2(
       subject = subject,
       subscribeId = sid,
@@ -210,14 +183,13 @@ class InternalNatsConnection private constructor(
     }
 
 
-    val data = body
     reader.skip(2)
 
     return NatsMessageImpl2(
       subject = subject,
       subscribeId = sid,
       replyTo = replyTo,
-      data = data,
+      data = body,
       headers = headers,
     )
   }

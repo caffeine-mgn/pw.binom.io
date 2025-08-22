@@ -1,5 +1,6 @@
 package pw.binom.strong.web.server.controllers
 
+import kotlinx.coroutines.withTimeoutOrNull
 import pw.binom.io.httpServer.HttpServerExchange
 import pw.binom.io.httpServer.response
 import pw.binom.logger.Logger
@@ -8,6 +9,7 @@ import pw.binom.strong.HealthIndicator
 import pw.binom.strong.injectServiceList
 import pw.binom.strong.web.server.ManagementHttpHandler
 import pw.binom.url.toPath
+import kotlin.time.Duration.Companion.seconds
 
 class LivenessController : ManagementHttpHandler {
 
@@ -22,7 +24,9 @@ class LivenessController : ManagementHttpHandler {
       return
     }
 //readiness
-    val isNotHealthy = healthIndicators.filter { !it.isHealthy() }
+    val isNotHealthy = healthIndicators.filter {
+      withTimeoutOrNull(1.seconds) { !it.isHealthy() } != false
+    }
     exchange.response {
       if (isNotHealthy.isNotEmpty()) {
         logger.info("Unhealthy: ${isNotHealthy.map { it.componentName ?: it::class.qualifiedName ?: it::class.simpleName ?: it::class.toString() }}")

@@ -55,9 +55,7 @@ class ReconnectableNatsProtoConnection(
   private var connectionLock = SimpleAsyncLock()
   private val closed = AtomicBoolean(false)
 
-  suspend fun isConnected() = connectionLock.synchronize {
-    existConnection != null
-  }
+  suspend fun isConnected() = existConnection != null
 
   private class Subscription(
     val subject: String,
