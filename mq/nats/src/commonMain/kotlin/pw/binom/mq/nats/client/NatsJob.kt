@@ -3,6 +3,7 @@ package pw.binom.mq.nats.client
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -39,7 +40,13 @@ class NatsJob(
     private var forMessages: Int,
   ) {
     suspend fun push(msg: NatsMessage) {
-      channel.send(msg)
+      try {
+        channel.send(msg)
+      } catch (_: ClosedSendChannelException){
+        longListenersLock.synchronize {
+          longListeners.remove(subscribeId)
+        }
+      }
       if (forMessages > 0) {
         forMessages--
         if (forMessages <= 0) {
@@ -52,8 +59,8 @@ class NatsJob(
     }
   }
 
-  private val oneShotPrefix = "one-shot-"
-  private val oneShotSubjectPrefix = "one-shot-${Random.nextUuid()}"
+  private val subscribePrefix = "one-shot-"
+  private val subjectPrefix = "one-shot-${Random.nextUuid()}"
 
   suspend fun runBlocking() {
     check(reading.compareAndSet(false, true)) { "Reading process already started" }
@@ -66,7 +73,7 @@ class NatsJob(
       }
 
       val subscribeId = msg.subscribeId
-      if (subscribeId.startsWith(oneShotPrefix)) {
+      if (subscribeId.startsWith(subscribePrefix)) {
         val listener = oneShortListeners.remove(subscribeId)
         if (listener != null) {
           listener.resume(msg)
@@ -110,7 +117,7 @@ class NatsJob(
   ): ReceiveChannel<NatsMessage> {
     require(forMessages == -1 || forMessages > 0) { "Invalid argument \"forMessages\". Should be equals -1 or more than zero" }
     val id = oneShortCounter.addAndGet(1)
-    val subscribeId = "$oneShotPrefix-$id"
+    val subscribeId = "$subjectPrefix-$id"
     val listener = Listener(subscribeId = subscribeId, channel = Channel(), forMessages = forMessages)
 
     longListenersLock.synchronize {
@@ -155,8 +162,8 @@ class NatsJob(
     data: ByteArray?,
   ): NatsMessage {
     val id = oneShortCounter.addAndGet(1)
-    val subscribeId = "$oneShotPrefix-$id"
-    val responseSubject = "$oneShotSubjectPrefix-$id"
+    val subscribeId = "$subscribePrefix-$id"
+    val responseSubject = "$subjectPrefix-$id"
     try {
       connection.subscribe(
         subscribeId = subscribeId,
