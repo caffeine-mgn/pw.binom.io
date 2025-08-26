@@ -3,14 +3,18 @@ package pw.binom.mq.nats.client
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
 import pw.binom.io.socket.DomainSocketAddress
+import pw.binom.mq.nats.exceptions.SubscribeFinishedException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
@@ -34,7 +38,7 @@ class ReconnactableConnect(
   private val unexpectedMessageListener: ((NatsMessage) -> Unit)? = null,
   val scope: CoroutineScope = GlobalScope,
   val context: CoroutineContext = EmptyCoroutineContext,
-) : AsyncCloseable {
+) : AsyncCloseable, NatsConnection {
   init {
     require(addresses.isNotEmpty()) { "Addresses should not be empty" }
   }
@@ -128,5 +132,87 @@ class ReconnactableConnect(
     job.cancelAndJoin()
     currentConnection?.asyncClose()
     currentConnection = null
+  }
+
+  override suspend fun send(subject: String, headers: HeadersBody, replyTo: String?, data: ByteArray?) {
+    var reconnectListener: Closeable? = null
+
+    reconnectListener = onConnect {
+      it.send(
+        subject = subject,
+        headers = headers,
+        replyTo = replyTo,
+        data = data,
+      )
+      reconnectListener?.close()
+    }
+    TODO()
+    suspendCancellableCoroutine<Unit> {
+
+    }
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun subscribe(subject: String, group: String?, forMessages: Int): ReceiveChannel<NatsMessage> {
+    val channel = Channel<NatsMessage>()
+    var forMessages = forMessages
+    var reconnectListener: Closeable? = null
+    var listener: Closeable? = null
+    reconnectListener = onConnect {
+      listener = it.subscribe(
+        subject = subject,
+        group = group,
+        forMessages = forMessages,
+      ) {
+        if (it != null) {
+          channel.send(it)
+          if (forMessages > 0) {
+            forMessages--
+            if (forMessages == 0) {
+              reconnectListener?.close()
+              channel.close(SubscribeFinishedException())
+            }
+          }
+        }
+      }
+    }
+    channel.invokeOnClose {
+      reconnectListener.close()
+      listener?.close()
+    }
+    return channel
+  }
+
+  override suspend fun subscribe(
+    subject: String,
+    group: String?,
+    forMessages: Int,
+    listener: suspend (NatsMessage?) -> Unit,
+  ): Closeable {
+    var forMessages = forMessages
+    var reconnectListener: Closeable? = null
+    var listener: Closeable? = null
+
+    reconnectListener = onConnect {
+      listener = it.subscribe(
+        subject = subject,
+        group = group,
+        forMessages = forMessages,
+      ) {
+        if (it != null) {
+          listener(it)
+          if (forMessages > 0) {
+            forMessages--
+            if (forMessages == 0) {
+              reconnectListener?.close()
+            }
+          }
+        }
+      }
+    }
+    return Closeable {
+      reconnectListener.close()
+      listener?.close()
+    }
   }
 }

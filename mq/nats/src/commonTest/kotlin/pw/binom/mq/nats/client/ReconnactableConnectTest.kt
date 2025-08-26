@@ -43,12 +43,15 @@ class ReconnactableConnectTest : BaseTest() {
   }
 
   @Test
-  fun subcsriptionTest() = testing {
+  fun subscriptionReconnectTest() = testing {
     val streamName = Random.nextUuid().toShortString()
+    var tcpConnection: TcpConnection? = null
+    var counter = 0
     ReconnactableConnect(
       connect = {
+        tcpConnection = tcpConnect()
         InternalNatsConnection.connect(
-          channel = tcpConnect(),
+          channel = tcpConnection,
         )
       },
       addresses = setOf(
@@ -58,6 +61,7 @@ class ReconnactableConnectTest : BaseTest() {
       connection.onConnect {
         it.subscribe(subject = streamName) {
           println("INCOME----->$it")
+          counter++
         }
         it.send(subject = streamName, data = byteArrayOf(1))
       }
@@ -66,7 +70,7 @@ class ReconnactableConnectTest : BaseTest() {
   }
 
   @Test
-  fun jsPullReconnect() = testing {
+  fun jsPullReconnectTest() = testing {
     var tcpConnection: TcpConnection? = null
     val streamName = Random.nextUuid().toShortString()
     val consumerName = Random.nextUuid().toShortString()
