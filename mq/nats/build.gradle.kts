@@ -42,6 +42,21 @@ kotlin {
     }
   }
 }
+tasks {
+  val nats =
+    DockerUtils.dockerContanier(
+      project = project,
+      image = "nats:2.10.11",
+      tcpPorts = listOf(4222 to 8122),
+      args = listOf("-js"),
+      suffix = "Nats",
+    )
+
+  eachKotlinTest {
+    nats.dependsOn(it)
+    it.finalizedBy(nats.remove)
+  }
+}
 /*
 tasks {
   val nats =

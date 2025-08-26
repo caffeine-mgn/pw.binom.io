@@ -34,7 +34,7 @@ class NatsRawConnectionTest {
 
   suspend fun natsConnect() =
     InternalNatsConnection.connect(
-      channel = LoggingAsyncChannel(tcpConnect()),
+      channel = tcpConnect(),
     )
 
   suspend fun natsReader(incomeMessage: suspend (nats: InternalNatsConnection, message: NatsMessage) -> Unit): NatsReader {
@@ -158,6 +158,7 @@ class NatsRawConnectionTest {
         )
       val tmpO = "fffff"
       reader.subscribe(tmpO) {
+        it?:return@subscribe
         val replyTo = it.replyTo
         if (replyTo != null) {
           js.sendAck(

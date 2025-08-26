@@ -4,11 +4,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
+import pw.binom.io.Closeable
 import pw.binom.mq.nats.client.dto.*
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
@@ -218,8 +220,10 @@ class JetStreamImpl(val reader: NatsReader) {
     @Serializable
     data class Cursor(
       val offset: Int,
-      val subjects_filter: String?,
-      val deleted_details: Boolean? = null,
+      @SerialName("subjects_filter")
+      val subjectsFilter: String?,
+      @SerialName("deleted_details")
+      val deletedDetails: Boolean? = null,
     )
 
     val opt =
@@ -227,8 +231,8 @@ class JetStreamImpl(val reader: NatsReader) {
         Cursor.serializer(),
         Cursor(
           offset = offset,
-          subjects_filter = subjectsFilter,
-          deleted_details = deletedDetails,
+          subjectsFilter = subjectsFilter,
+          deletedDetails = deletedDetails,
         ),
       )
     val msg =
@@ -276,23 +280,24 @@ class JetStreamImpl(val reader: NatsReader) {
     val into = Random.nextUuid().toString()
     var remaining = newConfig.batch
     val channel = Channel<NatsMessage>(capacity = config.batch)
-    var listener: AsyncCloseable? = null
+    var listener: Closeable? = null
     listener = reader.subscribe(
       subject = into,
     ) { msg ->
+      msg ?: return@subscribe
       if (msg.headers.code == NatsHeaders.CODE_CONSUMER_HEARTBEAT) {
         return@subscribe
       }
       if (msg.headers.code == NatsHeaders.CODE_CONSUME_TIMEOUT || msg.headers.code == NatsHeaders.CODE_CONSUMER_DELETED) {
         channel.close()
-        listener?.asyncCloseAnyway()
+        listener?.closeAnyway()
         return@subscribe
       }
       channel.send(msg)
       remaining--
       if (remaining <= 0) {
         channel.close()
-        listener?.asyncCloseAnyway()
+        listener?.closeAnyway()
       }
     }
     pullMessages(
@@ -339,11 +344,12 @@ class JetStreamImpl(val reader: NatsReader) {
         incomeListener
       }
     val readNext = AtomicBoolean(true)
-    var subscribeClosable: AsyncCloseable? = null
+    var subscribeClosable: Closeable? = null
     subscribeClosable =
       this.reader.subscribe(
         subject = into,
       ) { msg ->
+        msg?:return@subscribe
         if (readNext.getValue()) {
           listener(msg)
           remaining--
@@ -351,14 +357,14 @@ class JetStreamImpl(val reader: NatsReader) {
             pullNext()
           }
         } else {
-          subscribeClosable!!.asyncCloseAnyway()
+          subscribeClosable!!.closeAnyway()
         }
       }
     pullNext()
     return AsyncCloseable {
       if (readNext.compareAndSet(true, false)) {
         if (remaining == 0) {
-          subscribeClosable.asyncCloseAnyway()
+          subscribeClosable.closeAnyway()
         }
       }
     }
@@ -368,7 +374,7 @@ class JetStreamImpl(val reader: NatsReader) {
     stream: String,
     subject: String,
   ) = reader.sendAndReceive(
-    subject = "\$JS.API.DIRECT.GET.%s.%s.$stream.$subject",
+    subject = "\$JS.API.DIRECT.GET.$stream.$subject",
     data = null as ByteArray?
   )
 

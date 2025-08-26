@@ -119,7 +119,7 @@ class InternalNatsConnection private constructor(
   private val reader = channel.input
   private val writer = channel.output
 
-  private class NatsMessageImpl2(
+  private data class NatsMessageImpl2(
     override val subject: String,
     override val subscribeId: String,
     override val replyTo: String?,
@@ -198,6 +198,7 @@ class InternalNatsConnection private constructor(
     try {
       READ_LOOP@ while (true) {
         val msgText = reader.readln() ?: throw SocketClosedException()
+        println("msgText->$msgText")
         when {
           msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
           msgText == "PING" -> {

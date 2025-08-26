@@ -31,7 +31,7 @@ abstract class BaseTest {
     testing {
       tcpConnect().use { tcp ->
         MqConnection.nats(
-          channel = LoggingAsyncChannel(tcp),
+          channel = tcp,
           context = coroutineContext,
         ).useAsync {
           func(it)
@@ -46,7 +46,7 @@ abstract class BaseTest {
 
   suspend fun natsConnect() =
     InternalNatsConnection.connect(
-      channel = LoggingAsyncChannel(tcpConnect()),
+      channel = tcpConnect(),
     )
 
   suspend fun natsReader(incomeMessage: suspend (nats: InternalNatsConnection, message: NatsMessage) -> Unit): NatsReader {

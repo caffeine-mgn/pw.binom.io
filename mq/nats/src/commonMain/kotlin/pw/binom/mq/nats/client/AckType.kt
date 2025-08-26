@@ -10,5 +10,5 @@ enum class AckType(val text: String, val terminal: Boolean) {
   AckNext("+NXT", false),
   ;
 
-  val bytes = text.encodeToByteArray()
+  internal val bytes = text.encodeToByteArray()
 }

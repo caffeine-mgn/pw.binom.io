@@ -26,16 +26,18 @@ interface NatsProtoConnection : AsyncCloseable {
     subscribeId: String,
     forMessages: Int,
   ) {
-    require(forMessages > 0) { "Argument \"forMessages\" should be more than zero" }
+//    require(forMessages > 0) { "Argument \"forMessages\" should be more than zero" }
     subscribe(
       subject = subject,
       group = group,
       subscribeId = subscribeId,
     )
-    unsubscribe(
-      subscribeId = subscribeId,
-      afterMessages = forMessages,
-    )
+    if (forMessages>0) {
+      unsubscribe(
+        subscribeId = subscribeId,
+        afterMessages = forMessages,
+      )
+    }
   }
 
   suspend fun unsubscribe(

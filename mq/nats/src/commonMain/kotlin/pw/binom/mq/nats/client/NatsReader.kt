@@ -3,10 +3,12 @@
 package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.ByteBuffer
+import pw.binom.io.Closeable
 import pw.binom.io.IOException
 import pw.binom.thread.DefaultUncaughtExceptionHandler
 import pw.binom.thread.Thread
@@ -26,7 +28,7 @@ private constructor(
   val context: CoroutineContext = EmptyCoroutineContext,
   val uncaughtExceptionHandler: UncaughtExceptionHandler = DefaultUncaughtExceptionHandler,
   val onDisconnected: (suspend (Throwable) -> Unit)? = null,
-) : AsyncCloseable {
+) : NatsConnection {
   fun interface IncomeMessage {
     companion object {
       val stub = object : IncomeMessage {
@@ -123,9 +125,46 @@ private constructor(
     }
   }
 
-  suspend fun sendAndReceive(
+  override suspend fun send(
     subject: String,
-    headers: HeadersBody = HeadersBody.empty,
+    headers: HeadersBody,
+    replyTo: String?,
+    data: ByteArray?,
+  ) {
+    connection.publish(
+      subject = subject,
+      replyTo = replyTo,
+      headers = headers,
+      data = data,
+    )
+  }
+
+  override suspend fun subscribe(
+    subject: String,
+    group: String?,
+    forMessages: Int,
+  ): ReceiveChannel<NatsMessage> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun subscribe(
+    subject: String,
+    group: String?,
+    forMessages: Int,
+    listener: suspend (NatsMessage?) -> Unit,
+  ): Closeable {
+    connection.subscribe(
+      subject = subject,
+      group = group,
+      forMessages = forMessages,
+      subscribeId = Random.nextUuid().toString()
+    )
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun sendAndReceive(
+    subject: String,
+    headers: HeadersBody,
     data: ByteArray?,
   ) = sendAndReceive { con, responseSubject ->
     con.publish(
@@ -171,36 +210,6 @@ private constructor(
     return waitMessage(responseSubject)
   }
 
-  /*
-      internal suspend inline fun sendAndReceive(crossinline func: suspend (NatsConnection, String) -> Unit): NatsMessage {
-        val responseSubject = oneShotSubjectPrefix + Random.nextUuid().toString()
-        val subscribeId = "subscribe-" + Random.nextUuid().toString()
-        connection.subscribe(
-          subscribeId = subscribeId,
-          subject = responseSubject,
-        )
-        connection.unsubscribe(id = subscribeId, afterMessages = 1)
-        println("NATS:: SUCCESS SEND! Wait until end!")
-        return suspendCancellableCoroutine {con->
-          con.invokeOnCancellation {
-            scope.launch(context) {
-              oneShotWatersLock.synchronize { subscribeWaiters.remove(responseSubject) }
-              connection.unsubscribe(id = subscribeId)
-            }
-          }
-          scope.launch(context) {
-            println("NATS:: one shot success!")
-            oneShotWatersLock.synchronize { subscribeWaiters[responseSubject] = con }
-            try {
-              func(connection, responseSubject)
-            } catch (e: Throwable) {
-              oneShotWatersLock.synchronize { subscribeWaiters.remove(responseSubject) }
-              con.resumeWithException(e)
-            }
-          }
-        }
-      }
-  */
   val config
     get() = connection.config
 
