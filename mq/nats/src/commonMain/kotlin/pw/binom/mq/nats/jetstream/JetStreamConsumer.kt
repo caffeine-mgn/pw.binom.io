@@ -3,7 +3,6 @@ package pw.binom.mq.nats.jetstream
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
-import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
 import pw.binom.mq.nats.client.JetStreamApi
 import pw.binom.mq.nats.client.NatsMessage
@@ -33,7 +32,7 @@ class JetStreamConsumer(
       var subscribeListener: Closeable? = null
       val connected = connection.onConnect { con ->
         println("Connected!")
-        subscribeListener = con.subscribe(subject = subject, forMessages = 1) { msg ->
+        subscribeListener = con.subscribe(subject = subject, forMessages = batch) { msg ->
           println("Income message $msg")
           if (msg != null) {
             try {
