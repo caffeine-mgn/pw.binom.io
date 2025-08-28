@@ -11,8 +11,8 @@ interface Producer<HEADER:Headers> : AsyncCloseable {
     data: ByteArray,
   )
 
-  suspend fun send(
-    headers: Headers = Headers.empty,
-    data: ByteBuffer,
-  )
+//  suspend fun send(
+//    headers: Headers = Headers.empty,
+//    data: ByteBuffer,
+//  )
 }

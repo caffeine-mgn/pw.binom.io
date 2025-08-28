@@ -2,12 +2,11 @@ package pw.binom.mq.nats.client
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
-import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-interface ReconnactableConnect : AsyncCloseable, NatsConnection {
+interface ReconnactableConnect : NatsConnection {
   companion object {
     fun create(
       /**

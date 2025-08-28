@@ -4,15 +4,18 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.io.Closeable
+import pw.binom.mq.nats.client.ConsumerConfiguration
 import pw.binom.mq.nats.client.JetStreamApi
 import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.ReconnactableConnect
+import pw.binom.mq.nats.client.dto.ConsumerInfoResponseDto
 import pw.binom.mq.nats.client.dto.PullRequestOptionsDto
 import pw.binom.uuid.nextUuid
 import kotlin.random.Random
 import kotlin.time.Duration
 
 class JetStreamConsumer(
+  val config: ConsumerConfiguration,
   val streamName: String,
   val consumerName: String,
   private val connection: ReconnactableConnect,
