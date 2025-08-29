@@ -4,6 +4,7 @@ import pw.binom.mq.nats.client.JetStreamApi
 import pw.binom.mq.nats.client.NatsConnection
 import pw.binom.mq.nats.client.ReconnactableConnect
 import pw.binom.mq.nats.client.dto.ErrorDto
+import pw.binom.mq.nats.client.dto.StreamConfig
 
 
 suspend fun ReconnactableConnect.getStreamConsumer(
@@ -22,6 +23,12 @@ suspend fun ReconnactableConnect.getStreamConsumer(
   )
 }
 
+suspend fun NatsConnection.createStream(
+  config: StreamConfig,
+) = JetStreamApi.createStream(
+  config = config,
+  client = this,
+)
 
 suspend fun NatsConnection.getStream(
   name: String,
@@ -34,10 +41,5 @@ suspend fun NatsConnection.getStream(
   offset = offset,
   deletedDetails = deletedDetails,
   subjectsFilter = subjectsFilter,
-).let {
-  if (it.error?.code == ErrorDto.NOT_FOUND) {
-    null
-  } else {
-    it
-  }
-}
+).takeIf { it.error?.code != ErrorDto.NOT_FOUND }
+

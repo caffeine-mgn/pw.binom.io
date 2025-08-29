@@ -4,10 +4,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.io.Closeable
-import pw.binom.mq.nats.client.ConsumerConfiguration
+import pw.binom.mq.nats.client.*
 import pw.binom.mq.nats.client.JetStreamApi
-import pw.binom.mq.nats.client.NatsMessage
-import pw.binom.mq.nats.client.ReconnactableConnect
 import pw.binom.mq.nats.client.dto.ConsumerInfoResponseDto
 import pw.binom.mq.nats.client.dto.PullRequestOptionsDto
 import pw.binom.uuid.nextUuid
@@ -21,6 +19,23 @@ class JetStreamConsumer(
   private val connection: ReconnactableConnect,
 ) {
   companion object {
+    private class MessageWithAck(
+      val client: NatsConnection,
+      val replayTo: String,
+      val msg: NatsMessage,
+    ) : NatsMessage by msg {
+
+      override suspend fun ack() {
+        val replyTo = msg.replyTo
+        if (replyTo != null) {
+          JetStreamApi.sendAck(
+            subject = replayTo,
+            client = client,
+          )
+        }
+      }
+    }
+
     suspend fun pull(
       streamName: String,
       consumerName: String,
@@ -28,6 +43,7 @@ class JetStreamConsumer(
       batch: Int = -1,
       maxBytes: Long = -1,
       expires: Duration = Duration.INFINITE,
+      withAck: Boolean,
     ): ReceiveChannel<NatsMessage> {
       val subject = Random.nextUuid().toString()
       val channel = Channel<NatsMessage>()
@@ -39,7 +55,17 @@ class JetStreamConsumer(
           println("Income message $msg")
           if (msg != null) {
             try {
-              channel.send(msg)
+              val replyTo = msg.replyTo
+              val clientMsg = if (withAck && replyTo != null) {
+                MessageWithAck(
+                  client = connection,
+                  replayTo = replyTo,
+                  msg = msg,
+                )
+              } else {
+                msg
+              }
+              channel.send(clientMsg)
             } catch (_: ClosedSendChannelException) {
               // Do nothing
             }
@@ -77,5 +103,6 @@ class JetStreamConsumer(
     batch = batch,
     maxBytes = maxBytes,
     expires = expires,
+    withAck = config.ackPolicy != AckPolicy.NONE,
   )
 }

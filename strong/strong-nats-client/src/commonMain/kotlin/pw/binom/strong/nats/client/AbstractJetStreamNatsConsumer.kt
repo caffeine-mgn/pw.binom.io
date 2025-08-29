@@ -1,13 +1,11 @@
 package pw.binom.strong.nats.client
 
-import pw.binom.mq.nats.JetStreamAutoConsumer
 import pw.binom.mq.nats.JetStreamTopic
-import pw.binom.mq.nats.NatsMqConnection
 import pw.binom.mq.nats.client.ConsumerConfiguration
 import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.ReconnactableConnect
 import pw.binom.mq.nats.jetstream.JetStreamConsumer
-import pw.binom.mq.nats.jetstream.createConsumer
+import pw.binom.mq.nats.jetstream.createStreamConsumer
 import pw.binom.mq.nats.jetstream.getStream
 import pw.binom.mq.nats.jetstream.getStreamConsumer
 import pw.binom.strong.BeanLifeCycle
@@ -53,7 +51,7 @@ abstract class AbstractJetStreamNatsConsumer {
         description = config.description,
         ackPolicy = config.ackPolicy,
       )
-      consumer1 = connection.createConsumer(
+      consumer1 = connection.createStreamConsumer(
         start = true, config = consumerConfiguration,
         batchSize = config.batchSize,
         func = this::consume,
