@@ -15,7 +15,7 @@ class JetStreamProducer(val subject: String, val topic: JetStreamTopic) : Produc
       data = data,
     )
   }
-
+/*
   override suspend fun send(
     headers: Headers,
     data: ByteBuffer,
@@ -26,7 +26,7 @@ class JetStreamProducer(val subject: String, val topic: JetStreamTopic) : Produc
       body = data,
     )
   }
-
+*/
   override suspend fun asyncClose() {
     // Do nothing
   }

@@ -64,8 +64,11 @@ object Nats {
     BeanLifeCycle.postConstruct {
       val nats by inject<NatsMqConnection>()
       val (topic1, producer1) = SafeException.async {
-        val topic = nats.getOrCreateTopic(config.subject).closeOnException()
-        topic to topic.createProducer().closeOnException()
+        val topic = nats.getOrCreateTopic(config.subject)
+        onException { topic.asyncClose() }
+        val producer=topic.createProducer()
+        onException { producer.asyncClose() }
+        topic to producer
       }
       topic = topic1
       producer = producer1

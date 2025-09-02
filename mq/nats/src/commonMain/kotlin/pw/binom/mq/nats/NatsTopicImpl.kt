@@ -4,9 +4,9 @@ import pw.binom.mq.Topic
 import pw.binom.mq.nats.client.NatsMessage
 
 class NatsTopicImpl(val connection: NatsMqConnection, override val subject: String) : NatsTopic {
-  private val producer = NatsProducer(this)
+//  private val producer = NatsProducer(this)
 
-  override suspend fun createProducer() = producer
+  override suspend fun createProducer():NatsProducer = TODO()//producer
 
   override suspend fun clean() {
     // Do nothing

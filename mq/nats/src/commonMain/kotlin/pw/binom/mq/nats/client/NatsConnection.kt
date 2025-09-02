@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
 import pw.binom.mq.nats.exceptions.NatsConnectionClosedException
+import kotlin.coroutines.cancellation.CancellationException
 
 interface NatsConnection : AsyncCloseable {
 
@@ -14,22 +15,22 @@ interface NatsConnection : AsyncCloseable {
     data: ByteArray? = null,
   )
 
-  @Throws(NatsConnectionClosedException::class)
+  @Throws(NatsConnectionClosedException::class, CancellationException::class)
   suspend fun subscribe(
     subject: String,
-    group: String?=null,
+    group: String? = null,
     forMessages: Int = -1,
   ): ReceiveChannel<NatsMessage>
 
-  @Throws(NatsConnectionClosedException::class)
+  @Throws(NatsConnectionClosedException::class, CancellationException::class)
   suspend fun subscribe(
     subject: String,
-    group: String?=null,
+    group: String? = null,
     forMessages: Int = -1,
     listener: suspend (NatsMessage?) -> Unit,
   ): Closeable
 
-  @Throws(NatsConnectionClosedException::class)
+  @Throws(NatsConnectionClosedException::class, CancellationException::class)
   suspend fun sendAndReceive(
     subject: String,
     headers: HeadersBody = HeadersBody.empty,

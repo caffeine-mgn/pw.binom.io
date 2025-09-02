@@ -40,5 +40,5 @@ interface ReconnactableConnect : NatsConnection {
   /**
    * Вызывается когда соединение потеряно
    */
-  fun onDisconnected(func: suspend (NatsConnection) -> Unit): Closeable
+  suspend fun onDisconnected(func: suspend (NatsConnection) -> Unit): Closeable
 }

@@ -126,15 +126,10 @@ class NatsJob(
     check(reading.compareAndSet(false, true)) { "Reading process already started" }
     while (coroutineContext.isActive) {
       val msg = try {
-        println("Reading message...")
-        val e = connection.readMessage()
-        println("Message was read $e")
-        e
+        connection.readMessage()
       } catch (_: CancellationException) {
-        println("Cancelled!")
         break
       } catch (e: SocketClosedException) {
-        println("Socket closed!")
         disconnected()
         throw e
       }
@@ -283,13 +278,11 @@ class NatsJob(
     val subscribeId = "$subscribePrefix-$id"
 //    val responseSubject = "$subjectPrefix-$id"
     try {
-      println("Subscribe to $subscribeId")
       connection.subscribe(
         subscribeId = subscribeId,
         subject = subscribeId,
         forMessages = 1,
       )
-      println("Sending to $subject")
       connection.publish(
         subject = subject,
         replyTo = subscribeId,
@@ -300,7 +293,6 @@ class NatsJob(
       disconnected()
       throw e
     }
-    println("suspend Coroutine... data=${data?.decodeToString()}")
     val context = coroutineContext
     return suspendCancellableCoroutine { coroutine ->
       coroutine.invokeOnCancellation {

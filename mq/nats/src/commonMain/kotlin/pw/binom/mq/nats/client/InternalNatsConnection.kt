@@ -198,7 +198,6 @@ class InternalNatsConnection private constructor(
     try {
       READ_LOOP@ while (true) {
         val msgText = reader.readln() ?: throw SocketClosedException()
-        println("msgText->$msgText")
         when {
           msgText.startsWith("INFO ") -> parseInfoMsg(msgText)
           msgText == "PING" -> {

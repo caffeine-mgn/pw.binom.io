@@ -129,7 +129,7 @@ internal class ReconnactableConnectImpl(
     }
   }
 
-  override fun onDisconnected(func: suspend (NatsConnection) -> Unit): Closeable {
+  override suspend fun onDisconnected(func: suspend (NatsConnection) -> Unit): Closeable {
     listenersLock.synchronize {
       onDisconnectHandlers += func
     }

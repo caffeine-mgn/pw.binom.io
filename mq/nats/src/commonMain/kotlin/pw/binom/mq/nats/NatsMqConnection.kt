@@ -49,11 +49,11 @@ interface NatsMqConnection : MqConnection {
         override suspend fun send(headers: Headers, data: ByteArray) {
           connection.publish(subject = topic, replyTo = responseSubject, headers = headers.toNatsHeaders(), data = data)
         }
-
+        /*
         override suspend fun send(headers: Headers, data: ByteBuffer) {
           connection.publish(subject = topic, replyTo = responseSubject, headers = headers.toNatsHeaders(), data = data)
         }
-
+        */
         override suspend fun asyncClose() {
         }
       }

@@ -23,6 +23,7 @@ kotlin {
     val runnableMain by getting {
       dependencies {
         api(project(":ssl"))
+        api(project(":date"))
         api(project(":compression"))
         api(project(":network"))
       }
