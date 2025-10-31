@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import pw.binom.mq.nats.client.ConsumerConfiguration
 import pw.binom.mq.nats.client.NatsMessage
 import pw.binom.mq.nats.client.ReconnactableConnect
-import pw.binom.mq.nats.jetstream.createConsumer
+import pw.binom.mq.nats.jetstream.createStreamConsumer
 import pw.binom.mq.nats.jetstream.getStreamConsumer
 import pw.binom.network.NetworkManager
 import pw.binom.strong.BeanLifeCycle
@@ -40,7 +40,7 @@ abstract class AbstractJetStreamNatsConsumer {
         if (!config.autoCreate) {
           throw IllegalStateException("Consumer ${streamConfig.consumerName} in stream ${config.streamName} doesn't exist")
         } else {
-          exist = connection.createConsumer(
+          exist = connection.createStreamConsumer(
             streamName = config.streamName,
             config = streamConfig,
           )
