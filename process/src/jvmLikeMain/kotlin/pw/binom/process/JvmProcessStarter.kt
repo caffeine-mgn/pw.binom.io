@@ -19,7 +19,6 @@ class JvmProcessStarter(
   private var process: JvmProcess? = null
   override val stdin: Output = object : Output {
     override fun write(data: ByteBuffer): DataTransferSize {
-      println("stdin::Wait on lock")
       lock.withLock {
         if (process == null) {
           con.await()
@@ -27,10 +26,8 @@ class JvmProcessStarter(
         }
       }
       val process = process ?: error("Process not ran")
-      println("stdin::writing ${data.remaining} bytes")
       val c =  process.internalStdin.write(data)
       process.internalStdin.flush()
-      println("stdin::wrote $c")
       return c
     }
 
@@ -44,14 +41,12 @@ class JvmProcessStarter(
   }
   override val stdout: Input = object : Input {
     override fun read(dest: ByteBuffer): DataTransferSize {
-      println("stdout::Wait on lock")
       lock.withLock {
         if (process == null) {
           con.await()
         }
       }
       val process = process ?: error("Process not ran")
-      println("stdout::reading....")
       return process.internalStdout.read(dest)
     }
 
