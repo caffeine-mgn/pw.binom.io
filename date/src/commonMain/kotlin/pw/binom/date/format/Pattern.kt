@@ -1,6 +1,8 @@
 package pw.binom.date.format
 
 import pw.binom.date.Calendar
+import pw.binom.date.Date
+import pw.binom.date.Time
 import kotlin.math.absoluteValue
 
 internal sealed interface Pattern {
@@ -79,6 +81,7 @@ internal sealed interface Pattern {
    */
   fun parse(text: String, position: Int, defaultTimezoneOffset: Int, set: ((FieldType, Int) -> Unit)?): Int
   fun toString(calendar: Calendar): String
+  fun toString(calendar: Date): String = toString(calendar.withTime(Time(0)).calendar(0))
 
   enum class FieldType {
     YEAR, MONTH, DAY_OF_MONTH, DAY_OF_WEAK, HOURS, MINUTES, SECONDS, MILLISECOND, TIME_ZONE
@@ -243,6 +246,8 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       format.toString(calendar)
 
+    override fun toString(calendar: Date): String = format.toString(calendar)
+
     override fun toString(): String = "[$format]"
   }
 
@@ -271,6 +276,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(calendar: Calendar): String = calendar.year.as4()
+    override fun toString(calendar: Date): String = calendar.year.as4()
 
     override fun toString(): String = "yyyy"
   }
@@ -301,6 +307,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(calendar: Calendar): String = calendar.month.as2()
+    override fun toString(calendar: Date): String = calendar.month.as2()
     override fun toString(): String = "MM"
   }
 
@@ -330,7 +337,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(calendar: Calendar): String = calendar.dayOfMonth.as2()
-
+    override fun toString(calendar: Date): String =calendar.dayOfMonth.as2()
     override fun toString(): String = "dd"
   }
 
@@ -356,6 +363,7 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       text
 
+    override fun toString(calendar: Date): String = text
     override fun toString(): String = "'$text'"
   }
 
@@ -384,6 +392,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(calendar: Calendar): String = calendar.hours.as2()
+    override fun toString(calendar: Date): String = "00"
 
     override fun toString(): String = "HH"
   }
@@ -413,7 +422,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(calendar: Calendar): String = calendar.minutes.as2()
-
+    override fun toString(calendar: Date): String = "00"
     override fun toString(): String = "mm"
   }
 
@@ -440,6 +449,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(calendar: Calendar): String = calendar.seconds.as2()
+    override fun toString(calendar: Date): String = "00"
 
     override fun toString(): String = "ss"
   }
@@ -559,8 +569,8 @@ internal sealed interface Pattern {
       return 3
     }
 
-    override fun toString(calendar: Calendar): String =
-      when (calendar.month) {
+    fun toString(index: Int): String =
+      when (index) {
         1 -> "Jan"
         2 -> "Feb"
         3 -> "Mar"
@@ -573,9 +583,10 @@ internal sealed interface Pattern {
         10 -> "Oct"
         11 -> "Nov"
         12 -> "Dec"
-        else -> throw IllegalArgumentException("Unknown month ${calendar.month}")
+        else -> throw IllegalArgumentException("Unknown month $index")
       }
 
+    override fun toString(calendar: Calendar): String = toString(calendar.month)
     override fun toString(): String = "MMM"
   }
 
@@ -603,6 +614,7 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       calendar.millisecond.as3()
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SSS"
   }
 
@@ -633,6 +645,7 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       "${calendar.millisecond.as3()}000000"
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SSSSSSSSS"
   }
 
@@ -663,6 +676,7 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       "${calendar.millisecond.as3()}00000"
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SSSSSSSS"
   }
 
@@ -693,6 +707,7 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       "${calendar.millisecond.as3()}0000"
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SSSSSSS"
   }
 
@@ -723,6 +738,7 @@ internal sealed interface Pattern {
     override fun toString(calendar: Calendar): String =
       "${calendar.millisecond.as3()}000"
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SSSSSS"
   }
 
@@ -755,6 +771,7 @@ internal sealed interface Pattern {
       return r.as2()
     }
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SS"
   }
 
@@ -783,6 +800,7 @@ internal sealed interface Pattern {
       return (calendar.millisecond / 100).toString()
     }
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "SS"
   }
 
@@ -828,6 +846,7 @@ internal sealed interface Pattern {
       return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}"
     }
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "X"
   }
 
@@ -881,6 +900,7 @@ internal sealed interface Pattern {
       return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}${m.as2()}"
     }
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "XXX"
   }
 
@@ -937,6 +957,7 @@ internal sealed interface Pattern {
       return "${if (calendar.offset >= 0) '+' else '-'}${h.as2()}:${m.as2()}"
     }
 
+    override fun toString(calendar: Date) = ""
     override fun toString(): String = "XXX"
   }
 
@@ -991,6 +1012,7 @@ internal sealed interface Pattern {
     }
 
     override fun toString(): String = "Z"
+    override fun toString(calendar: Date) = ""
   }
 
   /**
@@ -1028,6 +1050,8 @@ internal sealed interface Pattern {
       return "Z"
     }
 
+    override fun toString(calendar: Date) = ""
+
     override fun toString(): String = "Z"
   }
 
@@ -1053,7 +1077,8 @@ internal sealed interface Pattern {
         -1
       }
 
-    override fun toString(calendar: Calendar): String = "-"
+    override fun toString(calendar: Calendar) = toString()
+    override fun toString(calendar: Date) = toString()
     override fun toString(): String = "-"
   }
 
@@ -1079,7 +1104,8 @@ internal sealed interface Pattern {
         -1
       }
 
-    override fun toString(calendar: Calendar): String = ":"
+    override fun toString(calendar: Calendar): String = toString()
+    override fun toString(calendar: Date): String = toString()
     override fun toString(): String = ":"
   }
 
@@ -1105,7 +1131,8 @@ internal sealed interface Pattern {
         -1
       }
 
-    override fun toString(calendar: Calendar): String = "."
+    override fun toString(calendar: Calendar): String = toString()
+    override fun toString(calendar: Date): String = toString()
     override fun toString(): String = "."
   }
 
@@ -1131,7 +1158,8 @@ internal sealed interface Pattern {
         -1
       }
 
-    override fun toString(calendar: Calendar): String = "/"
+    override fun toString(calendar: Calendar): String = toString()
+    override fun toString(calendar: Date): String = toString()
     override fun toString(): String = "/"
   }
 
@@ -1157,7 +1185,8 @@ internal sealed interface Pattern {
         -1
       }
 
-    override fun toString(calendar: Calendar): String = ","
+    override fun toString(calendar: Calendar): String = toString()
+    override fun toString(calendar: Date): String = toString()
     override fun toString(): String = ","
   }
 
@@ -1186,6 +1215,7 @@ internal sealed interface Pattern {
       }
 
     override fun toString(calendar: Calendar): String = " "
+    override fun toString(calendar: Date): String = " "
   }
 }
 

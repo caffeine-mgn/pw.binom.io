@@ -68,7 +68,7 @@ class IsoParserTest {
             assertEquals(0, timeZoneOffset)
         }
          */
-    "2021-03-29T10:17:33.039440139Z".parseIso8601Date(0)!!.calendar(0).apply {
+    "2021-03-29T10:17:33.039440139Z".parseIso8601DateTime(0)!!.calendar(0).apply {
       assertEquals(2021, year)
       assertEquals(3, month)
       assertEquals(29, dayOfMonth)
@@ -82,7 +82,7 @@ class IsoParserTest {
 
   @Test
   fun aaa() {
-    "0071-08-23T12:00:00.000000000Z".parseIso8601Date().apply {
+    "0071-08-23T12:00:00.000000000Z".parseIso8601DateTime().apply {
       println("->time=${this?.milliseconds}")
       val calc = this?.calendar()
       assertNotNull(calc)

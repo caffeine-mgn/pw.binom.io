@@ -9,7 +9,7 @@ class DateParserTest {
   fun test() {
     assertEquals("2021-06-02T01:20:18.698+00:00", DateTime(1622596818698L).iso8601(0))
 
-    "yyyy-MM-dd".toDatePattern().parseOrNull("1989-01-05", defaultTimezoneOffset = 3 * 60)!!.calendar(3 * 60)
+    "yyyy-MM-dd".toDatePattern().parseDateTimeOrNull("1989-01-05", defaultTimezoneOffset = 3 * 60)!!.calendar(3 * 60)
       .apply {
         assertEquals(1989, year)
         assertEquals(1, month)
@@ -19,7 +19,7 @@ class DateParserTest {
         assertEquals(0, seconds)
         assertEquals(3 * 60, offset)
       }
-    "yyyy-MM-dd HH:mm:ss.SSSXXX".toDatePattern().parseOrNull("1989-01-05 10:31:44.456+03:00")!!.calendar(3 * 60)
+    "yyyy-MM-dd HH:mm:ss.SSSXXX".toDatePattern().parseDateTimeOrNull("1989-01-05 10:31:44.456+03:00")!!.calendar(3 * 60)
       .apply {
         assertEquals(1989, year)
         assertEquals(1, month)
@@ -64,8 +64,8 @@ class DateParserTest {
       assertEquals(0, date.millisecond)
       assertEquals(DateTime.systemZoneOffset, date.offset)
     }
-    assert(pattern.parseOrNull("14:32")!!.calendar())
-    assert(pattern.parseOrNull("1432")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("14:32")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("1432")!!.calendar())
   }
 
   @Test
@@ -82,9 +82,9 @@ class DateParserTest {
       assertEquals(0, date.millisecond)
       assertEquals(DateTime.systemZoneOffset, date.offset)
     }
-    assert(pattern.parseOrNull("1432")!!.calendar())
-    assert(pattern.parseOrNull("197001 1432")!!.calendar())
-    assert(pattern.parseOrNull("1970-01 1432")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("1432")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("197001 1432")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("1970-01 1432")!!.calendar())
   }
 
   @Test
@@ -101,8 +101,8 @@ class DateParserTest {
       assertEquals(0, date.millisecond)
       assertEquals(DateTime.systemZoneOffset, date.offset)
     }
-    assert(pattern.parseOrNull("2021")!!.calendar())
-    assert(pattern.parseOrNull("2021-")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("2021")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("2021-")!!.calendar())
   }
 
   @Test
@@ -114,10 +114,10 @@ class DateParserTest {
       assertEquals(2, date.dayOfMonth)
       assertEquals(2021, date.year)
     }
-    assert(pattern.parseOrNull("2021-08-02")!!.calendar())
-    assert(pattern.parseOrNull("2021.08.02")!!.calendar())
-    assert(pattern.parseOrNull("2021 08.02")!!.calendar())
-    assert(pattern.parseOrNull("202108.02")!!.calendar())
-    assert(pattern.parseOrNull("20210802")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("2021-08-02")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("2021.08.02")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("2021 08.02")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("202108.02")!!.calendar())
+    assert(pattern.parseDateTimeOrNull("20210802")!!.calendar())
   }
 }

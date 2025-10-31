@@ -1,22 +1,29 @@
 package pw.binom.date.format
 
 import pw.binom.date.Calendar
+import pw.binom.date.Date
 import pw.binom.date.DateTime
 import kotlin.jvm.JvmInline
 
 @JvmInline
 value class DateFormat internal constructor(internal val format: Array<Pattern>) {
   data class DateFormatParseResult(val format: DateFormat, val length: Int)
-  data class ParseResult(val dateTime: DateTime, val length: Int)
+  data class ParseDateTimeResult(val dateTime: DateTime, val length: Int)
+  data class ParseDateResult(val date: Date, val length: Int)
 
   val length
     get() = format.sumOf { it.patternLength }
 
-  fun parseOrNull(text: String, defaultTimezoneOffset: Int = DateTime.systemZoneOffset): DateTime? =
+  fun parseDateTimeOrNull(text: String, defaultTimezoneOffset: Int = DateTime.systemZoneOffset): DateTime? =
     parse3(
       text = text,
       defaultTimezoneOffset = defaultTimezoneOffset,
     )?.dateTime
+
+  fun parseDateOrNull(text: String) =
+    parse4(
+      text = text,
+    )?.date
 
   override fun toString(): String = format.joinToString(separator = "")
   internal fun parse2(
@@ -58,12 +65,53 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
     return index - position
   }
 
+  private fun parse4(
+    text: String,
+    returnNullOnEof: Boolean = true,
+    position: Int = 0,
+  ): ParseDateResult? {
+    var year = 1970
+    var month = 1
+    var dayOfMonth = 1
+    val l = parse2(
+      text = text,
+      defaultTimezoneOffset = 0,
+      returnNullOnEof = returnNullOnEof,
+      position = position,
+    ) { type, value ->
+      when (type) {
+        Pattern.FieldType.YEAR -> year = value
+        Pattern.FieldType.MONTH -> month = value
+        Pattern.FieldType.DAY_OF_MONTH -> dayOfMonth = value
+        Pattern.FieldType.HOURS,
+        Pattern.FieldType.MINUTES,
+        Pattern.FieldType.SECONDS,
+        Pattern.FieldType.MILLISECOND,
+        Pattern.FieldType.TIME_ZONE,
+        Pattern.FieldType.DAY_OF_WEAK,
+          -> {
+        }
+      }
+    }
+    if (l == -1) {
+      return null
+    }
+    return ParseDateResult(
+      date = Date.of(
+        year = year,
+        monthNumber = month,
+        dayOfMonth = dayOfMonth,
+      ),
+      length = l,
+    )
+  }
+
   private fun parse3(
     text: String,
     defaultTimezoneOffset: Int = DateTime.systemZoneOffset,
     returnNullOnEof: Boolean = true,
     position: Int = 0,
-  ): ParseResult? {
+  ): ParseDateTimeResult? {
     var year = 1970
     var month = 1
     var dayOfMonth = 1
@@ -93,7 +141,7 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
     if (l == -1) {
       return null
     }
-    return ParseResult(
+    return ParseDateTimeResult(
       dateTime = DateTime.internalOf(
         year = year,
         month = month,
@@ -109,6 +157,14 @@ value class DateFormat internal constructor(internal val format: Array<Pattern>)
   }
 
   fun toString(calendar: Calendar): String {
+    val sb = StringBuilder()
+    format.forEach {
+      sb.append(it.toString(calendar))
+    }
+    return sb.toString()
+  }
+
+  fun toString(calendar: Date): String {
     val sb = StringBuilder()
     format.forEach {
       sb.append(it.toString(calendar))
