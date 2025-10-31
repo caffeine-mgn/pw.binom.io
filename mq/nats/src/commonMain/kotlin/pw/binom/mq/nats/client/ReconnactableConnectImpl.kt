@@ -14,6 +14,7 @@ import pw.binom.concurrency.SpinLock
 import pw.binom.concurrency.synchronize
 import pw.binom.io.AsyncCloseable
 import pw.binom.io.Closeable
+import pw.binom.io.StreamClosedException
 import pw.binom.mq.nats.exceptions.SubscribeFinishedException
 import pw.binom.uuid.nextUuid
 import kotlin.coroutines.CoroutineContext

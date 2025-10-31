@@ -65,7 +65,7 @@ suspend fun ReconnactableConnect.getOrCreateConsumer(
   if (exist != null) {
     return exist
   }
-  return createConsumer(
+  return createStreamConsumer(
     streamName = streamName,
     config = config,
   )

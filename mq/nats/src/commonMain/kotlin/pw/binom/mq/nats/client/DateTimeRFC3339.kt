@@ -8,7 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
-import pw.binom.date.parseIso8601Date
+import pw.binom.date.parseIso8601DateTime
 
 object DateTimeRFC3339 : KSerializer<DateTime> {
   private val pattern =
@@ -16,7 +16,7 @@ object DateTimeRFC3339 : KSerializer<DateTime> {
   override val descriptor: SerialDescriptor = String.serializer().descriptor
 
   fun decode(value: String) =
-    pattern.parseOrNull(value) ?: value.parseIso8601Date()
+    pattern.parseDateTimeOrNull(value) ?: value.parseIso8601DateTime()
       ?: throw SerializationException("Can't parse \"$value\" to date as RFC 3339")
 
   override fun deserialize(decoder: Decoder): DateTime {
