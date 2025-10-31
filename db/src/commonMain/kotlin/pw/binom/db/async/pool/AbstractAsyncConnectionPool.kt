@@ -2,7 +2,7 @@ package pw.binom.db.async.pool
 
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
-import pw.binom.collections.WeakReferenceMap
+import pw.binom.collection.WeakReferenceMap
 import pw.binom.collections.defaultMutableList
 import pw.binom.collections.defaultMutableSet
 import pw.binom.concurrency.SpinLock

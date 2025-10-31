@@ -3,7 +3,7 @@ package pw.binom.db.serialization
 import kotlinx.serialization.SerializationException
 import pw.binom.date.Date
 import pw.binom.date.DateTime
-import pw.binom.date.parseIso8601Date
+import pw.binom.date.parseIso8601DateTime
 import pw.binom.uuid.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -42,7 +42,7 @@ interface DataProvider {
 
   fun getDateTime(key: String): DateTime {
     val str = getString(key)
-    return str.parseIso8601Date() ?: throw SerializationException("Can't parse $str to DateTime")
+    return str.parseIso8601DateTime() ?: throw SerializationException("Can't parse $str to DateTime")
   }
 
   fun getDate(key: String): Date {

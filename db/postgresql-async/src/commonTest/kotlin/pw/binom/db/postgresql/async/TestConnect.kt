@@ -3,7 +3,7 @@ package pw.binom.db.postgresql.async
 import kotlinx.coroutines.test.runTest
 import pw.binom.charset.Charsets
 import pw.binom.date.Date
-import pw.binom.date.parseIso8601Date
+import pw.binom.date.parseIso8601DateTime
 import pw.binom.db.ColumnType
 import pw.binom.db.async.firstOrNull
 import pw.binom.db.async.map
@@ -218,7 +218,7 @@ create table member_tag
             it.getDateTime(0)
           }
         }
-      assertEquals("2018-02-01 11:42:39.425".parseIso8601Date(0)!!.milliseconds, date!!.milliseconds)
+      assertEquals("2018-02-01 11:42:39.425".parseIso8601DateTime(0)!!.milliseconds, date!!.milliseconds)
     }
   }
 
@@ -424,7 +424,7 @@ create table member_tag
           it.executeQuery().useAsync {
             assertEquals(1, it.columns.size)
             assertTrue(it.next())
-            assertEquals("2020-01-05 15:43:36.000".parseIso8601Date(0)!!.milliseconds, it.getDateTime(0)!!.milliseconds)
+            assertEquals("2020-01-05 15:43:36.000".parseIso8601DateTime(0)!!.milliseconds, it.getDateTime(0)!!.milliseconds)
             assertFalse(it.next())
           }
         } catch (e: Throwable) {

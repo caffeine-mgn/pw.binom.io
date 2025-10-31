@@ -62,7 +62,7 @@ class PostgresAsyncResultSet(
 
   override fun getDateTime(index: Int): DateTime? {
     val value = getString(index) ?: return null
-    return DateUtils.parseDate(value)
+    return DateUtils.parseDateTime(value)
   }
 
   private fun Long.toDatetime() =

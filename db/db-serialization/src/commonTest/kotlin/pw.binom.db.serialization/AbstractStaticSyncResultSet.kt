@@ -2,7 +2,7 @@ package pw.binom.db.serialization
 
 import pw.binom.date.Date
 import pw.binom.date.DateTime
-import pw.binom.date.parseIso8601Date
+import pw.binom.date.parseIso8601DateTime
 import pw.binom.db.SQLException
 import pw.binom.db.async.AsyncResultSet
 import pw.binom.uuid.UUID
@@ -61,7 +61,7 @@ abstract class AbstractStaticSyncResultSet<T> : AsyncResultSet {
   protected open fun getDate(
     index: Int,
     value: T,
-  ): DateTime? = getString(index, value)?.parseIso8601Date()
+  ): DateTime? = getString(index, value)?.parseIso8601DateTime()
 
 //    protected open fun getBigDecimal(index: Int, value: T): BigDecimal? =
 //        getString(index, value)?.let { BigDecimal.parseString(it) }
