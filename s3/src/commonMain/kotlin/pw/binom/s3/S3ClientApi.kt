@@ -4,15 +4,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.modules.SerializersModule
 import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.DateTime
-import pw.binom.date.parseIso8601Date
+import pw.binom.date.parseIso8601DateTime
 import pw.binom.date.parseRfc822Date
 import pw.binom.http.client.Http11ClientExchange
 import pw.binom.http.client.HttpClientRunnable
 import pw.binom.io.AsyncOutput
 import pw.binom.io.bufferedWriter
 import pw.binom.io.http.range.Range
-import pw.binom.io.httpClient.HttpClient
-import pw.binom.io.httpClient.HttpResponse
 import pw.binom.io.useAsync
 import pw.binom.s3.dto.*
 import pw.binom.s3.exceptions.S3ErrorException
@@ -557,7 +555,7 @@ object S3ClientApi {
             ?.map {
               Bucket(
                 name = it.tags().withName("Name").single().text(),
-                creationDate = it.tags().withName("CreationDate").single().text().parseIso8601Date(0)!!
+                creationDate = it.tags().withName("CreationDate").single().text().parseIso8601DateTime(0)!!
               )
             }?.toList() ?: emptyList()
         )

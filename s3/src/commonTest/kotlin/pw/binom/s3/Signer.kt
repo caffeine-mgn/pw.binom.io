@@ -16,7 +16,7 @@ import pw.binom.crypto.Sha256MessageDigest
 import pw.binom.date.DateTime
 import pw.binom.date.format.toDatePattern
 import pw.binom.date.iso8601
-import pw.binom.date.parseIso8601Date
+import pw.binom.date.parseIso8601DateTime
 import pw.binom.io.ByteBuffer
 import pw.binom.io.bufferedReader
 import pw.binom.io.http.Headers
@@ -261,7 +261,7 @@ object IsoDateS : KSerializer<DateTime> {
   override val descriptor: SerialDescriptor
     get() = String.serializer().descriptor
 
-  override fun deserialize(decoder: Decoder): DateTime = decoder.decodeString().parseIso8601Date(0)!!
+  override fun deserialize(decoder: Decoder): DateTime = decoder.decodeString().parseIso8601DateTime(0)!!
 
   override fun serialize(
     encoder: Encoder,
