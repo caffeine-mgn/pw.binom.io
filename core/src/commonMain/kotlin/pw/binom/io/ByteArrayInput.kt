@@ -72,6 +72,24 @@ class ByteArrayInput(val data: ByteArray) : Input {
     return result
   }
 
+  override fun read(dest: ByteArray, offset: Int, length: Int): DataTransferSize {
+    require(offset >= 0)
+    if (length == 0) {
+      return DataTransferSize.EMPTY
+    }
+    require(length > 0)
+    require(dest.size - offset >= length)
+    val maxLen = minOf(data.size - cursor,length)
+    data.copyInto(
+      destination = dest,
+      destinationOffset = offset,
+      startIndex = cursor,
+      endIndex = cursor + maxLen,
+    )
+    cursor += length
+    return super.read(dest, offset, length)
+  }
+
   fun readBytes(
     destination: ByteArray,
     offset: Int = 0,

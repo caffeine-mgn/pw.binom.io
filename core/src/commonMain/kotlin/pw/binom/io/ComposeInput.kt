@@ -28,6 +28,26 @@ class ComposeInput : Input {
     }
   }
 
+  override fun read(dest: ByteArray, offset: Int, length: Int): DataTransferSize {
+    while (true) {
+      if (current.isEmpty && readers.isEmpty) {
+        return DataTransferSize.EMPTY
+      }
+
+      if (current.isEmpty) {
+        readers.popFirst(current)
+        continue
+      }
+
+      val r = current.value.read(dest = dest, offset = offset, length = length)
+      if (r.isNotAvailable) {
+        current.clear()
+        continue
+      }
+      return r
+    }
+  }
+
   override fun close() {
     do {
       if (!current.isEmpty) {
