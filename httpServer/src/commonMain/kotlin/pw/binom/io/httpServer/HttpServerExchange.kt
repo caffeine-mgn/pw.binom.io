@@ -57,7 +57,7 @@ interface HttpServerExchange : HttpInput {
   fun getQueryParam(name: String): List<String?> {
     val params = getQueryParams()
     if (!params.containsKey(name)) {
-      throw MissingQueryArgumentException("name")
+      throw MissingQueryArgumentException(name)
     }
     return params[name] ?: emptyList()
   }
