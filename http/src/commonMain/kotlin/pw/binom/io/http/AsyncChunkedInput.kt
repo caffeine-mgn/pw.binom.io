@@ -1,5 +1,6 @@
 package pw.binom.io.http
 
+import pw.binom.DEFAULT_BUFFER_SIZE
 import pw.binom.atomic.AtomicBoolean
 import pw.binom.io.*
 
@@ -81,8 +82,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
     }
   }
 
-  override suspend fun read(dest: ByteBuffer): DataTransferSize {
-    ensureOpen()
+  private suspend fun internalRead(dest: ByteBuffer): DataTransferSize {
     while (true) {
       if (eof) {
         return DataTransferSize.CLOSED
@@ -111,20 +111,25 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
       if (b.isAvailable) {
         readed += b.length.toULong()
       }
-//      if (chunkedSize!! - readed == 0uL) {
-//        chunkedSize = null
-//      }
-//      if (chunkedSize - readed == 0uL) {
-//        staticData.reset(position = 0, length = 2)
-//        stream.readFully(staticData)
-//        val b1 = staticData[0]
-//        val b2 = staticData[1]
-//        if (b1 != CR || b2 != LF) {
-//          throw IOException("Invalid end of chunk")
-//        }
-//        readChunkSize()
-//      }
       return b
+    }
+  }
+
+  override suspend fun read(dest: ByteBuffer): DataTransferSize {
+    if (closed.getValue()) {
+      return DataTransferSize.CLOSED
+    }
+    return internalRead(dest)
+  }
+
+  private suspend fun skipAllData() {
+    ByteBuffer(DEFAULT_BUFFER_SIZE).use { buffer ->
+      while (true) {
+        buffer.clear()
+        if (internalRead(buffer).isNotAvailable) {
+          break
+        }
+      }
     }
   }
 
@@ -133,7 +138,7 @@ open class AsyncChunkedInput(val stream: AsyncInput, val closeStream: Boolean = 
       return
     }
     if (!eof) {
-      skipAll()
+      skipAllData()
     }
     staticData.close()
     if (closeStream) {
