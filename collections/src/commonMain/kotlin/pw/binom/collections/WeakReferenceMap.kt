@@ -51,9 +51,9 @@ class WeakReferenceMap<K : Any, V : Any> {
     native.keys.forEach {
       if (it.get == null) {
         if (list == null) {
-          list = ArrayList2()
+          list = ArrayList()
         }
-        list!!.add(it)
+        list.add(it)
       }
     }
     list?.forEach {

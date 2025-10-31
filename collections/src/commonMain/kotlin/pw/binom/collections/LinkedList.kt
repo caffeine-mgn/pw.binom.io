@@ -17,6 +17,7 @@ open class LinkedList<T>() : MutableList<T> {
     val prev: Node<T>?
   }
 
+  @InternalApi
   class NodeImpl<T> internal constructor(prev: NodeImpl<T>?, var item: T?, next: NodeImpl<T>?) : Node<T> {
     override val value: T
       get() = item as T
@@ -28,9 +29,11 @@ open class LinkedList<T>() : MutableList<T> {
 
   protected var first: NodeImpl<T>? = null
 
+  @InternalApi
   val firstNode: Node<T>?
     get() = first
 
+  @InternalApi
   val lastNode: Node<T>?
     get() = last
 
@@ -161,6 +164,7 @@ open class LinkedList<T>() : MutableList<T> {
     modCount++
   }
 
+  @InternalApi
   fun node(index: Int): Node<T>? = nodeInternal(index)
 
   /**
@@ -389,6 +393,8 @@ open class LinkedList<T>() : MutableList<T> {
    * This method is equivalent to [add].
    * @param e the element to add
    */
+
+
   fun addLast(e: T) = linkLast(e)
 
   /**

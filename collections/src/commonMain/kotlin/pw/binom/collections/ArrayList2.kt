@@ -21,12 +21,12 @@ class ArrayList2<E> private constructor(
   constructor() : this(10)
 
   constructor(initialCapacity: Int) : this(
-    arrayOfUninitializedElements(initialCapacity),
-    0,
-    0,
-    false,
-    null,
-    null,
+    arrayOfUninitializedElements(size = initialCapacity),
+    offset = 0,
+    length = 0,
+    isReadOnly = false,
+    backingList = null,
+    root = null,
   )
 
   constructor(elements: Collection<E>) : this(elements.size) {
