@@ -35,20 +35,20 @@ private fun ipToString(data: ByteArray) =
 
 internal actual fun getAvailableNetworkInterfaces(): List<NetworkInterface> {
   val out = ArrayList<NetworkInterface>()
-  JNetworkInterface
+  val interfaces = JNetworkInterface
     .getNetworkInterfaces()
-    .asIterator()
-    .forEach { net ->
-      net.interfaceAddresses.forEach { addr ->
-        out += JvmNetworkInterface(
-          ip = InetAddress(addr.address),
-          name = net.name,
-          prefixLength = addr.networkPrefixLength.toInt(),
-          native = net,
-          index = net.index,
-        )
-      }
+  while (interfaces.hasMoreElements()) {
+    val net = interfaces.nextElement()
+    net.interfaceAddresses.forEach { addr ->
+      out += JvmNetworkInterface(
+        ip = InetAddress(addr.address),
+        name = net.name,
+        prefixLength = addr.networkPrefixLength.toInt(),
+        native = net,
+        index = net.index,
+      )
     }
+  }
   return out
 }
 
